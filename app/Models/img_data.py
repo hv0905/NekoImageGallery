@@ -21,11 +21,10 @@ class ImageData(BaseModel):
             "index_date": self.index_date.isoformat()
         }
 
-    def from_payload(self, payload: dict):
-        self.url = payload["url"]
-        self.thumbnail_url = payload["thumbnail_url"]
-        self.index_date = datetime.fromisoformat(payload["index_date"])
-        return self
+    @classmethod
+    def from_payload(cls, id: str, payload: dict):
+        return cls(id=UUID(id), url=payload['url'], thumbnail_url=payload['thumbnail_url'],
+                   index_date=datetime.fromisoformat(payload['index_date']))
 
     class Config:
         arbitrary_types_allowed = True

@@ -1,5 +1,6 @@
 # Fastapi
 fastapi
+python-multipart
 uvicorn[standard]
 
 

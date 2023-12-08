@@ -21,7 +21,7 @@ class VectorDbContext:
                                           with_payload=True
                                           )
         logger.success("Query completed!")
-        return [SearchResult(img=ImageData(id=t.id).from_payload(t.payload), score=t.score) for t in result]
+        return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
 
     async def insertItems(self, items: list[ImageData]):
         logger.info("Inserting {} items into Qdrant...", len(items))
