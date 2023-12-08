@@ -19,7 +19,7 @@ from shutil import copy2
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Create Qdrant collection')
-    parser.add_argument('--copy-from', type=str, required=True, help="Copy from this directory")
+    parser.add_argument('--copy-from', dest="local_index_target_dir", type=str, required=True, help="Copy from this directory")
     return parser.parse_args()
 
 
@@ -40,7 +40,7 @@ def copy_and_index(filePath: Path) -> ImageData | None:
 
 
 async def main(args):
-    root = Path(args.copy_from)
+    root = Path(args.local_index_target_dir)
     buffer = []
     counter = 0
     for item in root.glob('**/*.*'):
