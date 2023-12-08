@@ -13,7 +13,7 @@ searchRouter = APIRouter()
 @searchRouter.get("/text/{prompt}")
 async def textSearch(
         prompt: Annotated[str, Path(min_length=3, max_length=100, description="The image prompt text you want to search.")],
-        count: Annotated[int, Query(ge=1, le=30, description="The number of results you want to get.")] = 10):
+        count: Annotated[int, Query(ge=1, le=50, description="The number of results you want to get.")] = 10):
     """
     Search images by text prompt
     """
@@ -24,10 +24,11 @@ async def textSearch(
 
 
 @searchRouter.post("/image")
-async def imageSearch(image: Annotated[bytes, File(max_length=3 * 1024 * 1024, media_type="image/*", description="The image you want to search.")]):
+async def imageSearch(image: Annotated[bytes, File(max_length=3 * 1024 * 1024, media_type="image/*", description="The image you want to search.")],
+                      count: Annotated[int, Query(ge=1, le=50, description="The number of results you want to get.")] = 10):
     fakefile = BytesIO(image)
     img = Image.open(fakefile)
     logger.info("Image search request received")
     image_vector = clip_service.get_image_vector(img)
-    results = await db_context.querySearch(image_vector)
+    results = await db_context.querySearch(image_vector, top_k=count)
     return results
