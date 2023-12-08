@@ -9,6 +9,16 @@
 - 使用Clip模型为每张图片生成768维向量作为搜索依据。无需人工标注或分类，无限分类类别。
 - 使用Qdrant向量数据库进行高效的向量搜索。
 
+## 📷截图
+
+![Screenshot1](web/screenshots/1.png)
+![Screenshot2](web/screenshots/2.png)
+![Screenshot3](web/screenshots/3.png)
+![Screenshot4](web/screenshots/4.png)
+
+> 以上截图可能包含来自不同画师的版权图片，请不要将其用作其它用途。
+
+
 ## ✈️部署
 
 ### 本地部署

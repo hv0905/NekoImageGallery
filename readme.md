@@ -9,6 +9,15 @@ An online AI image search engine based on the Clip model and Qdrant vector datab
 - Use the Clip model to generate 768-dimensional vectors for each image as the basis for search. No need for manual annotation or classification, unlimited classification categories.
 - Use Qdrant vector database for efficient vector search.
 
+## 📷Screenshots
+
+![Screenshot1](web/screenshots/1.png)
+![Screenshot2](web/screenshots/2.png)
+![Screenshot3](web/screenshots/3.png)
+![Screenshot4](web/screenshots/4.png)
+
+> The above screenshots may contain copyrighted images from different artists, please do not use them for other purposes.
+
 ## ✈️ Deployment
 
 ### Local Deployment
