@@ -1,0 +1,20 @@
+# Fastapi
+fastapi
+uvicorn[standard]
+
+
+# AI - Manually install cuda-capable pytorch
+torch
+torchvision
+transformers
+pillow
+
+# Vector Database
+qdrant-client
+
+# Misc
+pyyaml
+loguru
+httpx
+
+
