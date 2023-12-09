@@ -1,5 +1,6 @@
 if __name__ == '__main__':
     import sys
+
     sys.path.insert(1, './')
 
 import asyncio
@@ -19,7 +20,8 @@ from shutil import copy2
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Create Qdrant collection')
-    parser.add_argument('--copy-from', dest="local_index_target_dir", type=str, required=True, help="Copy from this directory")
+    parser.add_argument('--copy-from', dest="local_index_target_dir", type=str, required=True,
+                        help="Copy from this directory")
     return parser.parse_args()
 
 
@@ -31,7 +33,11 @@ def copy_and_index(filePath: Path) -> ImageData | None:
         return None
     id = uuid4()
     img_ext = filePath.suffix
-    image_vector = clip_service.get_image_vector(img)
+    try:
+        image_vector = clip_service.get_image_vector(img)
+    except Exception as e:
+        logger.error("Error when processing image {}: {}", filePath, e)
+        return None
     imgdata = ImageData(id=id, url=f'/static/{id}{img_ext}', image_vector=image_vector, index_date=datetime.now())
 
     # copy to static
@@ -46,7 +52,7 @@ async def main(args):
     for item in root.glob('**/*.*'):
         counter += 1
         logger.info("[{}] Indexing {}", str(counter), item.relative_to(root).__str__())
-        if item.suffix in ['.jpg', '.png', '.jpeg']:
+        if item.suffix in ['.jpg', '.png', '.jpeg', '.jfif']:
             imgdata = copy_and_index(item)
             if imgdata is not None:
                 buffer.append(imgdata)
@@ -60,6 +66,7 @@ async def main(args):
         logger.info("Upload {} element to database", len(buffer))
         await db_context.insertItems(buffer)
         logger.success("Indexing completed! {} images indexed", counter)
+
 
 if __name__ == '__main__':
     args = parse_args()
