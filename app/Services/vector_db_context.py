@@ -19,7 +19,7 @@ class VectorDbContext:
         result = await self.client.retrieve(collection_name=self.collection_name, ids=[id], with_payload=True,
                                             with_vectors=with_vectors)
         return ImageData.from_payload(result[0].id, result[0].payload,
-                                      numpy.ndarray(result[0].vector) if with_vectors else None)
+                                      numpy.array(result[0].vector, dtype=numpy.float32) if with_vectors else None)
 
     async def querySearch(self, query_vector, top_k=10) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
@@ -59,8 +59,8 @@ class VectorDbContext:
         :param new_data: The new data to update.
         """
         response = await self.client.set_payload(collection_name=self.collection_name,
-                                      payload=new_data.payload,
-                                      points=[new_data.id],
-                                      wait=True
-                                      )
+                                                 payload=new_data.payload,
+                                                 points=[str(new_data.id)],
+                                                 wait=True
+                                                 )
         logger.success("Update completed! Status: {}", response.status)
