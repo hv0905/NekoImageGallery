@@ -22,9 +22,9 @@ class ImageData(BaseModel):
         }
 
     @classmethod
-    def from_payload(cls, id: str, payload: dict):
+    def from_payload(cls, id: str, payload: dict, vector: Optional[ndarray] = None):
         return cls(id=UUID(id), url=payload['url'], thumbnail_url=payload['thumbnail_url'],
-                   index_date=datetime.fromisoformat(payload['index_date']))
+                   index_date=datetime.fromisoformat(payload['index_date']), image_vector=vector)
 
     class Config:
         arbitrary_types_allowed = True
