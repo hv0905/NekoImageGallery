@@ -1,3 +1,3 @@
 from fastapi import APIRouter
 
-filesRouter = APIRouter()
+admin_router = APIRouter()

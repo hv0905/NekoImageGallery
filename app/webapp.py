@@ -1,12 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.Controllers.files import filesRouter
+from app.Controllers.admin import admin_router
 from app.Controllers.search import searchRouter
 from fastapi.staticfiles import StaticFiles
 from time import time
 import app.config as config
+from .util.fastapi_log_handler import init_logging
 
 app = FastAPI()
+init_logging()
 
 app.add_middleware(
     CORSMiddleware,
@@ -16,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(filesRouter, prefix="/files")
+app.include_router(admin_router, prefix="/admin")
 app.include_router(searchRouter, prefix="/search")
 
 if config.STATIC_FILE_ENABLE:
