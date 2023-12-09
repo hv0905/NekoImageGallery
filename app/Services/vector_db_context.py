@@ -9,7 +9,9 @@ from app.Models.search_result import SearchResult
 
 class VectorDbContext:
     def __init__(self):
-        self.client = AsyncQdrantClient(host=config.QDRANT_HOST, port=config.QDRANT_PORT)
+        self.client = AsyncQdrantClient(host=config.QDRANT_HOST, port=config.QDRANT_PORT,
+                                        grpc_port=config.QDRANT_GRPC_PORT, api_key=config.QDRANT_API_KEY,
+                                        prefer_grpc=config.QDRANT_PREFER_GRPC)
         self.collection_name = config.QDRANT_COLL
 
     async def querySearch(self, query_vector, top_k=10) -> list[SearchResult]:
@@ -30,4 +32,3 @@ class VectorDbContext:
                                             wait=True,
                                             points=points)
         logger.success("Insert completed! Status: {}", response.status)
-
