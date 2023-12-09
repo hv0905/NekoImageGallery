@@ -28,7 +28,7 @@ async def textSearch(
 @searchRouter.post("/image", description="Search images by image")
 async def imageSearch(
         image: Annotated[
-            bytes, File(max_length=3 * 1024 * 1024, media_type="image/*", description="The image you want to search.")],
+            bytes, File(max_length=10 * 1024 * 1024, media_type="image/*", description="The image you want to search.")],
         count: Annotated[
             int, Query(ge=1, le=50, description="The number of results you want to get.")] = 10) -> SearchApiResponse:
     fakefile = BytesIO(image)
