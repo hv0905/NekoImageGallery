@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.Controllers.admin import admin_router
 from app.Controllers.search import searchRouter
 from fastapi.staticfiles import StaticFiles
-from time import time
+from datetime import datetime
 import app.config as config
+from .Models.api_response.base import WelcomeApiResponse
 from .util.fastapi_log_handler import init_logging
 
 app = FastAPI()
@@ -18,17 +19,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(admin_router, prefix="/admin")
 app.include_router(searchRouter, prefix="/search")
+if config.ADMIN_API_ENABLE:
+    app.include_router(admin_router, prefix="/admin")
 
 if config.STATIC_FILE_ENABLE:
     app.mount("/static", StaticFiles(directory=config.STATIC_FILE_PATH), name="static")
 
 
-@app.get("/")
-def welcome():
-    return {
-        "serverTime": time(),
-        "message": "Ciallo~ Welcome to NekoImageGallery API",
-        "docs": "/docs"
-    }
+@app.get("/", description="Default portal. Test for server availability.")
+def welcome() -> WelcomeApiResponse:
+    return WelcomeApiResponse(
+        message="Ciallo~ Welcome to NekoImageGallery API!",
+        server_time=datetime.now(),
+        wiki={
+            "openAPI": "/openapi.json",
+            "swagger UI": "/docs",
+            "redoc": "/redoc"
+        }
+    )

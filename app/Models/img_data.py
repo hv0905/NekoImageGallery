@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from numpy import ndarray
 from datetime import datetime
 from uuid import UUID
@@ -10,7 +10,7 @@ class ImageData(BaseModel):
     id: UUID
     url: str
     thumbnail_url: Optional[str] = None
-    image_vector: Optional[ndarray] = None
+    image_vector: Optional[ndarray] = Field(None, exclude=True)
     index_date: datetime
 
     @property

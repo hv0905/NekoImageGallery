@@ -2,6 +2,7 @@
 fastapi
 python-multipart
 uvicorn[standard]
+pydantic
 
 
 # AI - Manually install cuda-capable pytorch
@@ -9,6 +10,7 @@ torch
 torchvision
 transformers
 pillow
+numpy
 
 # Vector Database
 qdrant-client
@@ -17,5 +19,3 @@ qdrant-client
 pyyaml
 loguru
 httpx
-
-

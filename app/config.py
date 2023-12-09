@@ -20,3 +20,7 @@ STATIC_FILE_PATH = "./static"
 
 # Server Configuration
 CORS_ORIGINS = ["*"]
+# Set to False will completely disable admin API
+ADMIN_API_ENABLE = True
+# Use this token to access admin API. Disable token check by setting it to None
+ADMIN_TOKEN = "your-super-secret-admin-token"
