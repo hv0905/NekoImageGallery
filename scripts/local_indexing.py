@@ -3,19 +3,19 @@ if __name__ == '__main__':
 
     sys.path.insert(1, './')
 
-import asyncio
-import shutil
-
-import app.config as config
-from app.Services import clip_service, db_context
-from app.Models.img_data import ImageData
-from pathlib import Path
-from PIL import Image
-from uuid import uuid4
 import argparse
+import asyncio
 from datetime import datetime
-from loguru import logger
+from pathlib import Path
 from shutil import copy2
+from uuid import uuid4
+
+from PIL import Image
+from loguru import logger
+
+from app.Models.img_data import ImageData
+from app.Services import clip_service, db_context
+from app.config import config
 
 
 def parse_args():
@@ -41,13 +41,13 @@ def copy_and_index(filePath: Path) -> ImageData | None:
     imgdata = ImageData(id=id, url=f'/static/{id}{img_ext}', image_vector=image_vector, index_date=datetime.now())
 
     # copy to static
-    copy2(filePath, Path(config.STATIC_FILE_PATH) / f'{id}{img_ext}')
+    copy2(filePath, Path(config.static_file.path) / f'{id}{img_ext}')
     return imgdata
 
 
 async def main(args):
     root = Path(args.local_index_target_dir)
-    static_path = Path(config.STATIC_FILE_PATH)
+    static_path = Path(config.static_file.path)
     if not static_path.exists():
         static_path.mkdir()
     buffer = []

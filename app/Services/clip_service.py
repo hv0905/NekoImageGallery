@@ -3,7 +3,7 @@ import torch
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel
 from torch import FloatTensor, no_grad
-import app.config as config
+from app.config import config
 from loguru import logger
 from time import time
 from numpy import ndarray
@@ -11,12 +11,12 @@ from numpy import ndarray
 
 class ClipService:
     def __init__(self):
-        self.device = config.CLIP_DEVICE
+        self.device = config.clip.device
         if self.device == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        logger.info("Using device: {}; Model: {}", self.device, config.CLIP_MODEL)
-        self.model = CLIPModel.from_pretrained(config.CLIP_MODEL).to(self.device)
-        self.processor = CLIPProcessor.from_pretrained(config.CLIP_MODEL)
+        logger.info("Using device: {}; Model: {}", self.device, config.clip.model)
+        self.model = CLIPModel.from_pretrained(config.clip.model).to(self.device)
+        self.processor = CLIPProcessor.from_pretrained(config.clip.model)
         logger.success("Model loaded successfully")
 
     @no_grad()

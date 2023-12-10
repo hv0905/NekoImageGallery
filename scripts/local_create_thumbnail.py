@@ -3,12 +3,12 @@ from loguru import logger
 from PIL import Image
 
 from app.Services import db_context
-import app.config as config
+from app.config import config
 import uuid
 
 
 async def main():
-    static_path = Path(config.STATIC_FILE_PATH)
+    static_path = Path(config.static_file.path)
     static_thumb_path = static_path / 'thumbnails'
     if not static_thumb_path.exists():
         static_thumb_path.mkdir()

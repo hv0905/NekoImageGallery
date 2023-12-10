@@ -1,26 +1,40 @@
-
-# Vector Database Configuration
-QDRANT_HOST = "localhost"
-QDRANT_PORT = 6333
-QDRANT_GRPC_PORT = 6334
-# Set to True if you want to use gRPC instead of HTTP
-QDRANT_PREFER_GRPC = True
-# Add your API key here if you have set one, otherwise leave it None
-QDRANT_API_KEY = None
-QDRANT_COLL = "NekoImg"
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# CLIP Configuration
-CLIP_DEVICE = 'auto'
-CLIP_MODEL = "openai/clip-vit-large-patch14"
+class QdrantSettings(BaseModel):
+    host: str = 'localhost'
+    port: int = 6333
+    grpc_port: int = 6334
+    coll: str = ''
+    prefer_grpc: bool = False
+    api_key: str | None = None
 
-# Static File Hosting: Useful for local deployment / local file deployment without OSS like S3/MinIO
-STATIC_FILE_ENABLE = True
-STATIC_FILE_PATH = "./static"
 
-# Server Configuration
-CORS_ORIGINS = ["*"]
-# Set to False will completely disable admin API
-ADMIN_API_ENABLE = True
-# Use this token to access admin API. Disable token check by setting it to None
-ADMIN_TOKEN = "your-super-secret-admin-token"
+class ClipSettings(BaseModel):
+    device: str = 'auto'
+    model: str = 'openai/clip-vit-large-patch14'
+
+
+class StaticFileSettings(BaseModel):
+    path: str = './static'
+    enable: bool = True
+
+
+class Config(BaseSettings):
+    qdrant: QdrantSettings = QdrantSettings()
+    clip: ClipSettings = ClipSettings()
+    static_file: StaticFileSettings = StaticFileSettings()
+
+    cors_origins: set[str] = {'*'}
+    admin_api_enable: bool = False
+    admin_token: str = ''
+
+    model_config = SettingsConfigDict(env_prefix="app_", env_nested_delimiter='__',
+                                      env_file=('config/default.env', 'config/local.env'),
+                                      env_file_encoding='utf-8')
+
+
+config = Config()
+
+print(config.model_dump())

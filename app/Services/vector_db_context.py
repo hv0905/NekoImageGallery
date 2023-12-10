@@ -3,17 +3,17 @@ from loguru import logger
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import PointStruct, Batch
 
-import app.config as config
+from app.config import config
 from app.Models.img_data import ImageData
 from app.Models.search_result import SearchResult
 
 
 class VectorDbContext:
     def __init__(self):
-        self.client = AsyncQdrantClient(host=config.QDRANT_HOST, port=config.QDRANT_PORT,
-                                        grpc_port=config.QDRANT_GRPC_PORT, api_key=config.QDRANT_API_KEY,
-                                        prefer_grpc=config.QDRANT_PREFER_GRPC)
-        self.collection_name = config.QDRANT_COLL
+        self.client = AsyncQdrantClient(host=config.qdrant.host, port=config.qdrant.port,
+                                        grpc_port=config.qdrant.grpc_port, api_key=config.qdrant.api_key,
+                                        prefer_grpc=config.qdrant.prefer_grpc)
+        self.collection_name = config.qdrant.coll
 
     async def retrieve_by_id(self, id: str, with_vectors=False) -> ImageData:
         result = await self.client.retrieve(collection_name=self.collection_name, ids=[id], with_payload=True,

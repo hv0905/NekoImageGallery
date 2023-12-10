@@ -29,11 +29,11 @@ if __name__ == '__main__':
     args = parse_args()
     if args.init_database:
         from scripts import qdrant_create_collection
-        import app.config as config
+        from app.config import config
 
         qdrant_create_collection.create_coll(
-            collections.namedtuple('Options', ['host', 'port', 'name'])(config.QDRANT_HOST, config.QDRANT_PORT,
-                                                                        config.QDRANT_COLL))
+            collections.namedtuple('Options', ['host', 'port', 'name'])(config.qdrant.host, config.qdrant.port,
+                                                                        config.qdrant.coll))
     elif args.local_index_target_dir is not None:
         from scripts import local_indexing
         import asyncio

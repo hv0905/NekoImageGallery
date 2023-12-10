@@ -40,7 +40,7 @@ If you don't want to deploy Qdrant yourself, you can use the [online service pro
     ```shell
     pip install -r requirements.txt
     ```
-5. Modify the project configuration file `app/config.py` as needed. Remember to change `QDRANT_HOST` to your Qdrant server address.
+5. Modify the project configuration file inside `config/`, you can edit `default.env` directly, but it's recommended to create a new file named `local.env` and override the configuration in `default.env`.
 6. Initialize the Qdrant database by running the following command:
     ```shell
     python main.py --init-database

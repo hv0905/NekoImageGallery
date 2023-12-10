@@ -3,6 +3,7 @@ fastapi
 python-multipart
 uvicorn[standard]
 pydantic
+pydantic-settings
 
 
 # AI - Manually install cuda-capable pytorch

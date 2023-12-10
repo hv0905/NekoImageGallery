@@ -41,7 +41,7 @@
     ```shell
     pip install -r requirements.txt
     ```
-5. 按需修改项目配置文件`app/config.py`，记得将`QDRANT_HOST`修改为您的Qdrant服务器地址。
+5. 按需修改位于`config`目录下的配置文件，您可以直接修改`default.env`，但是建议创建一个名为`local.env`的文件，覆盖`default.env`中的配置。
 6. 初始化Qdrant数据库，运行下面命令：
     ```shell
     python main.py --init-database
