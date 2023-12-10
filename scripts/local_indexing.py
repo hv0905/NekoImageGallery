@@ -47,6 +47,9 @@ def copy_and_index(filePath: Path) -> ImageData | None:
 
 async def main(args):
     root = Path(args.local_index_target_dir)
+    static_path = Path(config.STATIC_FILE_PATH)
+    if not static_path.exists():
+        static_path.mkdir()
     buffer = []
     counter = 0
     for item in root.glob('**/*.*'):

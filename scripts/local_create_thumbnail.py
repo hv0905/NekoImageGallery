@@ -24,7 +24,7 @@ async def main():
             if item.suffix not in ['.jpg', '.png', '.jpeg']:
                 logger.warning("Unsupported file type: {}. Skip...", item.suffix)
                 continue
-            if (static_thumb_path / f'{item.stem}{item.suffix}').exists():
+            if (static_thumb_path / f'{item.stem}.webp').exists():
                 logger.warning("Thumbnail for {} already exists. Skip...", item.stem)
                 continue
             id = uuid.UUID(item.stem)
