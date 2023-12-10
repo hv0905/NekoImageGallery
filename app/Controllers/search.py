@@ -56,6 +56,14 @@ async def similarWith(
     return SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4())
 
 
+@searchRouter.get("/random", description="Get random images")
+async def randomPick(paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
+    logger.info("Random pick request received")
+    random_vector = clip_service.get_random_vector()
+    result = await db_context.querySearch(random_vector, top_k=paging.count)
+    return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
+
+
 @searchRouter.get("/recall/{queryId}", description="Recall the query with given queryId")
 async def recallQuery(queryId: str):
     raise NotImplementedError()

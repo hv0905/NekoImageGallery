@@ -1,3 +1,4 @@
+import numpy.random
 import torch
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel
@@ -43,5 +44,11 @@ class ClipService:
         logger.info("Norm: {}", outputs.norm(dim=-1).item())
         outputs /= outputs.norm(dim=-1, keepdim=True)
         return outputs.numpy(force=True).reshape(-1)
+
+    @staticmethod
+    def get_random_vector() -> ndarray:
+        vec = numpy.random.rand(768)
+        vec -= vec.mean()
+        return vec
 
 
