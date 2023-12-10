@@ -52,6 +52,13 @@
    python main.py --local-index <path-to-your-image-directory>
     ```
    此操作会将位于`<path-to-your-image-directory>`目录下的所有图片文件复制到`config.STATIC_FILE_PATH`目录下(默认为`./static`)，并将图片信息写入Qdrant数据库。
+   
+   然后运行下面的命令，为所有static目录下的图片生成缩略图：
+
+   ```shell
+    python main.py --local-create-thumbnail
+   ```
+   
    如果你希望大规模部署，可以使用类似`MinIO`的OSS存储服务，将图片文件存储在OSS中，然后将图片信息写入Qdrant数据库即可。
 8. 运行本应用：
     ```shell

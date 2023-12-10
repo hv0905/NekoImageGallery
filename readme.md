@@ -51,6 +51,13 @@ If you don't want to deploy Qdrant yourself, you can use the [online service pro
    python main.py --local-index <path-to-your-image-directory>
     ```
    This operation will copy all image files in the `<path-to-your-image-directory>` directory to the `config.STATIC_FILE_PATH` directory (default is `./static`) and write the image information to the Qdrant database.
+
+   Then run the following command to generate thumbnails for all images in the static directory:
+
+   ```shell
+     python main.py --local-create-thumbnail
+   ```
+   
    If you want to deploy on a large scale, you can use OSS storage services like `MinIO` to store image files in OSS and then write the image information to the Qdrant database.
 8. Run this application:
     ```shell
