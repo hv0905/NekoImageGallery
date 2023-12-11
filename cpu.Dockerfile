@@ -18,6 +18,8 @@ ENV APP_CLIP__DEVICE="cpu"
 
 LABEL org.opencontainers.image.authors="EdgeNeko" \
       org.opencontainers.image.url="https://github.com/hv0905/NekoImageGallery" \
-      org.opencontainers.image.source="https://github.com/hv0905/NekoImageGallery"
+      org.opencontainers.image.source="https://github.com/hv0905/NekoImageGallery" \
+      org.opencontainers.image.title="NekoImageGallery" \
+      org.opencontainers.image.description="An AI-powered natural language & reverse Image Search Engine powered by CLIP & qdrant."
 
 ENTRYPOINT ["python", "main.py"]
