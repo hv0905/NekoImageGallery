@@ -30,11 +30,12 @@ class Config(BaseSettings):
     admin_api_enable: bool = False
     admin_token: str = ''
 
+    access_protected: bool = False
+    access_token: str = 'default-access-token'
+
     model_config = SettingsConfigDict(env_prefix="app_", env_nested_delimiter='__',
                                       env_file=('config/default.env', 'config/local.env'),
                                       env_file_encoding='utf-8')
 
 
 config = Config()
-
-print(config.model_dump())

@@ -1,11 +1,16 @@
+from datetime import datetime
+from typing import Annotated
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.params import Depends
+from fastapi.staticfiles import StaticFiles
+
 from app.Controllers.admin import admin_router
 from app.Controllers.search import searchRouter
-from fastapi.staticfiles import StaticFiles
-from datetime import datetime
+from app.Services.authentication import permissive_access_token_verify
 from app.config import config
-from .Models.api_response.base import WelcomeApiResponse
+from .Models.api_response.base import WelcomeApiResponse, WelcomeApiAuthenticationResponse
 from .util.fastapi_log_handler import init_logging
 
 app = FastAPI()
@@ -28,7 +33,7 @@ if config.static_file.enable:
 
 
 @app.get("/", description="Default portal. Test for server availability.")
-def welcome() -> WelcomeApiResponse:
+def welcome(token_passed: Annotated[bool, Depends(permissive_access_token_verify)]) -> WelcomeApiResponse:
     return WelcomeApiResponse(
         message="Ciallo~ Welcome to NekoImageGallery API!",
         server_time=datetime.now(),
@@ -36,5 +41,6 @@ def welcome() -> WelcomeApiResponse:
             "openAPI": "/openapi.json",
             "swagger UI": "/docs",
             "redoc": "/redoc"
-        }
+        },
+        authorization=WelcomeApiAuthenticationResponse(required=config.access_protected, passed=token_passed)
     )

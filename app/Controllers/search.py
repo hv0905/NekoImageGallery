@@ -1,16 +1,19 @@
+from io import BytesIO
+from typing import Annotated
+from uuid import uuid4, UUID
+
+from PIL import Image
 from fastapi import APIRouter
 from fastapi.params import File, Query, Path, Depends
 from loguru import logger
-from typing import Annotated
-from uuid import uuid4, UUID
 
 from app.Models.api_response.search_api_response import SearchApiResponse
 from app.Services import clip_service
 from app.Services import db_context
-from PIL import Image
-from io import BytesIO
+from app.Services.authentication import force_access_token_verify
+from app.config import config
 
-searchRouter = APIRouter()
+searchRouter = APIRouter(dependencies=([Depends(force_access_token_verify)] if config.access_protected else None))
 
 
 class SearchPagingParams:
