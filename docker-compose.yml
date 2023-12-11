@@ -21,6 +21,14 @@ services:
       - APP_QDRANT__PREFER_GRPC=True
     depends_on:
       - qdrant-database
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
 networks:
   default:
     name: neko-image-gallery

@@ -69,7 +69,30 @@
 
 ### Docker Compose容器化部署
 
-WIP
+> [!WARNING]  
+> Docker Compose部署方式的支持目前仍处在alpha状态，可能不适用于所有环境(尤其是CUDA加速功能)。  
+> 请确保您在继续前熟悉[docker文档](https://docs.docker.com/)。如果您在使用过程中遇到任何问题，请提交issue。
+
+#### 准备`nvidia-container-runtime`
+
+如果你希望在推理时支持CUDA加速，请参考[Docker GPU相关文档](https://docs.docker.com/config/containers/resource_constraints/#gpu)准备支持GPU的容器运行时。
+
+> 相关文档：  
+> 1. https://docs.docker.com/config/containers/resource_constraints/#gpu
+> 2. https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker
+> 3. https://nvidia.github.io/nvidia-container-runtime/
+
+#### 运行
+
+1. 按需修改docker-compose.yml文件
+2. 运行下面命令启动docker-compose
+   ```shell
+   # start in foreground
+   docker-compose up
+   # start in background(detached mode)
+   docker-compose up -d
+   ```
+
 
 ## Copyright
 

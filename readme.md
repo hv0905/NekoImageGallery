@@ -68,7 +68,30 @@ If you don't want to deploy Qdrant yourself, you can use the [online service pro
 
 ### Docker Compose Containerized Deployment
 
-WIP
+> [!WARNING]
+> Docker compose support is in an alpha state, and may not work for everyone(especially CUDA acceleration).
+> Please make sure you are familiar with [Docker documentation](https://docs.docker.com/) before using this deployment method.
+> If you encounter any problems during deployment, please submit an issue.
+
+#### Prepare `nvidia-container-runtime`
+
+If you want to use CUDA acceleration, you need to install `nvidia-container-runtime` on your system. Please refer to the [official documentation](https://docs.docker.com/config/containers/resource_constraints/#gpu) for installation.
+
+> Related Document:  
+> 1. https://docs.docker.com/config/containers/resource_constraints/#gpu
+> 2. https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker
+> 3. https://nvidia.github.io/nvidia-container-runtime/
+
+#### Run the server
+
+1. Modify the docker-compose.yml file as needed
+2. Run the following command to start the server:
+    ```shell
+    # start in foreground
+    docker-compose up
+    # start in background(detached mode)
+    docker-compose up -d
+    ```
 
 ## Copyright
 
