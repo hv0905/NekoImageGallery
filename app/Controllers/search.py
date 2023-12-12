@@ -67,7 +67,7 @@ async def advancedSearch(model: AdvancedSearchModel,
         raise ValueError("At least one criteria should be provided.")
     positive_vectors = [clip_service.get_text_vector(t) for t in model.criteria]
     negative_vectors = [clip_service.get_text_vector(t) for t in model.negative_criteria]
-    result = await db_context.queryAdvanced(positive_vectors, negative_vectors, top_k=paging.count)
+    result = await db_context.queryAdvanced(positive_vectors, negative_vectors, model.mode, top_k=paging.count)
     return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
 
 
