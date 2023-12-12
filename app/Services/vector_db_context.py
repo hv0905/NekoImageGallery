@@ -40,8 +40,7 @@ class VectorDbContext:
                                              using=query_vector_name,
                                              limit=top_k,
                                              with_vectors=False,
-                                             with_payload=True,
-                                             )
+                                             with_payload=True)
         logger.success("Query completed!")
         return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
 
@@ -50,7 +49,7 @@ class VectorDbContext:
                             top_k=10) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.recommend(collection_name=self.collection_name,
-                                             query_vector_name=query_vector_name,
+                                             using=query_vector_name,
                                              positive=[t.tolist() for t in positive_vectors],
                                              negative=[t.tolist() for t in negative_vectors],
                                              limit=top_k,
@@ -58,8 +57,7 @@ class VectorDbContext:
                                              (RecommendStrategy.AVERAGE_VECTOR if
                                               mode == SearchModelEnum.average else RecommendStrategy.BEST_SCORE),
                                              with_vectors=False,
-                                             with_payload=True,
-                                             )
+                                             with_payload=True)
         logger.success("Query completed!")
         return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
 
@@ -88,6 +86,5 @@ class VectorDbContext:
         response = await self.client.set_payload(collection_name=self.collection_name,
                                                  payload=new_data.payload,
                                                  points=[str(new_data.id)],
-                                                 wait=True
-                                                 )
+                                                 wait=True)
         logger.success("Update completed! Status: {}", response.status)
