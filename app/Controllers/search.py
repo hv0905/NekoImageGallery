@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from fastapi.params import File, Query, Path, Depends
 from loguru import logger
 
+from app.Models.api_model import AdvancedSearchModel
 from app.Models.api_response.search_api_response import SearchApiResponse
 from app.Services import clip_service
 from app.Services import db_context
@@ -57,6 +58,17 @@ async def similarWith(
     logger.info("Similar search request received, id: {}", id)
     results = await db_context.querySimilar(str(id), top_k=paging.count)
     return SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4())
+
+
+@searchRouter.post("/advanced", description="Search with multiple creteria")
+async def advancedSearch(model: AdvancedSearchModel,
+                         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]):
+    if len(model.criteria) + len(model.negative_criteria) == 0:
+        raise ValueError("At least one criteria should be provided.")
+    positive_vectors = [clip_service.get_text_vector(t) for t in model.criteria]
+    negative_vectors = [clip_service.get_text_vector(t) for t in model.negative_criteria]
+    result = await db_context.queryAdvanced(positive_vectors, negative_vectors, top_k=paging.count)
+    return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
 
 
 @searchRouter.get("/random", description="Get random images")

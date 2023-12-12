@@ -1,11 +1,11 @@
 import numpy
 from loguru import logger
 from qdrant_client import AsyncQdrantClient
-from qdrant_client.http.models import PointStruct, Batch
+from qdrant_client.http.models import PointStruct
 
-from app.config import config
 from app.Models.img_data import ImageData
 from app.Models.search_result import SearchResult
+from app.config import config
 
 
 class VectorDbContext:
@@ -37,6 +37,19 @@ class VectorDbContext:
         result = await self.client.recommend(collection_name=self.collection_name,
                                              positive=[id],
                                              negative=[],
+                                             limit=top_k,
+                                             with_vectors=False,
+                                             with_payload=True,
+                                             )
+        logger.success("Query completed!")
+        return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
+
+    async def queryAdvanced(self, positive_vectors: list[numpy.ndarray], negative_vectors: list[numpy.ndarray],
+                            top_k=10) -> list[SearchResult]:
+        logger.info("Querying Qdrant... top_k = {}", top_k)
+        result = await self.client.recommend(collection_name=self.collection_name,
+                                             positive=[t.tolist() for t in positive_vectors],
+                                             negative=[t.tolist() for t in negative_vectors],
                                              limit=top_k,
                                              with_vectors=False,
                                              with_payload=True,
