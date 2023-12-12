@@ -65,6 +65,7 @@ async def advancedSearch(model: AdvancedSearchModel,
                          paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]):
     if len(model.criteria) + len(model.negative_criteria) == 0:
         raise ValueError("At least one criteria should be provided.")
+    logger.info("Advanced search request received: {}", model)
     positive_vectors = [clip_service.get_text_vector(t) for t in model.criteria]
     negative_vectors = [clip_service.get_text_vector(t) for t in model.negative_criteria]
     result = await db_context.queryAdvanced(positive_vectors, negative_vectors, model.mode, top_k=paging.count)
