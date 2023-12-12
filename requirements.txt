@@ -12,6 +12,7 @@ torchvision
 transformers
 pillow
 numpy
+easyocr
 
 # Vector Database
 qdrant-client

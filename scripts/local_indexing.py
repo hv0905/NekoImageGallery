@@ -14,7 +14,7 @@ from PIL import Image
 from loguru import logger
 
 from app.Models.img_data import ImageData
-from app.Services import clip_service, db_context
+from app.Services import transformers_service, db_context
 from app.config import config
 
 
@@ -34,11 +34,13 @@ def copy_and_index(filePath: Path) -> ImageData | None:
     id = uuid4()
     img_ext = filePath.suffix
     try:
-        image_vector = clip_service.get_image_vector(img)
+        image_vector = transformers_service.get_image_vector(img)
+        text_contain_vector = transformers_service.get_bert_vector(transformers_service.get_picture_to_text(str(filePath)))
     except Exception as e:
         logger.error("Error when processing image {}: {}", filePath, e)
         return None
-    imgdata = ImageData(id=id, url=f'/static/{id}{img_ext}', image_vector=image_vector, index_date=datetime.now())
+    imgdata = ImageData(id=id, url=f'/static/{id}{img_ext}', image_vector=image_vector,
+                        text_contain_vector=text_contain_vector, index_date=datetime.now())
 
     # copy to static
     copy2(filePath, Path(config.static_file.path) / f'{id}{img_ext}')

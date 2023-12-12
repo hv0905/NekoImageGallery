@@ -1,6 +1,6 @@
-from .clip_service import ClipService
+from .transformers_service import Service
 from .vector_db_context import VectorDbContext
 
-clip_service = ClipService()
+transformers_service = Service()
 db_context = VectorDbContext()
 

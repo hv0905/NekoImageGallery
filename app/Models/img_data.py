@@ -11,6 +11,7 @@ class ImageData(BaseModel):
     url: str
     thumbnail_url: Optional[str] = None
     image_vector: Optional[ndarray] = Field(None, exclude=True)
+    text_contain_vector: Optional[ndarray] = Field(None, exclude=True)
     index_date: datetime
 
     @property
