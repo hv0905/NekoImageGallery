@@ -1,30 +1,39 @@
-import easyocr
+from time import time
+
 import numpy as np
 import torch
 from PIL import Image
-from transformers import CLIPProcessor, CLIPModel, BertTokenizer, BertModel
-from torch import FloatTensor, no_grad
-from app.config import config
 from loguru import logger
-from time import time
 from numpy import ndarray
+from torch import FloatTensor, no_grad
+from transformers import CLIPProcessor, CLIPModel, BertTokenizer, BertModel
+
+from app.config import config
 
 
 class Service:
     def __init__(self):
-        self.device = config.device.device
+        self.device = config.device
         if self.device == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         logger.info("Using device: {}; CLIP Model: {}, BERT Model: {}",
-                    self.device, config.clip.model, config.bert.model)
+                    self.device, config.clip.model, config.ocr_search.bert_model)
+
         self.model = CLIPModel.from_pretrained(config.clip.model).to(self.device)
         self.processor = CLIPProcessor.from_pretrained(config.clip.model)
         logger.success("CLIP Model loaded successfully")
-        self.bert_model = BertModel.from_pretrained(config.bert.model).to(self.device)
-        self.bert_tokenizer = BertTokenizer.from_pretrained(config.bert.model)
-        logger.success("BERT Model loaded successfully")
-        self.ocrReader = easyocr.Reader(['ch_sim'], gpu=True if self.device == "cuda" else False)
-        logger.success("easyOCR loaded successfully")
+
+        if config.ocr_search.enable:
+            self.bert_model = BertModel.from_pretrained(config.ocr_search.bert_model).to(self.device)
+            self.bert_tokenizer = BertTokenizer.from_pretrained(config.ocr_search.bert_model)
+            logger.success("BERT Model loaded successfully")
+
+            import easyocr
+            self.ocrReader = easyocr.Reader(config.ocr_search.ocr_language,
+                                            gpu=True if self.device == "cuda" else False)
+            logger.success("easyOCR loaded successfully")
+        else:
+            logger.info("OCR search is disabled. Skipping OCR model loading.")
 
     @no_grad()
     def get_image_vector(self, image: Image.Image) -> ndarray:

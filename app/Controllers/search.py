@@ -3,7 +3,7 @@ from typing import Annotated
 from uuid import uuid4, UUID
 
 from PIL import Image
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.params import File, Query, Path, Depends
 from loguru import logger
 
@@ -29,6 +29,8 @@ class SearchBasisParams:
     def __init__(self,
                  basis: Annotated[SearchBasisEnum, Query(
                      description="The basis used to search the image.")] = SearchBasisEnum.vision):
+        if basis == SearchBasisEnum.ocr and not config.ocr_search.enable:
+            raise HTTPException(400, "OCR search is not enabled.")
         self.basis = basis
 
 
