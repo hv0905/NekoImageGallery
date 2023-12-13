@@ -35,7 +35,8 @@ def copy_and_index(filePath: Path) -> ImageData | None:
     img_ext = filePath.suffix
     try:
         image_vector = transformers_service.get_image_vector(img)
-        text_contain_vector = transformers_service.get_bert_vector(transformers_service.get_picture_to_text(str(filePath)))
+        image_ocr_result = transformers_service.get_picture_ocr_result(img)
+        text_contain_vector = transformers_service.get_bert_vector(image_ocr_result)
     except Exception as e:
         logger.error("Error when processing image {}: {}", filePath, e)
         return None

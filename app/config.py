@@ -12,8 +12,15 @@ class QdrantSettings(BaseModel):
 
 
 class ClipSettings(BaseModel):
-    device: str = 'auto'
     model: str = 'openai/clip-vit-large-patch14'
+
+
+class BertSettings(BaseModel):
+    model: str = 'bert-base-chinese'
+
+
+class DeviceSettings(BaseModel):
+    device: str = 'auto'
 
 
 class StaticFileSettings(BaseModel):
@@ -24,6 +31,8 @@ class StaticFileSettings(BaseModel):
 class Config(BaseSettings):
     qdrant: QdrantSettings = QdrantSettings()
     clip: ClipSettings = ClipSettings()
+    bert: BertSettings = BertSettings()
+    device: DeviceSettings = DeviceSettings()
     static_file: StaticFileSettings = StaticFileSettings()
 
     cors_origins: set[str] = {'*'}

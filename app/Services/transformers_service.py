@@ -1,5 +1,5 @@
 import easyocr
-import numpy.random
+import numpy as np
 import torch
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel, BertTokenizer, BertModel
@@ -12,17 +12,18 @@ from numpy import ndarray
 
 class Service:
     def __init__(self):
-        self.device = config.clip.device
+        self.device = config.device.device
         if self.device == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        logger.info("Using device: {}; Model: {}", self.device, config.clip.model)
+        logger.info("Using device: {}; CLIP Model: {}, BERT Model: {}",
+                    self.device, config.clip.model, config.bert.model)
         self.model = CLIPModel.from_pretrained(config.clip.model).to(self.device)
         self.processor = CLIPProcessor.from_pretrained(config.clip.model)
         logger.success("CLIP Model loaded successfully")
-        self.bert_tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
-        self.bert_model = BertModel.from_pretrained('bert-base-chinese').to(self.device)
+        self.bert_model = BertModel.from_pretrained(config.bert.model).to(self.device)
+        self.bert_tokenizer = BertTokenizer.from_pretrained(config.bert.model)
         logger.success("BERT Model loaded successfully")
-        self.ocrReader = easyocr.Reader(['ch_sim'], gpu=True)
+        self.ocrReader = easyocr.Reader(['ch_sim'], gpu=True if self.device == "cuda" else False)
         logger.success("easyOCR loaded successfully")
 
     @no_grad()
@@ -52,11 +53,17 @@ class Service:
         return outputs.numpy(force=True).reshape(-1)
 
     @no_grad()
-    def get_picture_to_text(self, filePath: str) -> str:
+    def get_picture_ocr_result(self, img: Image.Image) -> str:
         start_time = time()
         logger.info("Processing text with EasyOCR...")
-        ocrResult = self.ocrReader.readtext(filePath)
-        pureText = "".join(itm[1] for itm in ocrResult)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        if img.size[0] > 1024 or img.size[1] > 1024:
+            img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+        newImg = Image.new('RGB', (1024, 1024), (0, 0, 0))
+        newImg.paste(img, ((1024 - img.size[0]) // 2, (1024 - img.size[1]) // 2))
+        ocrResult = self.ocrReader.readtext(np.array(img))
+        pureText = " ".join(itm[1] for itm in ocrResult if itm[2] > 1e-3)
         logger.success("OCR processed done. Time elapsed: {:.2f}s", time() - start_time)
         return pureText
 
@@ -72,6 +79,6 @@ class Service:
 
     @staticmethod
     def get_random_vector() -> ndarray:
-        vec = numpy.random.rand(768)
+        vec = np.random.rand(768)
         vec -= vec.mean()
         return vec
