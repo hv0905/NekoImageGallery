@@ -35,6 +35,9 @@ if __name__ == '__main__':
             collections.namedtuple('Options', ['host', 'port', 'name'])(config.qdrant.host, config.qdrant.port,
                                                                         config.qdrant.coll))
     elif args.local_index_target_dir is not None:
+        from app.config import environment
+
+        environment.local_indexing = True
         from scripts import local_indexing
         import asyncio
 

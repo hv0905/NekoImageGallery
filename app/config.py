@@ -45,4 +45,9 @@ class Config(BaseSettings):
                                       env_file_encoding='utf-8')
 
 
+class Environment(BaseModel):
+    local_indexing: bool = False
+
+
 config = Config()
+environment = Environment()

@@ -8,7 +8,7 @@ from numpy import ndarray
 from torch import FloatTensor, no_grad
 from transformers import CLIPProcessor, CLIPModel, BertTokenizer, BertModel
 
-from app.config import config
+from app.config import config, environment
 
 
 class Service:
@@ -27,11 +27,11 @@ class Service:
             self.bert_model = BertModel.from_pretrained(config.ocr_search.bert_model).to(self.device)
             self.bert_tokenizer = BertTokenizer.from_pretrained(config.ocr_search.bert_model)
             logger.success("BERT Model loaded successfully")
-
-            import easyocr
-            self.ocrReader = easyocr.Reader(config.ocr_search.ocr_language,
-                                            gpu=True if self.device == "cuda" else False)
-            logger.success("easyOCR loaded successfully")
+            if environment.local_indexing:
+                import easyocr
+                self.ocrReader = easyocr.Reader(config.ocr_search.ocr_language,
+                                                gpu=True if self.device == "cuda" else False)
+                logger.success("easyOCR loaded successfully")
         else:
             logger.info("OCR search is disabled. Skipping OCR model loading.")
 
