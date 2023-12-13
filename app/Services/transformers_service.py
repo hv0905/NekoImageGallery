@@ -72,7 +72,7 @@ class Service:
         newImg = Image.new('RGB', (1024, 1024), (0, 0, 0))
         newImg.paste(img, ((1024 - img.size[0]) // 2, (1024 - img.size[1]) // 2))
         ocrResult = self.ocrReader.readtext(np.array(img))
-        pureText = " ".join(itm[1] for itm in ocrResult if itm[2] > 1e-3)
+        pureText = " ".join(itm[1] for itm in ocrResult if itm[2] > config.ocr_search.ocr_min_confidence)
         logger.success("OCR processed done. Time elapsed: {:.2f}s", time() - start_time)
         return pureText
 

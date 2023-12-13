@@ -19,6 +19,7 @@ class OCRSearchSettings(BaseModel):
     enable: bool = True
     bert_model: str = 'bert-base-chinese'
     ocr_language: list[str] = ['ch_sim', 'en']
+    ocr_min_confidence: float = 1e-2
 
 
 class StaticFileSettings(BaseModel):
