@@ -14,9 +14,12 @@ def create_coll(args):
     client = qdrant_client.QdrantClient(host=args.host, port=args.port)
     # create or update
     print("Creating collection")
+    vectors_config = {
+        "image_vector": models.VectorParams(size=768, distance=models.Distance.COSINE),
+        "text_contain_vector": models.VectorParams(size=768, distance=models.Distance.COSINE)
+    }
     client.create_collection(collection_name=args.name,
-                             vectors_config=models.VectorParams(size=768, distance=models.Distance.COSINE),
-                             )
+                             vectors_config=vectors_config)
     print("Collection created")
 
 

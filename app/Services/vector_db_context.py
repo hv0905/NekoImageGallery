@@ -4,13 +4,16 @@ from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import PointStruct
 from qdrant_client.models import RecommendStrategy
 
-from app.Models.api_model import SearchModelEnum
+from app.Models.api_model import SearchModelEnum, SearchBasisEnum
 from app.Models.img_data import ImageData
 from app.Models.search_result import SearchResult
 from app.config import config
 
 
 class VectorDbContext:
+    IMG_VECTOR = "image_vector"
+    TEXT_VECTOR = "text_contain_vector"
+
     def __init__(self):
         self.client = AsyncQdrantClient(host=config.qdrant.host, port=config.qdrant.port,
                                         grpc_port=config.qdrant.grpc_port, api_key=config.qdrant.api_key,
@@ -23,33 +26,33 @@ class VectorDbContext:
         return ImageData.from_payload(result[0].id, result[0].payload,
                                       numpy.array(result[0].vector, dtype=numpy.float32) if with_vectors else None)
 
-    async def querySearch(self, query_vector, top_k=10) -> list[SearchResult]:
+    async def querySearch(self, query_vector, query_vector_name: str = IMG_VECTOR, top_k=10) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.search(collection_name=self.collection_name,
-                                          query_vector=query_vector,
+                                          query_vector=(query_vector_name, query_vector),
                                           limit=top_k,
-                                          with_vectors=False,
-                                          with_payload=True
-                                          )
+                                          with_payload=True)
         logger.success("Query completed!")
         return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
 
-    async def querySimilar(self, id: str, top_k=10) -> list[SearchResult]:
+    async def querySimilar(self, id: str, query_vector_name: str = IMG_VECTOR, top_k=10) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.recommend(collection_name=self.collection_name,
                                              positive=[id],
                                              negative=[],
+                                             using=query_vector_name,
                                              limit=top_k,
                                              with_vectors=False,
-                                             with_payload=True,
-                                             )
+                                             with_payload=True)
         logger.success("Query completed!")
         return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
 
     async def queryAdvanced(self, positive_vectors: list[numpy.ndarray], negative_vectors: list[numpy.ndarray],
-                            mode: SearchModelEnum = SearchModelEnum.average, top_k=10) -> list[SearchResult]:
+                            query_vector_name: str = IMG_VECTOR, mode: SearchModelEnum = SearchModelEnum.average,
+                            top_k=10) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.recommend(collection_name=self.collection_name,
+                                             using=query_vector_name,
                                              positive=[t.tolist() for t in positive_vectors],
                                              negative=[t.tolist() for t in negative_vectors],
                                              limit=top_k,
@@ -57,14 +60,27 @@ class VectorDbContext:
                                              (RecommendStrategy.AVERAGE_VECTOR if
                                               mode == SearchModelEnum.average else RecommendStrategy.BEST_SCORE),
                                              with_vectors=False,
-                                             with_payload=True,
-                                             )
+                                             with_payload=True)
         logger.success("Query completed!")
         return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
 
     async def insertItems(self, items: list[ImageData]):
         logger.info("Inserting {} items into Qdrant...", len(items))
-        points = [PointStruct(id=str(t.id), vector=t.image_vector.tolist(), payload=t.payload) for t in items]
+
+        def getPoint(img_data):
+            vector = {
+                self.IMG_VECTOR: img_data.image_vector.tolist(),
+            }
+            if img_data.text_contain_vector is not None:
+                vector[self.TEXT_VECTOR] = img_data.text_contain_vector.tolist()
+            return PointStruct(
+                id=str(img_data.id),
+                vector=vector,
+                payload=img_data.payload
+            )
+
+        points = [getPoint(t) for t in items]
+
         response = await self.client.upsert(collection_name=self.collection_name,
                                             wait=True,
                                             points=points)
@@ -79,6 +95,15 @@ class VectorDbContext:
         response = await self.client.set_payload(collection_name=self.collection_name,
                                                  payload=new_data.payload,
                                                  points=[str(new_data.id)],
-                                                 wait=True
-                                                 )
+                                                 wait=True)
         logger.success("Update completed! Status: {}", response.status)
+
+    @classmethod
+    def getVectorByBasis(cls, basis: SearchBasisEnum) -> str:
+        match basis:
+            case SearchBasisEnum.vision:
+                return cls.IMG_VECTOR
+            case SearchBasisEnum.ocr:
+                return cls.TEXT_VECTOR
+            case _:
+                raise ValueError("Invalid basis")

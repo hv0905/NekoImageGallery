@@ -12,8 +12,14 @@ class QdrantSettings(BaseModel):
 
 
 class ClipSettings(BaseModel):
-    device: str = 'auto'
     model: str = 'openai/clip-vit-large-patch14'
+
+
+class OCRSearchSettings(BaseModel):
+    enable: bool = True
+    bert_model: str = 'bert-base-chinese'
+    ocr_language: list[str] = ['ch_sim', 'en']
+    ocr_min_confidence: float = 1e-2
 
 
 class StaticFileSettings(BaseModel):
@@ -24,8 +30,10 @@ class StaticFileSettings(BaseModel):
 class Config(BaseSettings):
     qdrant: QdrantSettings = QdrantSettings()
     clip: ClipSettings = ClipSettings()
+    ocr_search: OCRSearchSettings = OCRSearchSettings()
     static_file: StaticFileSettings = StaticFileSettings()
 
+    device: str = 'auto'
     cors_origins: set[str] = {'*'}
     admin_api_enable: bool = False
     admin_token: str = ''
@@ -38,4 +46,9 @@ class Config(BaseSettings):
                                       env_file_encoding='utf-8')
 
 
+class Environment(BaseModel):
+    local_indexing: bool = False
+
+
 config = Config()
+environment = Environment()

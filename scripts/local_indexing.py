@@ -14,7 +14,7 @@ from PIL import Image
 from loguru import logger
 
 from app.Models.img_data import ImageData
-from app.Services import clip_service, db_context
+from app.Services import transformers_service, db_context
 from app.config import config
 
 
@@ -33,18 +33,33 @@ def copy_and_index(filePath: Path) -> ImageData | None:
         return None
     id = uuid4()
     img_ext = filePath.suffix
+    image_ocr_result = None
+    text_contain_vector = None
     try:
-        image_vector = clip_service.get_image_vector(img)
+        image_vector = transformers_service.get_image_vector(img)
+        if config.ocr_search.enable:
+            image_ocr_result = transformers_service.get_picture_ocr_result(img).strip()
+            if image_ocr_result != "":
+                text_contain_vector = transformers_service.get_bert_vector(image_ocr_result)
+            else:
+                image_ocr_result = None
+
     except Exception as e:
         logger.error("Error when processing image {}: {}", filePath, e)
         return None
-    imgdata = ImageData(id=id, url=f'/static/{id}{img_ext}', image_vector=image_vector, index_date=datetime.now())
+    imgdata = ImageData(id=id,
+                        url=f'/static/{id}{img_ext}',
+                        image_vector=image_vector,
+                        text_contain_vector=text_contain_vector,
+                        index_date=datetime.now(),
+                        ocr_text=image_ocr_result)
 
     # copy to static
     copy2(filePath, Path(config.static_file.path) / f'{id}{img_ext}')
     return imgdata
 
 
+@logger.catch()
 async def main(args):
     root = Path(args.local_index_target_dir)
     static_path = Path(config.static_file.path)

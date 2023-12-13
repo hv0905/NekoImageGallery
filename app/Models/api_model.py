@@ -3,6 +3,11 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 
+class SearchBasisEnum(str, Enum):
+    vision = "vision"
+    ocr = "ocr"
+
+
 class SearchModelEnum(str, Enum):
     average = "average"
     best = "best"
