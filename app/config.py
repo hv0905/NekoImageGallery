@@ -16,6 +16,7 @@ class ClipSettings(BaseModel):
 
 
 class BertSettings(BaseModel):
+    enable: bool = True
     model: str = 'bert-base-chinese'
 
 

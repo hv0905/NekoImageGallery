@@ -4,13 +4,16 @@ from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import PointStruct
 from qdrant_client.models import RecommendStrategy
 
-from app.Models.api_model import SearchModelEnum
+from app.Models.api_model import SearchModelEnum, SearchBasisEnum
 from app.Models.img_data import ImageData
 from app.Models.search_result import SearchResult
 from app.config import config
 
 
 class VectorDbContext:
+    IMG_VECTOR = "image_vector"
+    TEXT_VECTOR = "text_contain_vector"
+
     def __init__(self):
         self.client = AsyncQdrantClient(host=config.qdrant.host, port=config.qdrant.port,
                                         grpc_port=config.qdrant.grpc_port, api_key=config.qdrant.api_key,
@@ -23,7 +26,7 @@ class VectorDbContext:
         return ImageData.from_payload(result[0].id, result[0].payload,
                                       numpy.array(result[0].vector, dtype=numpy.float32) if with_vectors else None)
 
-    async def querySearch(self, query_vector, query_vector_name="image_vector", top_k=10) -> list[SearchResult]:
+    async def querySearch(self, query_vector, query_vector_name: str = IMG_VECTOR, top_k=10) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.search(collection_name=self.collection_name,
                                           query_vector=(query_vector_name, query_vector),
@@ -32,7 +35,7 @@ class VectorDbContext:
         logger.success("Query completed!")
         return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
 
-    async def querySimilar(self, id: str, query_vector_name: str, top_k=10) -> list[SearchResult]:
+    async def querySimilar(self, id: str, query_vector_name: str = IMG_VECTOR, top_k=10) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.recommend(collection_name=self.collection_name,
                                              positive=[id],
@@ -44,8 +47,8 @@ class VectorDbContext:
         logger.success("Query completed!")
         return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
 
-    async def queryAdvanced(self, positive_vectors: list[numpy.ndarray],  negative_vectors: list[numpy.ndarray],
-                            query_vector_name: str, mode: SearchModelEnum = SearchModelEnum.average,
+    async def queryAdvanced(self, positive_vectors: list[numpy.ndarray], negative_vectors: list[numpy.ndarray],
+                            query_vector_name: str = IMG_VECTOR, mode: SearchModelEnum = SearchModelEnum.average,
                             top_k=10) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.recommend(collection_name=self.collection_name,
@@ -88,3 +91,13 @@ class VectorDbContext:
                                                  points=[str(new_data.id)],
                                                  wait=True)
         logger.success("Update completed! Status: {}", response.status)
+
+    @classmethod
+    def getVectorByBasis(cls, basis: SearchBasisEnum) -> str:
+        match basis:
+            case SearchBasisEnum.vision:
+                return cls.IMG_VECTOR
+            case SearchBasisEnum.ocr:
+                return cls.TEXT_VECTOR
+            case _:
+                raise ValueError("Invalid basis")
