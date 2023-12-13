@@ -42,5 +42,6 @@ def welcome(token_passed: Annotated[bool, Depends(permissive_access_token_verify
             "swagger UI": "/docs",
             "redoc": "/redoc"
         },
-        authorization=WelcomeApiAuthenticationResponse(required=config.access_protected, passed=token_passed)
+        authorization=WelcomeApiAuthenticationResponse(required=config.access_protected, passed=token_passed),
+        available_basis=["vision", "ocr"] if config.ocr_search.enable else ["vision"]
     )

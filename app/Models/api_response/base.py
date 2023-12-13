@@ -16,3 +16,4 @@ class WelcomeApiResponse(NekoProtocol):
     server_time: datetime
     wiki: dict[str, str]
     authorization: WelcomeApiAuthenticationResponse
+    available_basis: list[str]
