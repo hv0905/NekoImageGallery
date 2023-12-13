@@ -59,6 +59,7 @@ def copy_and_index(filePath: Path) -> ImageData | None:
     return imgdata
 
 
+@logger.catch()
 async def main(args):
     root = Path(args.local_index_target_dir)
     static_path = Path(config.static_file.path)

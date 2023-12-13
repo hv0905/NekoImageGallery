@@ -66,14 +66,20 @@ class VectorDbContext:
 
     async def insertItems(self, items: list[ImageData]):
         logger.info("Inserting {} items into Qdrant...", len(items))
-        points = [PointStruct(
-            id=str(t.id),
-            vector={
-                "image_vector": t.image_vector.tolist(),
-                "text_contain_vector": t.text_contain_vector.tolist()
-            },
-            payload=t.payload
-        ) for t in items]
+
+        def getPoint(img_data):
+            vector = {
+                self.IMG_VECTOR: img_data.image_vector.tolist(),
+            }
+            if img_data.text_contain_vector is not None:
+                vector[self.TEXT_VECTOR] = img_data.text_contain_vector.tolist()
+            return PointStruct(
+                id=str(img_data.id),
+                vector=vector,
+                payload=img_data.payload
+            )
+
+        points = [getPoint(t) for t in items]
 
         response = await self.client.upsert(collection_name=self.collection_name,
                                             wait=True,
