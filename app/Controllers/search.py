@@ -20,9 +20,11 @@ searchRouter = APIRouter(dependencies=([Depends(force_access_token_verify)] if c
 class SearchPagingParams:
     def __init__(
             self,
-            count: Annotated[int, Query(ge=1, le=100, description="The number of results you want to get.")] = 10
+            count: Annotated[int, Query(ge=1, le=100, description="The number of results you want to get.")] = 10,
+            skip: Annotated[int, Query(ge=0, description="The number of results you want to skip.")] = 0
     ):
         self.count = count
+        self.skip = skip
 
 
 class SearchBasisParams:
@@ -46,7 +48,8 @@ async def textSearch(
         else transformers_service.get_bert_vector(prompt)
     results = await db_context.querySearch(text_vector,
                                            query_vector_name=db_context.getVectorByBasis(basis.basis),
-                                           top_k=paging.count)
+                                           top_k=paging.count,
+                                           skip=paging.skip)
     return SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4())
 
 
@@ -59,7 +62,7 @@ async def imageSearch(
     img = Image.open(fakefile)
     logger.info("Image search request received")
     image_vector = transformers_service.get_image_vector(img)
-    results = await db_context.querySearch(image_vector, top_k=paging.count)
+    results = await db_context.querySearch(image_vector, top_k=paging.count, skip=paging.skip)
     return SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4())
 
 
@@ -74,6 +77,7 @@ async def similarWith(
     logger.info("Similar search request received, id: {}", id)
     results = await db_context.querySimilar(str(id),
                                             top_k=paging.count,
+                                            skip=paging.skip,
                                             query_vector_name=db_context.getVectorByBasis(basis.basis))
     return SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4())
 
@@ -94,7 +98,8 @@ async def advancedSearch(
         negative_vectors = [transformers_service.get_text_vector(t) for t in model.negative_criteria]
     result = await db_context.queryAdvanced(positive_vectors, negative_vectors,
                                             db_context.getVectorByBasis(basis.basis), model.mode,
-                                            top_k=paging.count)
+                                            top_k=paging.count,
+                                            skip=paging.skip)
     return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
 
 
