@@ -1,5 +1,4 @@
 
-
 if __name__ == '__main__':
     import sys
 
@@ -37,10 +36,11 @@ def copy_and_index(filePath: Path) -> ImageData | None:
     img_ext = filePath.suffix
     image_ocr_result = None
     text_contain_vector = None
+    [width, height] = img.size
     try:
         image_vector = transformers_service.get_image_vector(img)
         if config.ocr_search.enable:
-            image_ocr_result = ocr_service.ocr_interface(img)
+            image_ocr_result = ocr_service.ocr_interface(img)  # This will modify img if you use preprocess!
             if image_ocr_result != "":
                 text_contain_vector = transformers_service.get_bert_vector(image_ocr_result)
             else:
@@ -53,6 +53,9 @@ def copy_and_index(filePath: Path) -> ImageData | None:
                         image_vector=image_vector,
                         text_contain_vector=text_contain_vector,
                         index_date=datetime.now(),
+                        width=width,
+                        height=height,
+                        aspect_ratio=float(width) / height,
                         ocr_text=image_ocr_result)
 
     # copy to static

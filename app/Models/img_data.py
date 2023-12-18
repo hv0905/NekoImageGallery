@@ -14,6 +14,9 @@ class ImageData(BaseModel):
     image_vector: Optional[ndarray] = Field(None, exclude=True)
     text_contain_vector: Optional[ndarray] = Field(None, exclude=True)
     index_date: datetime
+    width: Optional[int] = None
+    height: Optional[int] = None
+    aspect_ratio: Optional[float] = None
 
     @property
     def payload(self):
@@ -21,7 +24,10 @@ class ImageData(BaseModel):
             "url": self.url,
             "thumbnail_url": self.thumbnail_url,
             "ocr_text": self.ocr_text,
-            "index_date": self.index_date.isoformat()
+            "index_date": self.index_date.isoformat(),
+            "width": self.width,
+            "height": self.height,
+            "aspect_ratio": self.aspect_ratio
         }
 
     @classmethod
@@ -31,6 +37,9 @@ class ImageData(BaseModel):
                    thumbnail_url=payload['thumbnail_url'],
                    index_date=datetime.fromisoformat(payload['index_date']),
                    ocr_text=payload['ocr_text'] if 'ocr_text' in payload else None,
+                   width=payload['width'] if 'width' in payload else None,
+                   height=payload['height'] if 'height' in payload else None,
+                   aspect_ratio=payload['aspect_ratio'] if 'aspect_ratio' in payload else None,
                    image_vector=vector)
 
     class Config:
