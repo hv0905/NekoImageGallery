@@ -23,6 +23,10 @@ class OCRService:
                 self._paddleOCRModule = paddleocr.PaddleOCR(lang="ch", use_angle_cls=True,
                                                             use_gpu=True if self._device == "cuda" else False)
                 logger.success("PaddleOCR loaded successfully")
+            elif config.ocr_search.ocr_module == "easypaddleocr":
+                from easypaddleocr import EasyPaddleOCR
+                self._paddleOCRModule = EasyPaddleOCR(use_angle_cls=True, needWarmUp=True)
+                logger.success("EasyPaddleOCR loaded successfully")
             else:
                 raise NotImplementedError("Only support easyOCR and PaddleOCR!")
         else:
@@ -44,6 +48,12 @@ class OCRService:
             return "".join(itm[1][0] for itm in _ocrResult[0] if itm[1][1] > config.ocr_search.ocr_min_confidence)
         return ""
 
+    def _easy_paddleocr_process(self, img: Image.Image) -> str:
+        _, _ocrResult, _ = self._paddleOCRModule.ocr(np.array(img))
+        if _ocrResult:
+            return "".join(itm[0] for itm in _ocrResult if float(itm[1]) > config.ocr_search.ocr_min_confidence)
+        return ""
+
     def _easyocr_process(self, img: Image.Image) -> str:
         _ocrResult = self._easyOCRModule.readtext(np.array(img))
         return " ".join(itm[1] for itm in _ocrResult if itm[2] > config.ocr_search.ocr_min_confidence)
@@ -56,6 +66,8 @@ class OCRService:
             res = self._easyocr_process(self._image_preprocess(img) if need_preprocess else img)
         elif config.ocr_search.ocr_module == "paddleocr":
             res = self._paddleocr_process(self._image_preprocess(img) if need_preprocess else img)
+        elif config.ocr_search.ocr_module == "easypaddleocr":
+            res = self._easy_paddleocr_process(self._image_preprocess(img) if need_preprocess else img)
         else:
             raise NotImplementedError("Only support easyOCR and PaddleOCR!")
         logger.success("OCR processed done. Time elapsed: {:.2f}s", time() - start_time)
