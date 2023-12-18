@@ -12,7 +12,11 @@ torchvision
 transformers
 pillow
 numpy
-easyocr
+
+# OCR - you can choose other option if necessary, or completely disable it if you don't need this feature
+easypaddleocr
+# easyocr
+# paddleocr
 
 # Vector Database
 qdrant-client

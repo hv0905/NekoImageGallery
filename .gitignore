@@ -242,3 +242,4 @@ cython_debug/
 static/
 qdrant_data/
 local_*/
+.idea
