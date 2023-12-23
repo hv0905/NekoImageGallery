@@ -1,11 +1,13 @@
 import numpy
 from loguru import logger
 from qdrant_client import AsyncQdrantClient
+from qdrant_client.http import models
 from qdrant_client.http.models import PointStruct
 from qdrant_client.models import RecommendStrategy
 
 from app.Models.api_model import SearchModelEnum, SearchBasisEnum
 from app.Models.img_data import ImageData
+from app.Models.query_params import FilterParams
 from app.Models.search_result import SearchResult
 from app.config import config
 
@@ -26,23 +28,27 @@ class VectorDbContext:
         return ImageData.from_payload(result[0].id, result[0].payload,
                                       numpy.array(result[0].vector, dtype=numpy.float32) if with_vectors else None)
 
-    async def querySearch(self, query_vector, query_vector_name: str = IMG_VECTOR, top_k=10, skip=0) -> list[
+    async def querySearch(self, query_vector, query_vector_name: str = IMG_VECTOR,
+                          top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[
         SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.search(collection_name=self.collection_name,
                                           query_vector=(query_vector_name, query_vector),
+                                          filters=self.getFiltersByFilterParam(filter_param),
                                           limit=top_k,
                                           offset=skip,
                                           with_payload=True)
         logger.success("Query completed!")
         return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
 
-    async def querySimilar(self, id: str, query_vector_name: str = IMG_VECTOR, top_k=10, skip=0) -> list[SearchResult]:
+    async def querySimilar(self, id: str, query_vector_name: str = IMG_VECTOR,
+                           top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.recommend(collection_name=self.collection_name,
                                              positive=[id],
                                              negative=[],
                                              using=query_vector_name,
+                                             query_filter=self.getFiltersByFilterParam(filter_param),
                                              limit=top_k,
                                              offset=skip,
                                              with_vectors=False,
@@ -52,12 +58,13 @@ class VectorDbContext:
 
     async def queryAdvanced(self, positive_vectors: list[numpy.ndarray], negative_vectors: list[numpy.ndarray],
                             query_vector_name: str = IMG_VECTOR, mode: SearchModelEnum = SearchModelEnum.average,
-                            top_k=10, skip=0) -> list[SearchResult]:
+                            top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.recommend(collection_name=self.collection_name,
                                              using=query_vector_name,
                                              positive=[t.tolist() for t in positive_vectors],
                                              negative=[t.tolist() for t in negative_vectors],
+                                             query_filter=self.getFiltersByFilterParam(filter_param),
                                              limit=top_k,
                                              offset=skip,
                                              strategy=
@@ -111,3 +118,41 @@ class VectorDbContext:
                 return cls.TEXT_VECTOR
             case _:
                 raise ValueError("Invalid basis")
+
+    @staticmethod
+    def getFiltersByFilterParam(filter_param: FilterParams | None) -> models.Filter | None:
+        if filter_param is None:
+            return None
+
+        filters = []
+        if filter_param.min_width is not None:
+            filters.append(models.FieldCondition(
+                key="width",
+                range=models.Range(
+                    gte=filter_param.min_width
+                )
+            ))
+
+        if filter_param.min_height is not None:
+            filters.append(models.FieldCondition(
+                key="height",
+                range=models.Range(
+                    gte=filter_param.min_height
+                )
+            ))
+
+        if filter_param.min_ratio is not None:
+            filters.append(models.FieldCondition(
+                key="aspect_ratio",
+                range=models.Range(
+                    gte=filter_param.min_ratio,
+                    lte=filter_param.max_ratio
+                )
+            ))
+
+        if len(filters) > 0:
+            return models.Filter(
+                must=filters
+            )
+        else:
+            return None

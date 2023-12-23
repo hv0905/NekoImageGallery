@@ -9,22 +9,13 @@ from loguru import logger
 
 from app.Models.api_model import AdvancedSearchModel, SearchBasisEnum
 from app.Models.api_response.search_api_response import SearchApiResponse
+from app.Models.query_params import SearchPagingParams, FilterParams
 from app.Services import db_context
 from app.Services import transformers_service
 from app.Services.authentication import force_access_token_verify
 from app.config import config
 
 searchRouter = APIRouter(dependencies=([Depends(force_access_token_verify)] if config.access_protected else None))
-
-
-class SearchPagingParams:
-    def __init__(
-            self,
-            count: Annotated[int, Query(ge=1, le=100, description="The number of results you want to get.")] = 10,
-            skip: Annotated[int, Query(ge=0, description="The number of results you want to skip.")] = 0
-    ):
-        self.count = count
-        self.skip = skip
 
 
 class SearchBasisParams:
@@ -41,6 +32,7 @@ async def textSearch(
         prompt: Annotated[
             str, Path(min_length=3, max_length=100, description="The image prompt text you want to search.")],
         basis: Annotated[SearchBasisParams, Depends(SearchBasisParams)],
+        filter_param: Annotated[FilterParams, Depends(FilterParams)],
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]
 ) -> SearchApiResponse:
     logger.info("Text search request received, prompt: {}", prompt)
@@ -48,6 +40,7 @@ async def textSearch(
         else transformers_service.get_bert_vector(prompt)
     results = await db_context.querySearch(text_vector,
                                            query_vector_name=db_context.getVectorByBasis(basis.basis),
+                                           filter_param=filter_param,
                                            top_k=paging.count,
                                            skip=paging.skip)
     return SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4())
@@ -57,12 +50,17 @@ async def textSearch(
 async def imageSearch(
         image: Annotated[bytes, File(max_length=10 * 1024 * 1024, media_type="image/*",
                                      description="The image you want to search.")],
-        paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
+        filter_param: Annotated[FilterParams, Depends(FilterParams)],
+        paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]
+) -> SearchApiResponse:
     fakefile = BytesIO(image)
     img = Image.open(fakefile)
     logger.info("Image search request received")
     image_vector = transformers_service.get_image_vector(img)
-    results = await db_context.querySearch(image_vector, top_k=paging.count, skip=paging.skip)
+    results = await db_context.querySearch(image_vector,
+                                           top_k=paging.count,
+                                           skip=paging.skip,
+                                           filter_param=filter_param)
     return SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4())
 
 
@@ -72,12 +70,14 @@ async def imageSearch(
 async def similarWith(
         id: Annotated[UUID, Path(description="The id of the image you want to search.")],
         basis: Annotated[SearchBasisParams, Depends(SearchBasisParams)],
+        filter_param: Annotated[FilterParams, Depends(FilterParams)],
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]
 ) -> SearchApiResponse:
     logger.info("Similar search request received, id: {}", id)
     results = await db_context.querySimilar(str(id),
                                             top_k=paging.count,
                                             skip=paging.skip,
+                                            filter_param=filter_param,
                                             query_vector_name=db_context.getVectorByBasis(basis.basis))
     return SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4())
 
@@ -86,6 +86,7 @@ async def similarWith(
 async def advancedSearch(
         model: AdvancedSearchModel,
         basis: Annotated[SearchBasisParams, Depends(SearchBasisParams)],
+        filter_param: Annotated[FilterParams, Depends(FilterParams)],
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
     if len(model.criteria) + len(model.negative_criteria) == 0:
         raise ValueError("At least one criteria should be provided.")
@@ -98,16 +99,20 @@ async def advancedSearch(
         negative_vectors = [transformers_service.get_text_vector(t) for t in model.negative_criteria]
     result = await db_context.queryAdvanced(positive_vectors, negative_vectors,
                                             db_context.getVectorByBasis(basis.basis), model.mode,
+                                            filter_param=filter_param,
                                             top_k=paging.count,
-                                            skip=paging.skip)
+                                            skip=paging.skip
+                                            )
     return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
 
 
 @searchRouter.get("/random", description="Get random images")
-async def randomPick(paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
+async def randomPick(
+        filter_param: Annotated[FilterParams, Depends(FilterParams)],
+        paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
     logger.info("Random pick request received")
     random_vector = transformers_service.get_random_vector()
-    result = await db_context.querySearch(random_vector, top_k=paging.count)
+    result = await db_context.querySearch(random_vector, top_k=paging.count, filter_param=filter_param)
     return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
 
 
