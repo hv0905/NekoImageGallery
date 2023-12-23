@@ -63,10 +63,20 @@ class VectorDbContext:
                                              strategy=
                                              (RecommendStrategy.AVERAGE_VECTOR if
                                               mode == SearchModelEnum.average else RecommendStrategy.BEST_SCORE),
-                                             with_vectors=False,
+                                             with_vectors=[self.IMG_VECTOR if
+                                                           query_vector_name == self.TEXT_VECTOR else self.IMG_VECTOR],
                                              with_payload=True)
         logger.success("Query completed!")
-        return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
+        result_transform = lambda t: SearchResult(
+            img=ImageData.from_payload(
+                t.id,
+                t.payload,
+                numpy.array(t.vector['image_vector']) if t.vector and 'image_vector' in t.vector else None,
+                numpy.array(t.vector['text_contain_vector']) if t.vector and 'text_contain_vector' in t.vector else None
+            ),
+            score=t.score
+        )
+        return [result_transform(t) for t in result]
 
     async def insertItems(self, items: list[ImageData]):
         logger.info("Inserting {} items into Qdrant...", len(items))
