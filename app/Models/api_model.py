@@ -1,5 +1,5 @@
 from enum import Enum
-from fastapi import HTTPException
+
 from pydantic import BaseModel, Field
 
 
@@ -26,5 +26,5 @@ class AdvancedSearchModel(BaseModel):
 
 
 class CombinedSearchModel(AdvancedSearchModel):
-    extra_prompt: str = Field(min_length=3, max_length=100,
+    extra_prompt: str = Field(max_length=100,
                               description="The secondary prompt used for filtering the image.")

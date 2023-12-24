@@ -42,7 +42,7 @@ class SearchCombinedParams:
 @searchRouter.get("/text/{prompt}", description="Search images by text prompt")
 async def textSearch(
         prompt: Annotated[
-            str, Path(min_length=3, max_length=100, description="The image prompt text you want to search.")],
+            str, Path(max_length=100, description="The image prompt text you want to search.")],
         basis: Annotated[SearchBasisParams, Depends(SearchBasisParams)],
         filter_param: Annotated[FilterParams, Depends(FilterParams)],
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]
