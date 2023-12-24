@@ -1,18 +1,21 @@
 from io import BytesIO
-from uuid import uuid4, UUID
-from PIL import Image
-from loguru import logger
 from typing import Annotated, List, Union
+from uuid import uuid4, UUID
+
+from PIL import Image
 from fastapi import APIRouter, HTTPException
 from fastapi.params import File, Query, Path, Depends
-from app.Models.api_response.search_api_response import SearchApiResponse
+from loguru import logger
+
 from app.Models.api_model import AdvancedSearchModel, CombinedSearchModel, SearchBasisEnum, SearchCombinedBasisEnum
+from app.Models.api_response.search_api_response import SearchApiResponse
 from app.Models.query_params import SearchPagingParams, FilterParams
+from app.Models.search_result import SearchResult
 from app.Services import db_context
 from app.Services import transformers_service
 from app.Services.authentication import force_access_token_verify
-from app.util.calculate_vectors_cosine import calculate_vectors_cosine
 from app.config import config
+from app.util.calculate_vectors_cosine import calculate_vectors_cosine
 
 searchRouter = APIRouter(dependencies=([Depends(force_access_token_verify)] if config.access_protected else None))
 
@@ -100,7 +103,7 @@ async def advancedSearch(
     if len(model.criteria) + len(model.negative_criteria) == 0:
         raise HTTPException(status_code=422, detail="At least one criteria should be provided.")
     logger.info("Advanced search request received: {}", model)
-    result = await process_advanced_and_combined_search_query(model, basis, paging)
+    result = await process_advanced_and_combined_search_query(model, basis, filter_param, paging)
     return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
 
 
@@ -108,11 +111,12 @@ async def advancedSearch(
 async def combinedSearch(
         model: CombinedSearchModel,
         basis: Annotated[SearchCombinedParams, Depends(SearchCombinedParams)],
+        filter_param: Annotated[FilterParams, Depends(FilterParams)],
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
     if len(model.criteria) + len(model.negative_criteria) == 0:
         raise HTTPException(status_code=422, detail="At least one criteria should be provided.")
     logger.info("Combined search request received: {}", model)
-    result = await process_advanced_and_combined_search_query(model, basis, paging)
+    result = await process_advanced_and_combined_search_query(model, basis, filter_param, paging)
     calculate_and_sort_by_combined_scores(model, basis, result)
     return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
 
@@ -134,6 +138,7 @@ async def recallQuery(queryId: str):
 
 async def process_advanced_and_combined_search_query(model: Union[AdvancedSearchModel, CombinedSearchModel],
                                                      basis: Union[SearchBasisParams, SearchCombinedParams],
+                                                     filter: FilterParams,
                                                      paging: SearchPagingParams) -> List[SearchResult]:
     if basis.basis == SearchBasisEnum.ocr:
         positive_vectors = [transformers_service.get_bert_vector(t) for t in model.criteria]
@@ -146,6 +151,7 @@ async def process_advanced_and_combined_search_query(model: Union[AdvancedSearch
                                            positive_vectors=positive_vectors,
                                            negative_vectors=negative_vectors,
                                            mode=model.mode,
+                                           filter_param=filter,
                                            with_vectors=True if isinstance(basis, SearchCombinedParams) else False,
                                            top_k=paging.count,
                                            skip=paging.skip)
