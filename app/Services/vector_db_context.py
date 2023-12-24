@@ -1,5 +1,6 @@
 import numpy
 from loguru import logger
+from typing import Optional
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import PointStruct
 from qdrant_client.models import RecommendStrategy
@@ -37,34 +38,31 @@ class VectorDbContext:
         logger.success("Query completed!")
         return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
 
-    async def querySimilar(self, id: str, query_vector_name: str = IMG_VECTOR, top_k=10, skip=0) -> list[SearchResult]:
+    async def querySimilar(self,
+                           query_vector_name: str = IMG_VECTOR,
+                           search_id: Optional[str] = None,
+                           positive_vectors: Optional[list[numpy.ndarray]] = None,
+                           negative_vectors: Optional[list[numpy.ndarray]] = None,
+                           mode: Optional[SearchModelEnum] = None,
+                           with_vectors: bool = False,
+                           top_k: int = 10,
+                           skip: int = 0) -> list[SearchResult]:
+        _positive_vectors = [t.tolist() for t in positive_vectors] if positive_vectors is not None else [search_id]
+        _negative_vectors = [t.tolist() for t in negative_vectors] if negative_vectors is not None else None
+        _strategy = None if mode is None else (RecommendStrategy.AVERAGE_VECTOR if
+                                               mode == SearchModelEnum.average else RecommendStrategy.BEST_SCORE)
+        # since only combined_search need return vectors, We can define _combined_search_need_vectors like below
+        _combined_search_need_vectors = [self.IMG_VECTOR if query_vector_name == self.TEXT_VECTOR else self.IMG_VECTOR]\
+            if with_vectors else None
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.recommend(collection_name=self.collection_name,
-                                             positive=[id],
-                                             negative=[],
                                              using=query_vector_name,
+                                             positive=_positive_vectors,
+                                             negative=_negative_vectors,
+                                             strategy=_strategy,
+                                             with_vectors=_combined_search_need_vectors,
                                              limit=top_k,
                                              offset=skip,
-                                             with_vectors=False,
-                                             with_payload=True)
-        logger.success("Query completed!")
-        return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
-
-    async def queryAdvanced(self, positive_vectors: list[numpy.ndarray], negative_vectors: list[numpy.ndarray],
-                            query_vector_name: str = IMG_VECTOR, mode: SearchModelEnum = SearchModelEnum.average,
-                            top_k=10, skip=0) -> list[SearchResult]:
-        logger.info("Querying Qdrant... top_k = {}", top_k)
-        result = await self.client.recommend(collection_name=self.collection_name,
-                                             using=query_vector_name,
-                                             positive=[t.tolist() for t in positive_vectors],
-                                             negative=[t.tolist() for t in negative_vectors],
-                                             limit=top_k,
-                                             offset=skip,
-                                             strategy=
-                                             (RecommendStrategy.AVERAGE_VECTOR if
-                                              mode == SearchModelEnum.average else RecommendStrategy.BEST_SCORE),
-                                             with_vectors=[self.IMG_VECTOR if
-                                                           query_vector_name == self.TEXT_VECTOR else self.IMG_VECTOR],
                                              with_payload=True)
         logger.success("Query completed!")
         result_transform = lambda t: SearchResult(

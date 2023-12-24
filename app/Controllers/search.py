@@ -1,14 +1,12 @@
 from io import BytesIO
-from typing import Annotated, List
 from uuid import uuid4, UUID
-
 from PIL import Image
+from loguru import logger
+from typing import Annotated, List, Union
 from fastapi import APIRouter, HTTPException
 from fastapi.params import File, Query, Path, Depends
-from loguru import logger
-
 from app.Models.api_response.search_api_response import SearchApiResponse
-from app.Models.api_model import AdvancedSearchModel, SearchBasisEnum, SearchCombinedPriorityEnum
+from app.Models.api_model import AdvancedSearchModel, CombinedSearchModel, SearchBasisEnum, SearchCombinedBasisEnum
 from app.Models.search_result import SearchResult
 from app.Services import db_context
 from app.Services import transformers_service
@@ -35,8 +33,16 @@ class SearchBasisParams:
                      description="The basis used to search the image.")] = SearchBasisEnum.vision):
         if basis == SearchBasisEnum.ocr and not config.ocr_search.enable:
             raise HTTPException(400, "OCR search is not enabled.")
-        if basis == SearchBasisEnum.combined and not config.ocr_search.enable:
-            raise HTTPException(400, "You used combined search, but it needs OCR search which is not enabled.")
+        self.basis = basis
+
+
+class SearchCombinedParams:
+    def __init__(self,
+                 basis: Annotated[SearchCombinedBasisEnum, Query(
+                     description="The primary basis used for searching the image.")] = SearchCombinedBasisEnum.vision):
+        if not config.ocr_search.enable:
+            raise HTTPException(400, "You used combined search, but it needs OCR search which is not "
+                                     "enabled.")
         self.basis = basis
 
 
@@ -79,7 +85,7 @@ async def similarWith(
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]
 ) -> SearchApiResponse:
     logger.info("Similar search request received, id: {}", id)
-    results = await db_context.querySimilar(str(id),
+    results = await db_context.querySimilar(search_id=str(id),
                                             top_k=paging.count,
                                             skip=paging.skip,
                                             query_vector_name=db_context.getVectorByBasis(basis.basis))
@@ -91,24 +97,23 @@ async def advancedSearch(
         model: AdvancedSearchModel,
         basis: Annotated[SearchBasisParams, Depends(SearchBasisParams)],
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
-    model.validate_combined(basis.basis)
     if len(model.criteria) + len(model.negative_criteria) == 0:
         raise HTTPException(status_code=422, detail="At least one criteria should be provided.")
     logger.info("Advanced search request received: {}", model)
-    _current_basis = model.combined_priority if basis.basis == SearchBasisEnum.combined else basis.basis
-    if _current_basis == SearchBasisEnum.ocr:
-        positive_vectors = [transformers_service.get_bert_vector(t) for t in model.criteria]
-        negative_vectors = [transformers_service.get_bert_vector(t) for t in model.negative_criteria]
-    else:
-        positive_vectors = [transformers_service.get_text_vector(t) for t in model.criteria]
-        negative_vectors = [transformers_service.get_text_vector(t) for t in model.negative_criteria]
-    result = await db_context.queryAdvanced(positive_vectors, negative_vectors,
-                                            db_context.getVectorByBasis(_current_basis), model.mode,
-                                            top_k=paging.count,
-                                            skip=paging.skip)
-    if basis.basis == SearchBasisEnum.combined:
-        # sorted it!
-        calculate_and_sort_by_combined_scores(result, model)
+    result = await process_advanced_and_combined_search_query(model, basis, paging)
+    return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
+
+
+@searchRouter.post("/combined", description="Search with combined criteria")
+async def combinedSearch(
+        model: CombinedSearchModel,
+        basis: Annotated[SearchCombinedParams, Depends(SearchCombinedParams)],
+        paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
+    if len(model.criteria) + len(model.negative_criteria) == 0:
+        raise HTTPException(status_code=422, detail="At least one criteria should be provided.")
+    logger.info("Combined search request received: {}", model)
+    result = await process_advanced_and_combined_search_query(model, basis, paging)
+    calculate_and_sort_by_combined_scores(model, basis, result)
     return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
 
 
@@ -125,10 +130,32 @@ async def recallQuery(queryId: str):
     raise NotImplementedError()
 
 
-def calculate_and_sort_by_combined_scores(result: List[SearchResult], model: AdvancedSearchModel) -> None:
+async def process_advanced_and_combined_search_query(model: Union[AdvancedSearchModel, CombinedSearchModel],
+                                                     basis: Union[SearchBasisParams, SearchCombinedParams],
+                                                     paging: SearchPagingParams) -> List[SearchResult]:
+    if basis.basis == SearchBasisEnum.ocr:
+        positive_vectors = [transformers_service.get_bert_vector(t) for t in model.criteria]
+        negative_vectors = [transformers_service.get_bert_vector(t) for t in model.negative_criteria]
+    else:
+        positive_vectors = [transformers_service.get_text_vector(t) for t in model.criteria]
+        negative_vectors = [transformers_service.get_text_vector(t) for t in model.negative_criteria]
+
+    result = await db_context.querySimilar(query_vector_name=db_context.getVectorByBasis(basis.basis),
+                                           positive_vectors=positive_vectors,
+                                           negative_vectors=negative_vectors,
+                                           mode=model.mode,
+                                           with_vectors=True if isinstance(basis, SearchCombinedParams) else False,
+                                           top_k=paging.count,
+                                           skip=paging.skip)
+    return result
+
+
+def calculate_and_sort_by_combined_scores(model: CombinedSearchModel,
+                                          basis: SearchCombinedParams,
+                                          result: List[SearchResult]) -> None:
     # First, calculate the extra prompt vector
     extra_prompt_vector = transformers_service.get_text_vector(model.extra_prompt) \
-        if model.combined_priority == SearchCombinedPriorityEnum.ocr \
+        if basis.basis == SearchCombinedBasisEnum.ocr \
         else transformers_service.get_bert_vector(model.extra_prompt)
     # Then, calculate combined_similar_score (original score * similar_score) and write to SearchResult.score
     for itm in result:
@@ -136,6 +163,4 @@ def calculate_and_sort_by_combined_scores(result: List[SearchResult], model: Adv
         similar_score = calculate_vectors_cosine(extra_vector, extra_prompt_vector)
         itm.score = similar_score * itm.score
     # Finally, sort the result by combined_similar_score
-    # TODO: Is it better to write directly into the original result as it is now
-    # TODO: or to create a new combined_similar_score attribute in each itm?
     result.sort(key=lambda i: i.score, reverse=True)
