@@ -17,30 +17,24 @@ class ImageData(BaseModel):
     width: Optional[int] = None
     height: Optional[int] = None
     aspect_ratio: Optional[float] = None
+    starred: Optional[bool] = False
 
     @property
     def payload(self):
-        return {
-            "url": self.url,
-            "thumbnail_url": self.thumbnail_url,
-            "ocr_text": self.ocr_text,
-            "index_date": self.index_date.isoformat(),
-            "width": self.width,
-            "height": self.height,
-            "aspect_ratio": self.aspect_ratio
-        }
+        result = self.model_dump(exclude={'image_vector', 'text_contain_vector', 'id', 'index_date'})
+        # Qdrant database cannot accept datetime object, so we have to convert it to string
+        result['index_date'] = self.index_date.isoformat()
+        return result
 
     @classmethod
     def from_payload(cls, id: str, payload: dict,
                      image_vector: Optional[ndarray] = None, text_contain_vector: Optional[ndarray] = None):
+        # Convert the datetime string back to datetime object
+        index_date = datetime.fromisoformat(payload['index_date'])
+        del payload['index_date']
         return cls(id=UUID(id),
-                   url=payload['url'],
-                   thumbnail_url=payload['thumbnail_url'],
-                   index_date=datetime.fromisoformat(payload['index_date']),
-                   ocr_text=payload['ocr_text'] if 'ocr_text' in payload else None,
-                   width=payload['width'] if 'width' in payload else None,
-                   height=payload['height'] if 'height' in payload else None,
-                   aspect_ratio=payload['aspect_ratio'] if 'aspect_ratio' in payload else None,
+                   index_date=index_date,
+                   **payload,
                    image_vector=image_vector if image_vector is not None else None,
                    text_contain_vector=text_contain_vector if text_contain_vector is not None else None)
 
