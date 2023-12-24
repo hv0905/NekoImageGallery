@@ -34,7 +34,7 @@ class VectorDbContext:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.search(collection_name=self.collection_name,
                                           query_vector=(query_vector_name, query_vector),
-                                          filters=self.getFiltersByFilterParam(filter_param),
+                                          query_filter=self.getFiltersByFilterParam(filter_param),
                                           limit=top_k,
                                           offset=skip,
                                           with_payload=True)
