@@ -14,6 +14,12 @@ from app.Models.search_result import SearchResult
 from app.config import config
 
 
+class PointNotFoundError(ValueError):
+    def __init__(self, point_id: str):
+        self.point_id = point_id
+        super().__init__(f"Point {point_id} not found.")
+
+
 class VectorDbContext:
     IMG_VECTOR = "image_vector"
     TEXT_VECTOR = "text_contain_vector"
@@ -25,8 +31,12 @@ class VectorDbContext:
         self.collection_name = config.qdrant.coll
 
     async def retrieve_by_id(self, id: str, with_vectors=False) -> ImageData:
+        logger.info("Retrieving item {} from database...", id)
         result = await self.client.retrieve(collection_name=self.collection_name, ids=[id], with_payload=True,
                                             with_vectors=with_vectors)
+        if len(result) != 1:
+            logger.error("Point not exist.")
+            raise PointNotFoundError(id)
         return ImageData.from_payload(result[0].id, result[0].payload,
                                       numpy.array(result[0].vector, dtype=numpy.float32) if with_vectors else None)
 
@@ -107,6 +117,15 @@ class VectorDbContext:
                                             wait=True,
                                             points=points)
         logger.success("Insert completed! Status: {}", response.status)
+
+    async def deleteItems(self, ids: list[str]):
+        logger.info("Deleting {} items from Qdrant...", len(ids))
+        response = await self.client.delete(collection_name=self.collection_name,
+                                            points_selector=models.PointIdsList(
+                                                points=ids
+                                            ),
+                                            )
+        logger.success("Delete completed! Status: {}", response.status)
 
     async def updatePayload(self, new_data: ImageData):
         """

@@ -17,7 +17,8 @@ from app.Services.authentication import force_access_token_verify
 from app.config import config
 from app.util.calculate_vectors_cosine import calculate_vectors_cosine
 
-searchRouter = APIRouter(dependencies=([Depends(force_access_token_verify)] if config.access_protected else None))
+searchRouter = APIRouter(dependencies=([Depends(force_access_token_verify)] if config.access_protected else None),
+                         tags=["Search"])
 
 
 class SearchBasisParams:
