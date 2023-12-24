@@ -125,7 +125,7 @@ class VectorDbContext:
             return None
 
         filters = []
-        if filter_param.min_width is not None:
+        if filter_param.min_width is not None and filter_param.min_width > 0:
             filters.append(models.FieldCondition(
                 key="width",
                 range=models.Range(
@@ -133,7 +133,7 @@ class VectorDbContext:
                 )
             ))
 
-        if filter_param.min_height is not None:
+        if filter_param.min_height is not None and filter_param.min_height > 0:
             filters.append(models.FieldCondition(
                 key="height",
                 range=models.Range(

@@ -20,8 +20,8 @@ class FilterParams:
                 float | None, Query(gt=0, description="The preferred aspect ratio of the image.")] = None,
             ratio_tolerance: Annotated[
                 float, Query(gt=0, lt=1, description="The tolerance of the aspect ratio.")] = 0.1,
-            min_width: Annotated[int | None, Query(gt=0, description="The minimum width of the image.")] = None,
-            min_height: Annotated[int | None, Query(gt=0, description="The minimum height of the image.")] = None):
+            min_width: Annotated[int | None, Query(geq=0, description="The minimum width of the image.")] = None,
+            min_height: Annotated[int | None, Query(geq=0, description="The minimum height of the image.")] = None):
         self.preferred_ratio = preferred_ratio
         self.ratio_tolerance = ratio_tolerance
         self.min_width = min_width
