@@ -26,7 +26,7 @@ def force_access_token_verify(token_passed: Annotated[bool, Depends(permissive_a
 def permissive_admin_token_verify(
         x_admin_token: Annotated[str | None, Header(
             description="Admin token set in configuration (if admin_api_enable is enabled)")] = None) -> bool:
-    return x_admin_token == config.admin_token
+    return config.admin_api_enable and x_admin_token == config.admin_token
 
 
 def force_admin_token_verify(token_passed: Annotated[bool, Depends(permissive_admin_token_verify)]):

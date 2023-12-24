@@ -8,9 +8,10 @@ from fastapi.staticfiles import StaticFiles
 
 from app.Controllers.admin import admin_router
 from app.Controllers.search import searchRouter
-from app.Services.authentication import permissive_access_token_verify
+from app.Services.authentication import permissive_access_token_verify, permissive_admin_token_verify
 from app.config import config
-from .Models.api_response.base import WelcomeApiResponse, WelcomeApiAuthenticationResponse
+from .Models.api_response.base import WelcomeApiResponse, WelcomeApiAuthenticationResponse, \
+    WelcomeApiAdminPortalAuthenticationResponse
 from .util.fastapi_log_handler import init_logging
 
 app = FastAPI()
@@ -33,7 +34,9 @@ if config.static_file.enable:
 
 
 @app.get("/", description="Default portal. Test for server availability.")
-def welcome(token_passed: Annotated[bool, Depends(permissive_access_token_verify)]) -> WelcomeApiResponse:
+def welcome(token_passed: Annotated[bool, Depends(permissive_access_token_verify)],
+            admin_token_passed: Annotated[bool, Depends(permissive_admin_token_verify)],
+            ) -> WelcomeApiResponse:
     return WelcomeApiResponse(
         message="Ciallo~ Welcome to NekoImageGallery API!",
         server_time=datetime.now(),
@@ -42,6 +45,8 @@ def welcome(token_passed: Annotated[bool, Depends(permissive_access_token_verify
             "swagger UI": "/docs",
             "redoc": "/redoc"
         },
+        admin_api=WelcomeApiAdminPortalAuthenticationResponse(available=config.admin_api_enable,
+                                                              passed=admin_token_passed),
         authorization=WelcomeApiAuthenticationResponse(required=config.access_protected, passed=token_passed),
         available_basis=["vision", "ocr"] if config.ocr_search.enable else ["vision"]
     )
