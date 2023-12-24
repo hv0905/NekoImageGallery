@@ -131,14 +131,14 @@ async def randomPick(
     return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
 
 
-@searchRouter.get("/recall/{queryId}", description="Recall the query with given queryId")
-async def recallQuery(queryId: str):
+@searchRouter.get("/recall/{query_id}", description="Recall the query with given queryId")
+async def recallQuery(query_id: str):
     raise NotImplementedError()
 
 
 async def process_advanced_and_combined_search_query(model: Union[AdvancedSearchModel, CombinedSearchModel],
                                                      basis: Union[SearchBasisParams, SearchCombinedParams],
-                                                     filter: FilterParams,
+                                                     filter_param: FilterParams,
                                                      paging: SearchPagingParams) -> List[SearchResult]:
     if basis.basis == SearchBasisEnum.ocr:
         positive_vectors = [transformers_service.get_bert_vector(t) for t in model.criteria]
@@ -151,7 +151,7 @@ async def process_advanced_and_combined_search_query(model: Union[AdvancedSearch
                                            positive_vectors=positive_vectors,
                                            negative_vectors=negative_vectors,
                                            mode=model.mode,
-                                           filter_param=filter,
+                                           filter_param=filter_param,
                                            with_vectors=True if isinstance(basis, SearchCombinedParams) else False,
                                            top_k=paging.count,
                                            skip=paging.skip)

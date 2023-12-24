@@ -1,11 +1,4 @@
-
-if __name__ == '__main__':
-    import sys
-
-    sys.path.insert(1, './')
-
 import argparse
-import asyncio
 from datetime import datetime
 from pathlib import Path
 from shutil import copy2
@@ -26,14 +19,14 @@ def parse_args():
     return parser.parse_args()
 
 
-def copy_and_index(filePath: Path) -> ImageData | None:
+def copy_and_index(file_path: Path) -> ImageData | None:
     try:
-        img = Image.open(filePath)
+        img = Image.open(file_path)
     except Exception as e:
-        logger.error("Error when opening image {}: {}", filePath, e)
+        logger.error("Error when opening image {}: {}", file_path, e)
         return None
     id = uuid4()
-    img_ext = filePath.suffix
+    img_ext = file_path.suffix
     image_ocr_result = None
     text_contain_vector = None
     [width, height] = img.size
@@ -46,7 +39,7 @@ def copy_and_index(filePath: Path) -> ImageData | None:
             else:
                 image_ocr_result = None
     except Exception as e:
-        logger.error("Error when processing image {}: {}", filePath, e)
+        logger.error("Error when processing image {}: {}", file_path, e)
         return None
     imgdata = ImageData(id=id,
                         url=f'/static/{id}{img_ext}',
@@ -59,7 +52,7 @@ def copy_and_index(filePath: Path) -> ImageData | None:
                         ocr_text=image_ocr_result)
 
     # copy to static
-    copy2(filePath, Path(config.static_file.path) / f'{id}{img_ext}')
+    copy2(file_path, Path(config.static_file.path) / f'{id}{img_ext}')
     return imgdata
 
 
@@ -88,8 +81,3 @@ async def main(args):
         logger.info("Upload {} element to database", len(buffer))
         await db_context.insertItems(buffer)
         logger.success("Indexing completed! {} images indexed", counter)
-
-
-if __name__ == '__main__':
-    args = parse_args()
-    asyncio.run(main(args))

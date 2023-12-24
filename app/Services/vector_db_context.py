@@ -1,6 +1,7 @@
+from typing import Optional
+
 import numpy
 from loguru import logger
-from typing import Optional
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
 from qdrant_client.http.models import PointStruct
@@ -30,8 +31,7 @@ class VectorDbContext:
                                       numpy.array(result[0].vector, dtype=numpy.float32) if with_vectors else None)
 
     async def querySearch(self, query_vector, query_vector_name: str = IMG_VECTOR,
-                          top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[
-        SearchResult]:
+                          top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.search(collection_name=self.collection_name,
                                           query_vector=(query_vector_name, query_vector),
@@ -57,7 +57,7 @@ class VectorDbContext:
         _strategy = None if mode is None else (RecommendStrategy.AVERAGE_VECTOR if
                                                mode == SearchModelEnum.average else RecommendStrategy.BEST_SCORE)
         # since only combined_search need return vectors, We can define _combined_search_need_vectors like below
-        _combined_search_need_vectors = [self.IMG_VECTOR if query_vector_name == self.TEXT_VECTOR else self.IMG_VECTOR]\
+        _combined_search_need_vectors = [self.IMG_VECTOR if query_vector_name == self.TEXT_VECTOR else self.IMG_VECTOR] \
             if with_vectors else None
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.recommend(collection_name=self.collection_name,
@@ -71,15 +71,19 @@ class VectorDbContext:
                                              offset=skip,
                                              with_payload=True)
         logger.success("Query completed!")
-        result_transform = lambda t: SearchResult(
-            img=ImageData.from_payload(
-                t.id,
-                t.payload,
-                numpy.array(t.vector['image_vector']) if t.vector and 'image_vector' in t.vector else None,
-                numpy.array(t.vector['text_contain_vector']) if t.vector and 'text_contain_vector' in t.vector else None
-            ),
-            score=t.score
-        )
+
+        def result_transform(t):
+            return SearchResult(
+                img=ImageData.from_payload(
+                    t.id,
+                    t.payload,
+                    numpy.array(t.vector['image_vector']) if t.vector and 'image_vector' in t.vector else None,
+                    numpy.array(
+                        t.vector['text_contain_vector']) if t.vector and 'text_contain_vector' in t.vector else None
+                ),
+                score=t.score
+            )
+
         return [result_transform(t) for t in result]
 
     async def insertItems(self, items: list[ImageData]):

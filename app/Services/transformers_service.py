@@ -8,7 +8,7 @@ from numpy import ndarray
 from torch import FloatTensor, no_grad
 from transformers import CLIPProcessor, CLIPModel, BertTokenizer, BertModel
 
-from app.config import config, environment
+from app.config import config
 
 
 class TransformersService:
