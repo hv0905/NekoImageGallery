@@ -31,7 +31,8 @@ class ImageData(BaseModel):
         }
 
     @classmethod
-    def from_payload(cls, id: str, payload: dict, vector: Optional[ndarray] = None):
+    def from_payload(cls, id: str, payload: dict,
+                     image_vector: Optional[ndarray] = None, text_contain_vector: Optional[ndarray] = None):
         return cls(id=UUID(id),
                    url=payload['url'],
                    thumbnail_url=payload['thumbnail_url'],
@@ -40,7 +41,8 @@ class ImageData(BaseModel):
                    width=payload['width'] if 'width' in payload else None,
                    height=payload['height'] if 'height' in payload else None,
                    aspect_ratio=payload['aspect_ratio'] if 'aspect_ratio' in payload else None,
-                   image_vector=vector)
+                   image_vector=image_vector if image_vector is not None else None,
+                   text_contain_vector=text_contain_vector if text_contain_vector is not None else None)
 
     class Config:
         arbitrary_types_allowed = True
