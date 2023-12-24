@@ -7,6 +7,7 @@
 ## ✨特性
 
 - 使用Clip模型为每张图片生成768维向量作为搜索依据。无需人工标注或分类，无限分类类别。
+- 支持OCR文本搜索，使用PaddleOCR提取图片文本并使用BERT模型生成文本特征向量。
 - 使用Qdrant向量数据库进行高效的向量搜索。
 
 ## 📷截图
@@ -88,11 +89,23 @@
 2. 运行下面命令启动docker-compose
    ```shell
    # start in foreground
-   docker-compose up
+   docker compose up
    # start in background(detached mode)
-   docker-compose up -d
+   docker compose up -d
    ```
 
+## 📊仓库信息
+
+![Alt](https://repobeats.axiom.co/api/embed/ac080afa0d2d8af0345f6818b9b7c35bf8de1d31.svg "Repobeats analytics image")
+
+## ❤️贡献指南
+
+有很多种可以为本项目提供贡献的方式：记录 Bug，提交 Pull Request，报告问题，提出建议等等。
+
+即使您拥有对本仓库的写入权限，您也应该在有需要时创建自己的功能分支并通过 Pull Request 的方式提交您的变更。
+这有助于让我们的主仓库保持整洁并使您的个人工作流程不可见。
+
+我们也很感兴趣听到您关于这个项目未来的反馈。您可以通过 Issues 追踪器提交建议或功能请求。为了使这个过程更加有效，我们希望这些内容包含更多信息，以更清晰地定义它们。
 
 ## Copyright
 
