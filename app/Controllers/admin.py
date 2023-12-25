@@ -25,16 +25,16 @@ async def delete_image(
     except PointNotFoundError:
         raise HTTPException(404, "Cannot find the image with the given ID.")
 
-    db_context.deleteItems([str(image_id)])
-    logger.success("Image {} deleted from database.", image_id)
+    db_context.deleteItems([str(point.id)])
+    logger.success("Image {} deleted from database.", point.id)
 
     if point.url.startswith('/'):  # local image
         static_folder = Path(config.static_file.path)
-        image_files = list(static_folder.glob(f"{image_id}.*"))
+        image_files = list(static_folder.glob(f"{point.id}.*"))
         assert len(image_files) <= 1
 
         if len(image_files) == 0:
-            logger.warning("Image {} is a local image but not found in static folder.", image_id)
+            logger.warning("Image {} is a local image but not found in static folder.", point.id)
         else:
             deleted_folder = static_folder / "_deleted"
             deleted_folder.mkdir(parents=True, exist_ok=True)
@@ -44,7 +44,7 @@ async def delete_image(
 
         if point.thumbnail_url is not None:
             thumbnail_dir = static_folder / "thumbnails"
-            thumbnail_file = thumbnail_dir / f"{image_id}.webp"
+            thumbnail_file = thumbnail_dir / f"{point.id}.webp"
             if thumbnail_file.is_file():
                 thumbnail_file.unlink()
                 logger.success("Thumbnail {} removed.", thumbnail_file.name)
@@ -68,6 +68,6 @@ async def update_image(image_id: Annotated[UUID, params.Path(description="The id
         point.starred = model.starred
 
     await db_context.updatePayload(point)
-    logger.success("Image {} updated.", image_id)
+    logger.success("Image {} updated.", point.id)
 
     return NekoProtocol(message="Image updated.")
