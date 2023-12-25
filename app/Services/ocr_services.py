@@ -53,6 +53,7 @@ class EasyPaddleOCRService(OCRService):
 class EasyOCRService(OCRService):
     def __init__(self):
         super().__init__()
+        # noinspection PyPackageRequirements
         import easyocr
         self._easyOCRModule = easyocr.Reader(config.ocr_search.ocr_language,
                                              gpu=True if self._device == "cuda" else False)
@@ -73,7 +74,8 @@ class EasyOCRService(OCRService):
 class PaddleOCRService(OCRService):
     def __init__(self):
         super().__init__()
-        import paddleocr
+        # noinspection PyPackageRequirements
+        import paddleocr  # pylint: disable=import-error
         self._paddleOCRModule = paddleocr.PaddleOCR(lang="ch", use_angle_cls=True,
                                                     use_gpu=True if self._device == "cuda" else False)
         logger.success("PaddleOCR loaded successfully")
