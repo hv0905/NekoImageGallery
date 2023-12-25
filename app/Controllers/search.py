@@ -119,6 +119,7 @@ async def combinedSearch(
     logger.info("Combined search request received: {}", model)
     result = await process_advanced_and_combined_search_query(model, basis, filter_param, paging)
     calculate_and_sort_by_combined_scores(model, basis, result)
+    result = result[:paging.count] if len(result) > paging.count else result
     return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
 
 
@@ -147,14 +148,15 @@ async def process_advanced_and_combined_search_query(model: Union[AdvancedSearch
     else:
         positive_vectors = [transformers_service.get_text_vector(t) for t in model.criteria]
         negative_vectors = [transformers_service.get_text_vector(t) for t in model.negative_criteria]
-
+    # In order to ensure the query effect of the combined query, modify the actual top_k
+    _query_top_k = min(max(30, paging.count*3), 100) if isinstance(model, CombinedSearchModel) else paging.count
     result = await db_context.querySimilar(query_vector_name=db_context.getVectorByBasis(basis.basis),
                                            positive_vectors=positive_vectors,
                                            negative_vectors=negative_vectors,
                                            mode=model.mode,
                                            filter_param=filter_param,
                                            with_vectors=True if isinstance(basis, SearchCombinedParams) else False,
-                                           top_k=paging.count,
+                                           top_k=_query_top_k,
                                            skip=paging.skip)
     return result
 
