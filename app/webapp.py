@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.params import Depends
 from fastapi.staticfiles import StaticFiles
@@ -34,16 +34,18 @@ if config.static_file.enable:
 
 
 @app.get("/", description="Default portal. Test for server availability.")
-def welcome(token_passed: Annotated[bool, Depends(permissive_access_token_verify)],
+def welcome(request: Request,
+            token_passed: Annotated[bool, Depends(permissive_access_token_verify)],
             admin_token_passed: Annotated[bool, Depends(permissive_admin_token_verify)],
             ) -> WelcomeApiResponse:
+    root_path: str = request.scope.get('root_path').rstrip('/')
     return WelcomeApiResponse(
         message="Ciallo~ Welcome to NekoImageGallery API!",
         server_time=datetime.now(),
         wiki={
-            "openAPI": "/openapi.json",
-            "swagger UI": "/docs",
-            "redoc": "/redoc"
+            "openAPI": f"{root_path}/openapi.json",
+            "swagger UI": f"{root_path}/docs",
+            "redoc": f"{root_path}/redoc"
         },
         admin_api=WelcomeApiAdminPortalAuthenticationResponse(available=config.admin_api_enable,
                                                               passed=admin_token_passed),
