@@ -17,12 +17,11 @@ jobs:
       matrix:
         configurations:
           - dockerfile: "{ context }/Dockerfile"
-            tags:
-              - edgeneko/neko-image-gallery:latest
-              - edgeneko/neko-image-gallery:latest-cuda
+            tags: |
+              edgeneko/neko-image-gallery:latest
+              edgeneko/neko-image-gallery:latest-cuda
           - dockerfile: "{ context }/cpu-only.Dockerfile"
-            tags:
-              - edgeneko/neko-image-gallery:latest-cpu
+            tags: edgeneko/neko-image-gallery:latest-cpu
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
