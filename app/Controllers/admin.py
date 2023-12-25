@@ -25,7 +25,7 @@ async def delete_image(
     except PointNotFoundError:
         raise HTTPException(404, "Cannot find the image with the given ID.")
 
-    db_context.deleteItems([str(point.id)])
+    await db_context.deleteItems([str(point.id)])
     logger.success("Image {} deleted from database.", point.id)
 
     if point.url.startswith('/') and config.static_file.enable:  # local image
