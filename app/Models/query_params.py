@@ -21,11 +21,13 @@ class FilterParams:
             ratio_tolerance: Annotated[
                 float, Query(gt=0, lt=1, description="The tolerance of the aspect ratio.")] = 0.1,
             min_width: Annotated[int | None, Query(geq=0, description="The minimum width of the image.")] = None,
-            min_height: Annotated[int | None, Query(geq=0, description="The minimum height of the image.")] = None):
+            min_height: Annotated[int | None, Query(geq=0, description="The minimum height of the image.")] = None,
+            starred: Annotated[bool | None, Query(description="Whether the image is starred.")] = None):
         self.preferred_ratio = preferred_ratio
         self.ratio_tolerance = ratio_tolerance
         self.min_width = min_width
         self.min_height = min_height
+        self.starred = starred
 
         if self.preferred_ratio:
             self.min_ratio = self.preferred_ratio * (1 - self.ratio_tolerance)

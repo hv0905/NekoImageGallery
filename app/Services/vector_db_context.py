@@ -180,6 +180,14 @@ class VectorDbContext:
                 )
             ))
 
+        if filter_param.starred is not None:
+            filters.append(models.FieldCondition(
+                key="starred",
+                match=models.MatchValue(
+                    value=filter_param.starred
+                )
+            ))
+
         if len(filters) > 0:
             return models.Filter(
                 must=filters
