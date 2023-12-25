@@ -1,6 +1,11 @@
 name: Test and Lint Project
 
-on: [ push, pull_request ]
+on:
+  workflow_call:
+  push:
+    branches-ignore:
+      - 'master'
+  pull_request:
 
 jobs:
   build:
