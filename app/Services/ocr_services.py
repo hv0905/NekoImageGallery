@@ -54,7 +54,7 @@ class EasyOCRService(OCRService):
     def __init__(self):
         super().__init__()
         # noinspection PyPackageRequirements
-        import easyocr
+        import easyocr  # pylint: disable=import-error
         self._easyOCRModule = easyocr.Reader(config.ocr_search.ocr_language,
                                              gpu=True if self._device == "cuda" else False)
         logger.success("easyOCR loaded successfully")
