@@ -12,6 +12,7 @@ from app.Services.authentication import permissive_access_token_verify, permissi
 from app.config import config
 from .Models.api_response.base import WelcomeApiResponse, WelcomeApiAuthenticationResponse, \
     WelcomeApiAdminPortalAuthenticationResponse
+from .util import directories
 from .util.fastapi_log_handler import init_logging
 
 app = FastAPI()
@@ -30,7 +31,7 @@ if config.admin_api_enable:
     app.include_router(admin_router, prefix="/admin")
 
 if config.static_file.enable:
-    app.mount("/static", StaticFiles(directory=config.static_file.path), name="static")
+    app.mount("/static", StaticFiles(directory=directories.static_dir), name="static")
 
 
 @app.get("/", description="Default portal. Test for server availability.")

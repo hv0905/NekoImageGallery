@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Annotated
 from uuid import UUID
 
@@ -11,6 +10,7 @@ from app.Services import db_context
 from app.Services.authentication import force_admin_token_verify
 from app.Services.vector_db_context import PointNotFoundError
 from app.config import config
+from app.util import directories
 
 admin_router = APIRouter(dependencies=[Depends(force_admin_token_verify)], tags=["Admin"])
 
@@ -28,23 +28,20 @@ async def delete_image(
     db_context.deleteItems([str(point.id)])
     logger.success("Image {} deleted from database.", point.id)
 
-    if point.url.startswith('/'):  # local image
-        static_folder = Path(config.static_file.path)
-        image_files = list(static_folder.glob(f"{point.id}.*"))
+    if point.url.startswith('/') and config.static_file.enable:  # local image
+        image_files = list(directories.static_dir.glob(f"{point.id}.*"))
         assert len(image_files) <= 1
 
         if len(image_files) == 0:
             logger.warning("Image {} is a local image but not found in static folder.", point.id)
         else:
-            deleted_folder = static_folder / "_deleted"
-            deleted_folder.mkdir(parents=True, exist_ok=True)
+            directories.deleted_dir.mkdir(parents=True, exist_ok=True)
 
-            image_files[0].rename(deleted_folder / image_files[0].name)
+            image_files[0].rename(directories.deleted_dir / image_files[0].name)
             logger.success("Local image {} removed.", image_files[0].name)
 
         if point.thumbnail_url is not None:
-            thumbnail_dir = static_folder / "thumbnails"
-            thumbnail_file = thumbnail_dir / f"{point.id}.webp"
+            thumbnail_file = directories.thumbnails_dir / f"{point.id}.webp"
             if thumbnail_file.is_file():
                 thumbnail_file.unlink()
                 logger.success("Thumbnail {} removed.", thumbnail_file.name)
