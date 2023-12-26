@@ -58,7 +58,7 @@ class TransformersService:
     def get_bert_vector(self, text: str) -> ndarray:
         start_time = time()
         logger.info("Inferencing with BERT model...")
-        inputs = self.bert_tokenizer(text, return_tensors="pt").to(self.device)
+        inputs = self.bert_tokenizer(text.strip().lower(), return_tensors="pt").to(self.device)
         outputs = self.bert_model(**inputs)
         vector = outputs.last_hidden_state.mean(dim=1).squeeze()
         logger.success("BERT inference done. Time elapsed: {:.2f}s", time() - start_time)
