@@ -188,6 +188,14 @@ class VectorDbContext:
                 )
             ))
 
+        if filter_param.ocr_text is not None:
+            filters.append(models.FieldCondition(
+                key="ocr_text",
+                match=models.MatchText(
+                    text=filter_param.ocr_text
+                )
+            ))
+
         if len(filters) == 0:
             return None
         return models.Filter(

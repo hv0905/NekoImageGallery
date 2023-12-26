@@ -28,6 +28,7 @@ class FilterParams:
         self.min_width = min_width
         self.min_height = min_height
         self.starred = starred
+        self.ocr_text = None  # For exact search
 
         if self.preferred_ratio:
             self.min_ratio = self.preferred_ratio * (1 - self.ratio_tolerance)
