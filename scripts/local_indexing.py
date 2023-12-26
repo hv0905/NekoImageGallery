@@ -4,6 +4,7 @@ from pathlib import Path
 from shutil import copy2
 from uuid import uuid4
 
+import PIL
 from PIL import Image
 from loguru import logger
 
@@ -22,10 +23,10 @@ def parse_args():
 def copy_and_index(file_path: Path) -> ImageData | None:
     try:
         img = Image.open(file_path)
-    except Exception as e:
+    except PIL.UnidentifiedImageError as e:
         logger.error("Error when opening image {}: {}", file_path, e)
         return None
-    id = uuid4()
+    image_id = uuid4()
     img_ext = file_path.suffix
     image_ocr_result = None
     text_contain_vector = None
@@ -41,8 +42,8 @@ def copy_and_index(file_path: Path) -> ImageData | None:
     except Exception as e:
         logger.error("Error when processing image {}: {}", file_path, e)
         return None
-    imgdata = ImageData(id=id,
-                        url=f'/static/{id}{img_ext}',
+    imgdata = ImageData(id=image_id,
+                        url=f'/static/{image_id}{img_ext}',
                         image_vector=image_vector,
                         text_contain_vector=text_contain_vector,
                         index_date=datetime.now(),
@@ -52,7 +53,7 @@ def copy_and_index(file_path: Path) -> ImageData | None:
                         ocr_text=image_ocr_result)
 
     # copy to static
-    copy2(file_path, Path(config.static_file.path) / f'{id}{img_ext}')
+    copy2(file_path, Path(config.static_file.path) / f'{image_id}{img_ext}')
     return imgdata
 
 
@@ -66,7 +67,7 @@ async def main(args):
     counter = 0
     for item in root.glob('**/*.*'):
         counter += 1
-        logger.info("[{}] Indexing {}", str(counter), item.relative_to(root).__str__())
+        logger.info("[{}] Indexing {}", str(counter), str(item.relative_to(root)))
         if item.suffix in ['.jpg', '.png', '.jpeg', '.jfif', '.webp']:
             imgdata = copy_and_index(item)
             if imgdata is not None:

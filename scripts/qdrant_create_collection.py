@@ -1,5 +1,6 @@
-from qdrant_client import qdrant_client, models
 import argparse
+
+from qdrant_client import qdrant_client, models
 
 
 def parsing_args():

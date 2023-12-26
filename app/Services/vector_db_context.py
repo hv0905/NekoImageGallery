@@ -30,13 +30,13 @@ class VectorDbContext:
                                         prefer_grpc=config.qdrant.prefer_grpc)
         self.collection_name = config.qdrant.coll
 
-    async def retrieve_by_id(self, id: str, with_vectors=False) -> ImageData:
-        logger.info("Retrieving item {} from database...", id)
-        result = await self.client.retrieve(collection_name=self.collection_name, ids=[id], with_payload=True,
+    async def retrieve_by_id(self, image_id: str, with_vectors=False) -> ImageData:
+        logger.info("Retrieving item {} from database...", image_id)
+        result = await self.client.retrieve(collection_name=self.collection_name, ids=[image_id], with_payload=True,
                                             with_vectors=with_vectors)
         if len(result) != 1:
             logger.error("Point not exist.")
-            raise PointNotFoundError(id)
+            raise PointNotFoundError(image_id)
         return ImageData.from_payload(result[0].id, result[0].payload,
                                       numpy.array(result[0].vector, dtype=numpy.float32) if with_vectors else None)
 
@@ -67,8 +67,8 @@ class VectorDbContext:
         _strategy = None if mode is None else (RecommendStrategy.AVERAGE_VECTOR if
                                                mode == SearchModelEnum.average else RecommendStrategy.BEST_SCORE)
         # since only combined_search need return vectors, We can define _combined_search_need_vectors like below
-        _combined_search_need_vectors = [self.IMG_VECTOR if query_vector_name == self.TEXT_VECTOR else self.IMG_VECTOR] \
-            if with_vectors else None
+        _combined_search_need_vectors = [
+            self.IMG_VECTOR if query_vector_name == self.TEXT_VECTOR else self.IMG_VECTOR] if with_vectors else None
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self.client.recommend(collection_name=self.collection_name,
                                              using=query_vector_name,
@@ -99,7 +99,7 @@ class VectorDbContext:
     async def insertItems(self, items: list[ImageData]):
         logger.info("Inserting {} items into Qdrant...", len(items))
 
-        def getPoint(img_data):
+        def get_point(img_data):
             vector = {
                 self.IMG_VECTOR: img_data.image_vector.tolist(),
             }
@@ -111,7 +111,7 @@ class VectorDbContext:
                 payload=img_data.payload
             )
 
-        points = [getPoint(t) for t in items]
+        points = [get_point(t) for t in items]
 
         response = await self.client.upsert(collection_name=self.collection_name,
                                             wait=True,
@@ -188,9 +188,8 @@ class VectorDbContext:
                 )
             ))
 
-        if len(filters) > 0:
-            return models.Filter(
-                must=filters
-            )
-        else:
+        if len(filters) == 0:
             return None
+        return models.Filter(
+            must=filters
+        )
