@@ -1,5 +1,7 @@
 # NekoImageGallery
 
+![Man hours](https://img.shields.io/endpoint?url=https%3A%2F%2Fmanhours.aiursoft.cn%2Fr%2Fgithub.com%2Fhv0905%2FNekoImageGallery.json)
+
 An online AI image search engine based on the Clip model and Qdrant vector database. Supports keyword search and similar
 image search.
 
