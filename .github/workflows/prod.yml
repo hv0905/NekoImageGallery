@@ -44,4 +44,4 @@ jobs:
           file: ${{ matrix.configurations.dockerfile }}
           push: true
           tags: ${{ matrix.configurations.tags }}
-          args: ${{ matrix.configurations.args }}
+          build-args: ${{ matrix.configurations.args }}
