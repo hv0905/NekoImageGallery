@@ -1,4 +1,6 @@
-FROM pytorch/pytorch:2.1.1-cuda12.1-cudnn8-runtime
+ARG TORCH_VERSION=2.1.2
+ARG CUDA_VERSION=12.1
+FROM pytorch/pytorch:${TORCH_VERSION}-cuda${CUDA_VERSION}-cudnn8-runtime
 
 WORKDIR /opt/NekoImageGallery
 

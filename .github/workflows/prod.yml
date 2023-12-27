@@ -20,8 +20,16 @@ jobs:
             tags: |
               edgeneko/neko-image-gallery:latest
               edgeneko/neko-image-gallery:latest-cuda
+              edgeneko/neko-image-gallery:latest-cuda12.1
+            args: |
+              CUDA_VERSION=12.1
+          - dockerfile: "Dockerfile"
+            tags: edgeneko/neko-image-gallery:latest-cuda11.8
+            args: |
+              CUDA_VERSION=11.8
           - dockerfile: "cpu-only.Dockerfile"
             tags: edgeneko/neko-image-gallery:latest-cpu
+            args: ""
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -36,3 +44,4 @@ jobs:
           file: ${{ matrix.configurations.dockerfile }}
           push: true
           tags: ${{ matrix.configurations.tags }}
+          args: ${{ matrix.configurations.args }}
