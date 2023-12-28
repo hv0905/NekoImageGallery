@@ -18,6 +18,7 @@ class ImageData(BaseModel):
     height: Optional[int] = None
     aspect_ratio: Optional[float] = None
     starred: Optional[bool] = False
+    categories: Optional[list[str]] = []
 
     @property
     def payload(self):
