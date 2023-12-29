@@ -115,9 +115,9 @@ class VectorDbContext:
 
     async def updateVectors(self, new_points: list[ImageData]):
         resp = await self._client.update_vectors(collection_name=self.collection_name,
-                                                 points=[models.PointVectors(**self._get_point_from_img_data(t)
-                                                                             .model_dump()) for t in new_points],
+                                                 points=[self._get_vector_from_img_data(t) for t in new_points],
                                                  )
+        logger.success("Update vectors completed! Status: {}", resp.status)
 
     async def scroll_points(self,
                             from_id: str | None = None,
@@ -132,16 +132,23 @@ class VectorDbContext:
         return [self._get_img_data_from_point(t) for t in resp], next_id
 
     @classmethod
-    def _get_point_from_img_data(cls, img_data: ImageData) -> models.PointStruct:
+    def _get_vector_from_img_data(cls, img_data: ImageData) -> models.PointVectors:
         vector = {}
         if img_data.image_vector is not None:
             vector[cls.IMG_VECTOR] = img_data.image_vector.tolist()
         if img_data.text_contain_vector is not None:
             vector[cls.TEXT_VECTOR] = img_data.text_contain_vector.tolist()
+        return models.PointVectors(
+            id=str(img_data.id),
+            vector=vector
+        )
+
+    @classmethod
+    def _get_point_from_img_data(cls, img_data: ImageData) -> models.PointStruct:
         return models.PointStruct(
             id=str(img_data.id),
-            vector=vector,
-            payload=img_data.payload
+            payload=img_data.payload,
+            vector=cls._get_vector_from_img_data(img_data).vector
         )
 
     @classmethod

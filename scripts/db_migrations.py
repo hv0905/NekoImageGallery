@@ -14,14 +14,17 @@ async def migrate_v1_v2():
         for point in points:
             count += 1
             logger.info("[{}] Migrating point {}", count, point.id)
+            if point.url.startswith('/'):
+                # V1 database assuming all image with '/' as begins is a local image,
+                # v2 migrate to a more strict approach
+                point.local = True
+            await db_context.updatePayload(point)  # This will also store ocr_text_lower field, if present
             if point.ocr_text is not None:
                 point.text_contain_vector = transformers_service.get_bert_vector(point.ocr_text_lower)
-            if point.url.startswith('/'):
-                point.local = True  # V1 database assuming all image with '/' as begins is a local image,
-                # v2 migrate to a more strict approach
-            await db_context.updatePayload(point)  # store the new ocr_text_lower, vector won't update currently
+
         logger.info("Updating vectors...")
-        await db_context.updateVectors(points)  # Update vectors for this group of points
+        # Update vectors for this group of points
+        await db_context.updateVectors([t for t in points if t.text_contain_vector is not None])
         if next_id is None:
             break
 
