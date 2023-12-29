@@ -26,10 +26,10 @@ async def migrate_v1_v2():
             break
 
 
-def migrate(from_version: int):
+async def migrate(from_version: int):
     match from_version:
         case 1:
-            migrate_v1_v2()
+            await migrate_v1_v2()
         case 2:
             logger.info("Already up to date.")
             pass
