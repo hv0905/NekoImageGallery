@@ -41,7 +41,7 @@ class EasyPaddleOCRService(OCRService):
             return "".join(itm[0] for itm in ocr_result if float(itm[1]) > config.ocr_search.ocr_min_confidence)
         return ""
 
-    def ocr_interface(self, img: Image.Image, need_preprocess=False) -> str:
+    def ocr_interface(self, img: Image.Image, need_preprocess=True) -> str:
         start_time = time()
         logger.info("Processing text with EasyPaddleOCR...")
         res = self._easy_paddleocr_process(self._image_preprocess(img) if need_preprocess else img)
