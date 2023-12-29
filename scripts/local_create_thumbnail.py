@@ -4,7 +4,7 @@ from pathlib import Path
 from PIL import Image
 from loguru import logger
 
-from app.Services import db_context
+from app.Services.provider import db_context
 from app.config import config
 
 

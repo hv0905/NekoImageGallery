@@ -6,8 +6,8 @@ from loguru import logger
 
 from app.Models.admin_api_model import ImageOptUpdateModel
 from app.Models.api_response.base import NekoProtocol
-from app.Services import db_context
 from app.Services.authentication import force_admin_token_verify
+from app.Services.provider import db_context
 from app.Services.vector_db_context import PointNotFoundError
 from app.config import config
 from app.util import directories

@@ -1,6 +1,6 @@
 from loguru import logger
 
-from app.Services import db_context, transformers_service
+from app.Services.provider import db_context, transformers_service
 
 CURRENT_VERSION = 2
 
