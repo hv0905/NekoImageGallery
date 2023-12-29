@@ -6,6 +6,7 @@ from loguru import logger
 
 from app.Services.provider import db_context
 from app.config import config
+from .local_utility import gather_valid_files
 
 
 async def main():
@@ -14,7 +15,7 @@ async def main():
     if not static_thumb_path.exists():
         static_thumb_path.mkdir()
     count = 0
-    for item in static_path.glob('*.*'):
+    for item in gather_valid_files(static_path, '*.*'):
         count += 1
         logger.info("[{}] Processing {}", str(count), str(item.relative_to(static_path)))
         size = item.stat().st_size
@@ -22,9 +23,6 @@ async def main():
             logger.warning("File size too small: {}. Skip...", size)
             continue
         try:
-            if item.suffix not in ['.jpg', '.png', '.jpeg']:
-                logger.warning("Unsupported file type: {}. Skip...", item.suffix)
-                continue
             if (static_thumb_path / f'{item.stem}.webp').exists():
                 logger.warning("Thumbnail for {} already exists. Skip...", item.stem)
                 continue
