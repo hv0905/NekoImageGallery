@@ -50,7 +50,8 @@ def copy_and_index(file_path: Path) -> ImageData | None:
                         width=width,
                         height=height,
                         aspect_ratio=float(width) / height,
-                        ocr_text=image_ocr_result)
+                        ocr_text=image_ocr_result,
+                        local=True)
 
     # copy to static
     copy2(file_path, Path(config.static_file.path) / f'{image_id}{img_ext}')

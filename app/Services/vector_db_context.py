@@ -4,7 +4,6 @@ import numpy
 from loguru import logger
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
-from qdrant_client.http.models import PointStruct
 from qdrant_client.models import RecommendStrategy
 
 from app.Models.api_model import SearchModelEnum, SearchBasisEnum
@@ -25,32 +24,31 @@ class VectorDbContext:
     TEXT_VECTOR = "text_contain_vector"
 
     def __init__(self):
-        self.client = AsyncQdrantClient(host=config.qdrant.host, port=config.qdrant.port,
-                                        grpc_port=config.qdrant.grpc_port, api_key=config.qdrant.api_key,
-                                        prefer_grpc=config.qdrant.prefer_grpc)
+        self._client = AsyncQdrantClient(host=config.qdrant.host, port=config.qdrant.port,
+                                         grpc_port=config.qdrant.grpc_port, api_key=config.qdrant.api_key,
+                                         prefer_grpc=config.qdrant.prefer_grpc)
         self.collection_name = config.qdrant.coll
 
     async def retrieve_by_id(self, image_id: str, with_vectors=False) -> ImageData:
         logger.info("Retrieving item {} from database...", image_id)
-        result = await self.client.retrieve(collection_name=self.collection_name, ids=[image_id], with_payload=True,
-                                            with_vectors=with_vectors)
+        result = await self._client.retrieve(collection_name=self.collection_name, ids=[image_id], with_payload=True,
+                                             with_vectors=with_vectors)
         if len(result) != 1:
             logger.error("Point not exist.")
             raise PointNotFoundError(image_id)
-        return ImageData.from_payload(result[0].id, result[0].payload,
-                                      numpy.array(result[0].vector, dtype=numpy.float32) if with_vectors else None)
+        return self._get_img_data_from_point(result[0])
 
     async def querySearch(self, query_vector, query_vector_name: str = IMG_VECTOR,
                           top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
-        result = await self.client.search(collection_name=self.collection_name,
-                                          query_vector=(query_vector_name, query_vector),
-                                          query_filter=self.getFiltersByFilterParam(filter_param),
-                                          limit=top_k,
-                                          offset=skip,
-                                          with_payload=True)
+        result = await self._client.search(collection_name=self.collection_name,
+                                           query_vector=(query_vector_name, query_vector),
+                                           query_filter=self.getFiltersByFilterParam(filter_param),
+                                           limit=top_k,
+                                           offset=skip,
+                                           with_payload=True)
         logger.success("Query completed!")
-        return [SearchResult(img=ImageData.from_payload(t.id, t.payload), score=t.score) for t in result]
+        return [self._get_search_result_from_scored_point(t) for t in result]
 
     async def querySimilar(self,
                            query_vector_name: str = IMG_VECTOR,
@@ -70,61 +68,37 @@ class VectorDbContext:
         _combined_search_need_vectors = [
             self.IMG_VECTOR if query_vector_name == self.TEXT_VECTOR else self.IMG_VECTOR] if with_vectors else None
         logger.info("Querying Qdrant... top_k = {}", top_k)
-        result = await self.client.recommend(collection_name=self.collection_name,
-                                             using=query_vector_name,
-                                             positive=_positive_vectors,
-                                             negative=_negative_vectors,
-                                             strategy=_strategy,
-                                             with_vectors=_combined_search_need_vectors,
-                                             query_filter=self.getFiltersByFilterParam(filter_param),
-                                             limit=top_k,
-                                             offset=skip,
-                                             with_payload=True)
+        result = await self._client.recommend(collection_name=self.collection_name,
+                                              using=query_vector_name,
+                                              positive=_positive_vectors,
+                                              negative=_negative_vectors,
+                                              strategy=_strategy,
+                                              with_vectors=_combined_search_need_vectors,
+                                              query_filter=self.getFiltersByFilterParam(filter_param),
+                                              limit=top_k,
+                                              offset=skip,
+                                              with_payload=True)
         logger.success("Query completed!")
 
-        def result_transform(t):
-            return SearchResult(
-                img=ImageData.from_payload(
-                    t.id,
-                    t.payload,
-                    numpy.array(t.vector['image_vector']) if t.vector and 'image_vector' in t.vector else None,
-                    numpy.array(
-                        t.vector['text_contain_vector']) if t.vector and 'text_contain_vector' in t.vector else None
-                ),
-                score=t.score
-            )
-
-        return [result_transform(t) for t in result]
+        return [self._get_search_result_from_scored_point(t) for t in result]
 
     async def insertItems(self, items: list[ImageData]):
         logger.info("Inserting {} items into Qdrant...", len(items))
 
-        def get_point(img_data):
-            vector = {
-                self.IMG_VECTOR: img_data.image_vector.tolist(),
-            }
-            if img_data.text_contain_vector is not None:
-                vector[self.TEXT_VECTOR] = img_data.text_contain_vector.tolist()
-            return PointStruct(
-                id=str(img_data.id),
-                vector=vector,
-                payload=img_data.payload
-            )
+        points = [self._get_point_from_img_data(t) for t in items]
 
-        points = [get_point(t) for t in items]
-
-        response = await self.client.upsert(collection_name=self.collection_name,
-                                            wait=True,
-                                            points=points)
+        response = await self._client.upsert(collection_name=self.collection_name,
+                                             wait=True,
+                                             points=points)
         logger.success("Insert completed! Status: {}", response.status)
 
     async def deleteItems(self, ids: list[str]):
         logger.info("Deleting {} items from Qdrant...", len(ids))
-        response = await self.client.delete(collection_name=self.collection_name,
-                                            points_selector=models.PointIdsList(
-                                                points=ids
-                                            ),
-                                            )
+        response = await self._client.delete(collection_name=self.collection_name,
+                                             points_selector=models.PointIdsList(
+                                                 points=ids
+                                             ),
+                                             )
         logger.success("Delete completed! Status: {}", response.status)
 
     async def updatePayload(self, new_data: ImageData):
@@ -133,11 +107,64 @@ class VectorDbContext:
         Warning: This method will not update the vector of the item.
         :param new_data: The new data to update.
         """
-        response = await self.client.set_payload(collection_name=self.collection_name,
-                                                 payload=new_data.payload,
-                                                 points=[str(new_data.id)],
-                                                 wait=True)
+        response = await self._client.set_payload(collection_name=self.collection_name,
+                                                  payload=new_data.payload,
+                                                  points=[str(new_data.id)],
+                                                  wait=True)
         logger.success("Update completed! Status: {}", response.status)
+
+    async def updateVectors(self, new_points: list[ImageData]):
+        resp = await self._client.update_vectors(collection_name=self.collection_name,
+                                                 points=[self._get_vector_from_img_data(t) for t in new_points],
+                                                 )
+        logger.success("Update vectors completed! Status: {}", resp.status)
+
+    async def scroll_points(self,
+                            from_id: str | None = None,
+                            count=50,
+                            with_vectors=False) -> tuple[list[ImageData], str]:
+        resp, next_id = await self._client.scroll(collection_name=self.collection_name,
+                                                  limit=count,
+                                                  offset=from_id,
+                                                  with_vectors=with_vectors
+                                                  )
+
+        return [self._get_img_data_from_point(t) for t in resp], next_id
+
+    @classmethod
+    def _get_vector_from_img_data(cls, img_data: ImageData) -> models.PointVectors:
+        vector = {}
+        if img_data.image_vector is not None:
+            vector[cls.IMG_VECTOR] = img_data.image_vector.tolist()
+        if img_data.text_contain_vector is not None:
+            vector[cls.TEXT_VECTOR] = img_data.text_contain_vector.tolist()
+        return models.PointVectors(
+            id=str(img_data.id),
+            vector=vector
+        )
+
+    @classmethod
+    def _get_point_from_img_data(cls, img_data: ImageData) -> models.PointStruct:
+        return models.PointStruct(
+            id=str(img_data.id),
+            payload=img_data.payload,
+            vector=cls._get_vector_from_img_data(img_data).vector
+        )
+
+    @classmethod
+    def _get_img_data_from_point(cls, point: models.Record | models.ScoredPoint | models.PointStruct) -> ImageData:
+        return (ImageData
+                .from_payload(point.id,
+                              point.payload,
+                              image_vector=numpy.array(point.vector[cls.IMG_VECTOR], dtype=numpy.float32)
+                              if point.vector and cls.IMG_VECTOR in point.vector else None,
+                              text_contain_vector=numpy.array(point.vector[cls.TEXT_VECTOR], dtype=numpy.float32)
+                              if point.vector and cls.TEXT_VECTOR in point.vector else None
+                              ))
+
+    @classmethod
+    def _get_search_result_from_scored_point(cls, point: models.ScoredPoint) -> SearchResult:
+        return SearchResult(img=cls._get_img_data_from_point(point), score=point.score)
 
     @classmethod
     def getVectorByBasis(cls, basis: SearchBasisEnum) -> str:

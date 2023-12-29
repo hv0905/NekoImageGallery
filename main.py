@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import collections
 
 import uvicorn
@@ -13,6 +14,9 @@ def parse_args():
                         help="Initialize qdrant database using connection settings in "
                              "config.py. When this flag is set, will not"
                              "start the server.")
+    parser.add_argument('--migrate-db', dest="migrate_from_version", type=int,
+                        help="Migrate qdrant database using connection settings in config from version specified."
+                             "When this flag is set, will not start the server.")
     parser.add_argument('--local-index', dest="local_index_target_dir", type=str,
                         help="Index all the images in this directory and copy them to "
                              "static folder set in config.py. When this flag is set, "
@@ -39,17 +43,19 @@ if __name__ == '__main__':
         qdrant_create_collection.create_coll(
             collections.namedtuple('Options', ['host', 'port', 'name'])(config.qdrant.host, config.qdrant.port,
                                                                         config.qdrant.coll))
+    elif args.migrate_from_version is not None:
+        from scripts import db_migrations
+
+        asyncio.run(db_migrations.migrate(args.migrate_from_version))
     elif args.local_index_target_dir is not None:
         from app.config import environment
 
         environment.local_indexing = True
         from scripts import local_indexing
-        import asyncio
 
         asyncio.run(local_indexing.main(args))
     elif args.local_create_thumbnail:
         from scripts import local_create_thumbnail
-        import asyncio
 
         asyncio.run(local_create_thumbnail.main())
     else:

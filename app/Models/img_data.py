@@ -3,7 +3,7 @@ from typing import Optional
 from uuid import UUID
 
 from numpy import ndarray
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 
 class ImageData(BaseModel):
@@ -19,10 +19,19 @@ class ImageData(BaseModel):
     aspect_ratio: Optional[float] = None
     starred: Optional[bool] = False
     categories: Optional[list[str]] = []
+    local: Optional[bool] = False
+
+    @computed_field()
+    @property
+    def ocr_text_lower(self) -> str | None:
+        if self.ocr_text is None:
+            return None
+        return self.ocr_text.lower()
+
 
     @property
     def payload(self):
-        result = self.model_dump(exclude={'image_vector', 'text_contain_vector', 'id', 'index_date'})
+        result = self.model_dump(exclude={'id', 'index_date'})
         # Qdrant database cannot accept datetime object, so we have to convert it to string
         result['index_date'] = self.index_date.isoformat()
         return result
