@@ -4,7 +4,6 @@ import numpy
 from loguru import logger
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
-from qdrant_client.http.models import PointStruct
 from qdrant_client.models import RecommendStrategy
 
 from app.Models.api_model import SearchModelEnum, SearchBasisEnum
@@ -86,19 +85,7 @@ class VectorDbContext:
     async def insertItems(self, items: list[ImageData]):
         logger.info("Inserting {} items into Qdrant...", len(items))
 
-        def get_point(img_data):
-            vector = {
-                self.IMG_VECTOR: img_data.image_vector.tolist(),
-            }
-            if img_data.text_contain_vector is not None:
-                vector[self.TEXT_VECTOR] = img_data.text_contain_vector.tolist()
-            return PointStruct(
-                id=str(img_data.id),
-                vector=vector,
-                payload=img_data.payload
-            )
-
-        points = [get_point(t) for t in items]
+        points = [self._get_point_from_img_data(t) for t in items]
 
         response = await self._client.upsert(collection_name=self.collection_name,
                                              wait=True,
@@ -126,14 +113,36 @@ class VectorDbContext:
                                                   wait=True)
         logger.success("Update completed! Status: {}", response.status)
 
-    async def scrollPoints(self, from_id: str, count=50, with_vectors=False):
+    async def updateVectors(self, new_points: list[ImageData]):
+        resp = await self._client.update_vectors(collection_name=self.collection_name,
+                                                 points=[models.PointVectors(**self._get_point_from_img_data(t)
+                                                                             .model_dump()) for t in new_points],
+                                                 )
+
+    async def scroll_points(self,
+                            from_id: str | None = None,
+                            count=50,
+                            with_vectors=False) -> tuple[list[ImageData], str]:
         resp, next_id = await self._client.scroll(collection_name=self.collection_name,
                                                   limit=count,
                                                   offset=from_id,
                                                   with_vectors=with_vectors
                                                   )
 
-        return [self._get_img_data_from_point(t) for t in resp]
+        return [self._get_img_data_from_point(t) for t in resp], next_id
+
+    @classmethod
+    def _get_point_from_img_data(cls, img_data: ImageData) -> models.PointStruct:
+        vector = {}
+        if img_data.image_vector is not None:
+            vector[cls.IMG_VECTOR] = img_data.image_vector.tolist()
+        if img_data.text_contain_vector is not None:
+            vector[cls.TEXT_VECTOR] = img_data.text_contain_vector.tolist()
+        return models.PointStruct(
+            id=str(img_data.id),
+            vector=vector,
+            payload=img_data.payload
+        )
 
     @classmethod
     def _get_img_data_from_point(cls, point: models.Record | models.ScoredPoint | models.PointStruct) -> ImageData:
