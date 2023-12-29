@@ -7,9 +7,7 @@ from app.config import config
 
 
 def verify_access_token(token: str | None) -> bool:
-    if not config.access_protected:
-        return True
-    return token is not None and token == config.access_token
+    return (not config.access_protected) or (token is not None and token == config.access_token)
 
 
 def permissive_access_token_verify(

@@ -1,0 +1,4 @@
+# Requirements for development and testing
+
+pytest
+pylint
