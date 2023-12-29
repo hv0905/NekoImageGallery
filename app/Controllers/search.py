@@ -11,9 +11,8 @@ from app.Models.api_model import AdvancedSearchModel, CombinedSearchModel, Searc
 from app.Models.api_response.search_api_response import SearchApiResponse
 from app.Models.query_params import SearchPagingParams, FilterParams
 from app.Models.search_result import SearchResult
-from app.Services import db_context
-from app.Services import transformers_service
 from app.Services.authentication import force_access_token_verify
+from app.Services.provider import db_context, transformers_service
 from app.config import config
 from app.util.calculate_vectors_cosine import calculate_vectors_cosine
 

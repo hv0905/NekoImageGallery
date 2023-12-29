@@ -18,6 +18,7 @@ class ImageData(BaseModel):
     height: Optional[int] = None
     aspect_ratio: Optional[float] = None
     starred: Optional[bool] = False
+    categories: Optional[list[str]] = []
     local: Optional[bool] = False
 
     @computed_field()
@@ -26,6 +27,7 @@ class ImageData(BaseModel):
         if self.ocr_text is None:
             return None
         return self.ocr_text.lower()
+
 
     @property
     def payload(self):
