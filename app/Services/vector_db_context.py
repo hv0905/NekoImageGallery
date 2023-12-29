@@ -217,9 +217,9 @@ class VectorDbContext:
 
         if filter_param.ocr_text is not None:
             filters.append(models.FieldCondition(
-                key="ocr_text",
+                key="ocr_text_lower",
                 match=models.MatchText(
-                    text=filter_param.ocr_text
+                    text=filter_param.ocr_text.lower()
                 )
             ))
 

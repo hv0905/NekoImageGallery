@@ -69,7 +69,7 @@ async def main(args):
     for item in root.glob('**/*.*'):
         counter += 1
         logger.info("[{}] Indexing {}", str(counter), str(item.relative_to(root)))
-        if item.suffix in ['.jpg', '.png', '.jpeg', '.jfif', '.webp']:
+        if item.suffix in ['.jpg', '.png', '.jpeg', '.jfif', '.webp', '.gif']:
             imgdata = copy_and_index(item)
             if imgdata is not None:
                 buffer.append(imgdata)
