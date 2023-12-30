@@ -2,31 +2,34 @@ from datetime import datetime
 from pathlib import Path
 from shutil import copy2
 
+import uuid
 import PIL
 from PIL import Image
 from loguru import logger
 
 from app.Models.img_data import ImageData
-from app.Services.provider import index_service
+from app.Services.provider import index_service, db_context
+from app.Services.vector_db_context import PointNotFoundError
 from app.config import config
 from app.util import generate_uuid
-from .local_utility import gather_valid_files
+from .local_utility import gather_valid_files, fetch_path_uuid_list
 
 
-async def copy_and_index(file_path: Path):
+async def copy_and_index(file_path: Path, uuid_str: str = None):
     try:
         img = Image.open(file_path)
     except PIL.UnidentifiedImageError as e:
         logger.error("Error when opening image {}: {}", file_path, e)
         return
-    image_id = generate_uuid.generate(file_path)
+    image_id = uuid.UUID(uuid_str) if uuid_str else generate_uuid.generate(file_path)
     img_ext = file_path.suffix
     imgdata = ImageData(id=image_id,
                         url=f'/static/{image_id}{img_ext}',
                         index_date=datetime.now(),
                         local=True)
     try:
-        await index_service.index_image(img, imgdata)
+        # This has already been checked for duplicated, so there's no need to double-check.
+        await index_service.index_image(img, imgdata, allow_overwrite=True)
     except Exception as e:
         logger.error("Error when processing image {}: {}", file_path, e)
         return
@@ -34,14 +37,45 @@ async def copy_and_index(file_path: Path):
     copy2(file_path, Path(config.static_file.path) / f'{image_id}{img_ext}')
 
 
+async def copy_and_index_batch(file_path_list: list[tuple[Path, str]]):
+    for file_path_uuid_tuple in file_path_list:
+        await copy_and_index(file_path_uuid_tuple[0], uuid_str=file_path_uuid_tuple[1])
+
+
 @logger.catch()
 async def main(args):
     root = Path(args.local_index_target_dir)
     static_path = Path(config.static_file.path)
     static_path.mkdir(exist_ok=True)
-    counter = 0
-    for item in gather_valid_files(root):
-        counter += 1
-        logger.info("[{}] Indexing {}", str(counter), str(item.relative_to(root)))
-        await copy_and_index(item)
+    # First, check if the database is empty
+    item_number, counter = await db_context.get_counts(exact=False), 0
+    if item_number == 0:
+        # database is empty, do as usual
+        logger.warning("The database is empty, Will not check for duplicate points.")
+        for item in gather_valid_files(root):
+            counter += 1
+            logger.info("[{}] Indexing {}", str(counter), str(item.relative_to(root)))
+            await copy_and_index(item)
+    else:
+        # database is not empty, check for duplicate points
+        logger.warning("The database is not empty, Will check for duplicate points.")
+        for itm in gather_valid_files(root, max_files=5000):
+            counter += len(itm)
+            local_file_path_with_uuid_list = fetch_path_uuid_list(itm)
+            local_file_uuid_list = [itm[1] for itm in local_file_path_with_uuid_list]
+            try:
+                query_result = await db_context.retrieve_by_ids(local_file_uuid_list)
+                duplicate_uuid_list = [str(itm.id) for itm in query_result]
+            except PointNotFoundError:
+                duplicate_uuid_list = []
+            if len(duplicate_uuid_list) > 0:
+                duplicate_uuid_list = set(duplicate_uuid_list)
+                filtered_list = [item for item in local_file_path_with_uuid_list if item[1] not in duplicate_uuid_list]
+                logger.info("Found {} duplicate points. {} items left.",
+                            len(itm) - len(filtered_list), len(filtered_list))
+                await copy_and_index_batch(filtered_list)
+            else:
+                logger.info("Found {} duplicate points. {} items left.", 0, len(local_file_path_with_uuid_list))
+                await copy_and_index_batch(local_file_path_with_uuid_list)
+
     logger.success("Indexing completed! {} images indexed", counter)

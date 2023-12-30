@@ -40,10 +40,10 @@ class VectorDbContext:
         return self._get_img_data_from_point(result[0])
 
     async def retrieve_by_ids(self, image_id: list[str], with_vectors=False) -> list[ImageData]:
-        logger.info("Retrieving {}items from database...", image_id)
-        result = await self._client.retrieve(collection_name=self.collection_name, ids=[image_id], with_payload=True,
+        logger.info("Retrieving {} items from database...", len(image_id))
+        result = await self._client.retrieve(collection_name=self.collection_name, ids=image_id, with_payload=True,
                                              with_vectors=with_vectors)
-        if len(result) != 0:
+        if len(result) == 0:
             logger.error("All the dots don't exist.")
             raise PointNotFoundError("all")
         return self._get_img_data_from_points(result)
@@ -140,6 +140,10 @@ class VectorDbContext:
                                                   )
 
         return [self._get_img_data_from_point(t) for t in resp], next_id
+
+    async def get_counts(self, exact: bool) -> int:
+        resp = await self._client.count(collection_name=self.collection_name, exact=exact)
+        return resp.count
 
     @classmethod
     def _get_vector_from_img_data(cls, img_data: ImageData) -> models.PointVectors:

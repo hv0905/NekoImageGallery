@@ -42,14 +42,14 @@ class IndexService:
         return False
 
     async def index_image(self, image: Image.Image, image_data: ImageData, skip_ocr=False, allow_overwrite=False):
-        if not allow_overwrite or (await self._is_point_duplicate([image_data])):
+        if not allow_overwrite and (await self._is_point_duplicate([image_data])):
             raise PointDuplicateError("The uploaded points are contained in the database!")
         self._prepare_image(image, image_data, skip_ocr)
         await self._db_context.insertItems([image_data])
 
     async def index_image_batch(self, image: list[Image.Image], image_data: list[ImageData],
                                 skip_ocr=False, allow_overwrite=False):
-        if not allow_overwrite or (await self._is_point_duplicate(image_data)):
+        if not allow_overwrite and (await self._is_point_duplicate(image_data)):
             raise PointDuplicateError("The uploaded points are contained in the database!")
         for i, img in enumerate(image):
             self._prepare_image(img, image_data[i], skip_ocr)
