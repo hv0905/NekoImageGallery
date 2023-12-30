@@ -3,8 +3,12 @@ from PIL import Image
 from app.Models.img_data import ImageData
 from app.Services.ocr_services import OCRService
 from app.Services.transformers_service import TransformersService
-from app.Services.vector_db_context import VectorDbContext
+from app.Services.vector_db_context import VectorDbContext, PointNotFoundError
 from app.config import config
+
+
+class PointDuplicateError(ValueError):
+    pass
 
 
 class IndexService:
@@ -28,11 +32,25 @@ class IndexService:
             else:
                 image_data.ocr_text = None
 
-    async def index_image(self, image: Image.Image, image_data: ImageData, skip_ocr=False):
+    # currently, here only need just a simple check
+    async def _is_point_duplicate(self, image_data: list[ImageData]) -> bool:
+        image_id_list = [str(item.id) for item in image_data]
+        try:
+            _ = await self._db_context.retrieve_by_ids(image_id_list)
+        except PointNotFoundError:
+            return True  # Only if all points are not found, then it is not duplicate
+        return False
+
+    async def index_image(self, image: Image.Image, image_data: ImageData, skip_ocr=False, allow_overwrite=False):
+        if not allow_overwrite or (await self._is_point_duplicate([image_data])):
+            raise PointDuplicateError("The uploaded points are contained in the database!")
         self._prepare_image(image, image_data, skip_ocr)
         await self._db_context.insertItems([image_data])
 
-    async def index_image_batch(self, image: list[Image.Image], image_data: list[ImageData], skip_ocr=False):
-        for i in range(len(image)):
-            self._prepare_image(image[i], image_data[i], skip_ocr)
+    async def index_image_batch(self, image: list[Image.Image], image_data: list[ImageData],
+                                skip_ocr=False, allow_overwrite=False):
+        if not allow_overwrite or (await self._is_point_duplicate(image_data)):
+            raise PointDuplicateError("The uploaded points are contained in the database!")
+        for i, img in enumerate(image):
+            self._prepare_image(img, image_data[i], skip_ocr)
         await self._db_context.insertItems(image_data)

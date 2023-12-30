@@ -22,6 +22,7 @@ class PointNotFoundError(ValueError):
 class VectorDbContext:
     IMG_VECTOR = "image_vector"
     TEXT_VECTOR = "text_contain_vector"
+    AVAILABLE_POINT_TYPES = models.Record | models.ScoredPoint | models.PointStruct
 
     def __init__(self):
         self._client = AsyncQdrantClient(host=config.qdrant.host, port=config.qdrant.port,
@@ -37,6 +38,15 @@ class VectorDbContext:
             logger.error("Point not exist.")
             raise PointNotFoundError(image_id)
         return self._get_img_data_from_point(result[0])
+
+    async def retrieve_by_ids(self, image_id: list[str], with_vectors=False) -> list[ImageData]:
+        logger.info("Retrieving {}items from database...", image_id)
+        result = await self._client.retrieve(collection_name=self.collection_name, ids=[image_id], with_payload=True,
+                                             with_vectors=with_vectors)
+        if len(result) != 0:
+            logger.error("All the dots don't exist.")
+            raise PointNotFoundError("all")
+        return self._get_img_data_from_points(result)
 
     async def querySearch(self, query_vector, query_vector_name: str = IMG_VECTOR,
                           top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[SearchResult]:
@@ -152,7 +162,7 @@ class VectorDbContext:
         )
 
     @classmethod
-    def _get_img_data_from_point(cls, point: models.Record | models.ScoredPoint | models.PointStruct) -> ImageData:
+    def _get_img_data_from_point(cls, point: AVAILABLE_POINT_TYPES) -> ImageData:
         return (ImageData
                 .from_payload(point.id,
                               point.payload,
@@ -161,6 +171,10 @@ class VectorDbContext:
                               text_contain_vector=numpy.array(point.vector[cls.TEXT_VECTOR], dtype=numpy.float32)
                               if point.vector and cls.TEXT_VECTOR in point.vector else None
                               ))
+
+    @classmethod
+    def _get_img_data_from_points(cls, points: list[AVAILABLE_POINT_TYPES]) -> list[ImageData]:
+        return [cls._get_img_data_from_point(t) for t in points]
 
     @classmethod
     def _get_search_result_from_scored_point(cls, point: models.ScoredPoint) -> SearchResult:
