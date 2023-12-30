@@ -1,7 +1,6 @@
 from datetime import datetime
 from pathlib import Path
 from shutil import copy2
-from uuid import uuid4
 
 import PIL
 from PIL import Image
@@ -10,6 +9,7 @@ from loguru import logger
 from app.Models.img_data import ImageData
 from app.Services.provider import index_service
 from app.config import config
+from app.util import generate_uuid
 from .local_utility import gather_valid_files
 
 
@@ -19,7 +19,7 @@ async def copy_and_index(file_path: Path):
     except PIL.UnidentifiedImageError as e:
         logger.error("Error when opening image {}: {}", file_path, e)
         return
-    image_id = uuid4()
+    image_id = generate_uuid.generate(file_path)
     img_ext = file_path.suffix
     imgdata = ImageData(id=image_id,
                         url=f'/static/{image_id}{img_ext}',
