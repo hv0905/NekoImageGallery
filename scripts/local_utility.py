@@ -18,12 +18,14 @@ def gather_valid_files(root: Path, pattern: str = '**/*.*', max_files=None):
 
     def generator():
         gen = file_generator()
-        batch_size = 1 if max_files is None else max_files  # Make sure the return type is always list[pathlib.Path]
-        while True:
-            batch = list(itertools.islice(gen, batch_size))
-            if not batch:
-                break
-            yield batch
+        if max_files is None:
+            yield from gen
+        else:
+            while True:
+                batch = list(itertools.islice(gen, max_files))
+                if not batch:
+                    break
+                yield batch
 
     return generator()
 

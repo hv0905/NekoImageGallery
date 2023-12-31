@@ -64,6 +64,19 @@ class VectorDbContext:
                                              with_vectors=with_vectors)
         return self._get_img_data_from_points(result)
 
+    async def validate_ids(self, image_id: list[str]) -> list[str]:
+        """
+        Validate a list of IDs. Will return a list of valid IDs.
+        :param image_id: The list of IDs to validate.
+        :return: The list of valid IDs.
+        """
+        logger.info("Validating {} items from database...", len(image_id))
+        result = await self._client.retrieve(collection_name=self.collection_name,
+                                             ids=image_id,
+                                             with_payload=False,
+                                             with_vectors=False)
+        return [t.id for t in result]
+
     async def querySearch(self, query_vector, query_vector_name: str = IMG_VECTOR,
                           top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)

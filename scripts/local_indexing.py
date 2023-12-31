@@ -64,8 +64,7 @@ async def main(args):
         for itm in gather_valid_files(root, max_files=5000):
             local_file_path_with_uuid_list = fetch_path_uuid_list(itm)
             local_file_uuid_list = [itm[1] for itm in local_file_path_with_uuid_list]
-            query_result = await db_context.retrieve_by_ids(local_file_uuid_list, with_payload=False)
-            duplicate_uuid_list = [str(itm.id) for itm in query_result]
+            duplicate_uuid_list = await db_context.validate_ids(local_file_uuid_list)
             if len(duplicate_uuid_list) > 0:
                 duplicate_uuid_list = set(duplicate_uuid_list)
                 local_file_path_with_uuid_list = [item for item in local_file_path_with_uuid_list
