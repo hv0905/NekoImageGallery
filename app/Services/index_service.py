@@ -48,6 +48,6 @@ class IndexService:
                                 skip_ocr=False, allow_overwrite=False):
         if not allow_overwrite and (await self._is_point_duplicate(image_data)):
             raise PointDuplicateError("The uploaded points are contained in the database!")
-        for i, img in enumerate(image):
-            self._prepare_image(img, image_data[i], skip_ocr)
+        for img, img_data in zip(image, image_data):
+            self._prepare_image(img, img_data, skip_ocr)
         await self._db_context.insertItems(image_data)
