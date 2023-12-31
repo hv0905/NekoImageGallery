@@ -69,10 +69,14 @@ async def main(args):
                 duplicate_uuid_list = set(duplicate_uuid_list)
                 local_file_path_with_uuid_list = [item for item in local_file_path_with_uuid_list
                                                   if item[1] not in duplicate_uuid_list]
-                logger.info("Found {} duplicate points. {} items left.",
-                            len(duplicate_uuid_list), len(local_file_path_with_uuid_list))
+                logger.info("Found {} duplicate points, of which {} are duplicates in the database. "
+                            "The remaining {} points will be indexed.",
+                            len(itm) - len(local_file_path_with_uuid_list), len(duplicate_uuid_list),
+                            len(local_file_path_with_uuid_list))
             else:
-                logger.info("Found {} duplicate points. {} items left.", 0, len(local_file_path_with_uuid_list))
+                logger.info("Found {} duplicate points, of which {} are duplicates in the database."
+                            " The remaining {} points will be indexed.",
+                            0, 0, len(local_file_path_with_uuid_list))
             await copy_and_index_batch(local_file_path_with_uuid_list)
 
     logger.success("Indexing completed! {} images indexed", overall_count)
