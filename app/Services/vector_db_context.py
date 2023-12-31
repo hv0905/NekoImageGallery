@@ -49,8 +49,8 @@ class VectorDbContext:
 
     async def retrieve_by_ids(self, image_id: list[str], with_vectors=False) -> list[ImageData]:
         """
-        Retrieve items from database by ids. When a given ID doesn't exist, it will be ignored in the result list.
-        Will Return an empty list if all given IDs don't exist.
+        Retrieve items from the database by IDs.
+        An exception is thrown if there are items in the IDs that do not exist in the database.
         :param image_id: The list of IDs to retrieve.
         :param with_vectors: Whether to retrieve vectors.
         :return: The list of retrieved items.
@@ -60,10 +60,10 @@ class VectorDbContext:
                                              ids=image_id,
                                              with_payload=True,
                                              with_vectors=with_vectors)
-        if len(image_id) != len(result):
-            logger.error("{} points not exist.", len(image_id) - len(result))
-            result_point_ids = {t.id for t in result}
-            missing_point_ids = set(image_id) - result_point_ids
+        result_point_ids = {t.id for t in result}
+        missing_point_ids = set(image_id) - result_point_ids
+        if len(missing_point_ids) > 0:
+            logger.error("{} points not exist.", len(missing_point_ids))
             raise PointNotFoundError(str(missing_point_ids))
         return self._get_img_data_from_points(result)
 
