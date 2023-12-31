@@ -39,13 +39,12 @@ class VectorDbContext:
             raise PointNotFoundError(image_id)
         return self._get_img_data_from_point(result[0])
 
-    async def retrieve_by_ids(self, image_id: list[str], with_vectors=False) -> list[ImageData]:
+    async def retrieve_by_ids(self, image_id: list[str], with_vectors=False, with_payload=True) -> list[ImageData]:
         logger.info("Retrieving {} items from database...", len(image_id))
-        result = await self._client.retrieve(collection_name=self.collection_name, ids=image_id, with_payload=True,
+        result = await self._client.retrieve(collection_name=self.collection_name,
+                                             ids=image_id,
+                                             with_payload=with_payload,
                                              with_vectors=with_vectors)
-        if len(result) == 0:
-            logger.error("All the dots don't exist.")
-            raise PointNotFoundError("all")
         return self._get_img_data_from_points(result)
 
     async def querySearch(self, query_vector, query_vector_name: str = IMG_VECTOR,

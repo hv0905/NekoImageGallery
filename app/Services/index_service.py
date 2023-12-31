@@ -3,7 +3,7 @@ from PIL import Image
 from app.Models.img_data import ImageData
 from app.Services.ocr_services import OCRService
 from app.Services.transformers_service import TransformersService
-from app.Services.vector_db_context import VectorDbContext, PointNotFoundError
+from app.Services.vector_db_context import VectorDbContext
 from app.config import config
 
 
@@ -35,11 +35,8 @@ class IndexService:
     # currently, here only need just a simple check
     async def _is_point_duplicate(self, image_data: list[ImageData]) -> bool:
         image_id_list = [str(item.id) for item in image_data]
-        try:
-            _ = await self._db_context.retrieve_by_ids(image_id_list)
-        except PointNotFoundError:
-            return True  # Only if all points are not found, then it is not duplicate
-        return False
+        result = await self._db_context.retrieve_by_ids(image_id_list, with_payload=False)
+        return len(result) != 0
 
     async def index_image(self, image: Image.Image, image_data: ImageData, skip_ocr=False, allow_overwrite=False):
         if not allow_overwrite and (await self._is_point_duplicate([image_data])):

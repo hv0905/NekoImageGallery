@@ -1,15 +1,14 @@
+import uuid
 from datetime import datetime
 from pathlib import Path
 from shutil import copy2
 
-import uuid
 import PIL
 from PIL import Image
 from loguru import logger
 
 from app.Models.img_data import ImageData
 from app.Services.provider import index_service, db_context
-from app.Services.vector_db_context import PointNotFoundError
 from app.config import config
 from app.util import generate_uuid
 from .local_utility import gather_valid_files, fetch_path_uuid_list
@@ -63,19 +62,16 @@ async def main(args):
             counter += len(itm)
             local_file_path_with_uuid_list = fetch_path_uuid_list(itm)
             local_file_uuid_list = [itm[1] for itm in local_file_path_with_uuid_list]
-            try:
-                query_result = await db_context.retrieve_by_ids(local_file_uuid_list)
-                duplicate_uuid_list = [str(itm.id) for itm in query_result]
-            except PointNotFoundError:
-                duplicate_uuid_list = []
+            query_result = await db_context.retrieve_by_ids(local_file_uuid_list, with_payload=False)
+            duplicate_uuid_list = [str(itm.id) for itm in query_result]
             if len(duplicate_uuid_list) > 0:
                 duplicate_uuid_list = set(duplicate_uuid_list)
-                filtered_list = [item for item in local_file_path_with_uuid_list if item[1] not in duplicate_uuid_list]
+                local_file_path_with_uuid_list = [item for item in local_file_path_with_uuid_list
+                                                  if item[1] not in duplicate_uuid_list]
                 logger.info("Found {} duplicate points. {} items left.",
-                            len(itm) - len(filtered_list), len(filtered_list))
-                await copy_and_index_batch(filtered_list)
+                            len(duplicate_uuid_list), len(local_file_path_with_uuid_list))
             else:
                 logger.info("Found {} duplicate points. {} items left.", 0, len(local_file_path_with_uuid_list))
-                await copy_and_index_batch(local_file_path_with_uuid_list)
+            await copy_and_index_batch(local_file_path_with_uuid_list)
 
     logger.success("Indexing completed! {} images indexed", counter)
