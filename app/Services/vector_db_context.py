@@ -30,37 +30,35 @@ class VectorDbContext:
                                          prefer_grpc=config.qdrant.prefer_grpc)
         self.collection_name = config.qdrant.coll
 
-    async def retrieve_by_id(self, image_id: str, with_vectors=False, with_payload=True) -> ImageData:
+    async def retrieve_by_id(self, image_id: str, with_vectors=False) -> ImageData:
         """
         Retrieve an item from database by id. Will raise PointNotFoundError if the given ID doesn't exist.
         :param image_id: The ID to retrieve.
         :param with_vectors: Whether to retrieve vectors.
-        :param with_payload: Whether to retrieve payload.
         :return: The retrieved item.
         """
         logger.info("Retrieving item {} from database...", image_id)
         result = await self._client.retrieve(collection_name=self.collection_name,
                                              ids=[image_id],
-                                             with_payload=with_payload,
+                                             with_payload=True,
                                              with_vectors=with_vectors)
         if len(result) != 1:
             logger.error("Point not exist.")
             raise PointNotFoundError(image_id)
         return self._get_img_data_from_point(result[0])
 
-    async def retrieve_by_ids(self, image_id: list[str], with_vectors=False, with_payload=True) -> list[ImageData]:
+    async def retrieve_by_ids(self, image_id: list[str], with_vectors=False) -> list[ImageData]:
         """
         Retrieve items from database by ids. When a given ID doesn't exist, it will be ignored in the result list.
         Will Return an empty list if all given IDs don't exist.
         :param image_id: The list of IDs to retrieve.
         :param with_vectors: Whether to retrieve vectors.
-        :param with_payload: Whether to retrieve payload.
         :return: The list of retrieved items.
         """
         logger.info("Retrieving {} items from database...", len(image_id))
         result = await self._client.retrieve(collection_name=self.collection_name,
                                              ids=image_id,
-                                             with_payload=with_payload,
+                                             with_payload=True,
                                              with_vectors=with_vectors)
         return self._get_img_data_from_points(result)
 

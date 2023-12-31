@@ -35,7 +35,7 @@ class IndexService:
     # currently, here only need just a simple check
     async def _is_point_duplicate(self, image_data: list[ImageData]) -> bool:
         image_id_list = [str(item.id) for item in image_data]
-        result = await self._db_context.retrieve_by_ids(image_id_list, with_payload=False)
+        result = await self._db_context.validate_ids(image_id_list)
         return len(result) != 0
 
     async def index_image(self, image: Image.Image, image_data: ImageData, skip_ocr=False, allow_overwrite=False):
