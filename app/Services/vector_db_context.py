@@ -22,6 +22,7 @@ class PointNotFoundError(ValueError):
 class VectorDbContext:
     IMG_VECTOR = "image_vector"
     TEXT_VECTOR = "text_contain_vector"
+    AVAILABLE_POINT_TYPES = models.Record | models.ScoredPoint | models.PointStruct
 
     def __init__(self):
         self._client = AsyncQdrantClient(host=config.qdrant.host, port=config.qdrant.port,
@@ -30,13 +31,54 @@ class VectorDbContext:
         self.collection_name = config.qdrant.coll
 
     async def retrieve_by_id(self, image_id: str, with_vectors=False) -> ImageData:
+        """
+        Retrieve an item from database by id. Will raise PointNotFoundError if the given ID doesn't exist.
+        :param image_id: The ID to retrieve.
+        :param with_vectors: Whether to retrieve vectors.
+        :return: The retrieved item.
+        """
         logger.info("Retrieving item {} from database...", image_id)
-        result = await self._client.retrieve(collection_name=self.collection_name, ids=[image_id], with_payload=True,
+        result = await self._client.retrieve(collection_name=self.collection_name,
+                                             ids=[image_id],
+                                             with_payload=True,
                                              with_vectors=with_vectors)
         if len(result) != 1:
             logger.error("Point not exist.")
             raise PointNotFoundError(image_id)
         return self._get_img_data_from_point(result[0])
+
+    async def retrieve_by_ids(self, image_id: list[str], with_vectors=False) -> list[ImageData]:
+        """
+        Retrieve items from the database by IDs.
+        An exception is thrown if there are items in the IDs that do not exist in the database.
+        :param image_id: The list of IDs to retrieve.
+        :param with_vectors: Whether to retrieve vectors.
+        :return: The list of retrieved items.
+        """
+        logger.info("Retrieving {} items from database...", len(image_id))
+        result = await self._client.retrieve(collection_name=self.collection_name,
+                                             ids=image_id,
+                                             with_payload=True,
+                                             with_vectors=with_vectors)
+        result_point_ids = {t.id for t in result}
+        missing_point_ids = set(image_id) - result_point_ids
+        if len(missing_point_ids) > 0:
+            logger.error("{} points not exist.", len(missing_point_ids))
+            raise PointNotFoundError(str(missing_point_ids))
+        return self._get_img_data_from_points(result)
+
+    async def validate_ids(self, image_id: list[str]) -> list[str]:
+        """
+        Validate a list of IDs. Will return a list of valid IDs.
+        :param image_id: The list of IDs to validate.
+        :return: The list of valid IDs.
+        """
+        logger.info("Validating {} items from database...", len(image_id))
+        result = await self._client.retrieve(collection_name=self.collection_name,
+                                             ids=image_id,
+                                             with_payload=False,
+                                             with_vectors=False)
+        return [t.id for t in result]
 
     async def querySearch(self, query_vector, query_vector_name: str = IMG_VECTOR,
                           top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[SearchResult]:
@@ -131,6 +173,10 @@ class VectorDbContext:
 
         return [self._get_img_data_from_point(t) for t in resp], next_id
 
+    async def get_counts(self, exact: bool) -> int:
+        resp = await self._client.count(collection_name=self.collection_name, exact=exact)
+        return resp.count
+
     @classmethod
     def _get_vector_from_img_data(cls, img_data: ImageData) -> models.PointVectors:
         vector = {}
@@ -152,7 +198,7 @@ class VectorDbContext:
         )
 
     @classmethod
-    def _get_img_data_from_point(cls, point: models.Record | models.ScoredPoint | models.PointStruct) -> ImageData:
+    def _get_img_data_from_point(cls, point: AVAILABLE_POINT_TYPES) -> ImageData:
         return (ImageData
                 .from_payload(point.id,
                               point.payload,
@@ -161,6 +207,10 @@ class VectorDbContext:
                               text_contain_vector=numpy.array(point.vector[cls.TEXT_VECTOR], dtype=numpy.float32)
                               if point.vector and cls.TEXT_VECTOR in point.vector else None
                               ))
+
+    @classmethod
+    def _get_img_data_from_points(cls, points: list[AVAILABLE_POINT_TYPES]) -> list[ImageData]:
+        return [cls._get_img_data_from_point(t) for t in points]
 
     @classmethod
     def _get_search_result_from_scored_point(cls, point: models.ScoredPoint) -> SearchResult:

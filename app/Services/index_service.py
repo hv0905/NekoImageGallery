@@ -7,6 +7,10 @@ from app.Services.vector_db_context import VectorDbContext
 from app.config import config
 
 
+class PointDuplicateError(ValueError):
+    pass
+
+
 class IndexService:
     def __init__(self, ocr_service: OCRService, transformers_service: TransformersService, db_context: VectorDbContext):
         self._ocr_service = ocr_service
@@ -28,11 +32,22 @@ class IndexService:
             else:
                 image_data.ocr_text = None
 
-    async def index_image(self, image: Image.Image, image_data: ImageData, skip_ocr=False):
+    # currently, here only need just a simple check
+    async def _is_point_duplicate(self, image_data: list[ImageData]) -> bool:
+        image_id_list = [str(item.id) for item in image_data]
+        result = await self._db_context.validate_ids(image_id_list)
+        return len(result) != 0
+
+    async def index_image(self, image: Image.Image, image_data: ImageData, skip_ocr=False, allow_overwrite=False):
+        if not allow_overwrite and (await self._is_point_duplicate([image_data])):
+            raise PointDuplicateError("The uploaded points are contained in the database!")
         self._prepare_image(image, image_data, skip_ocr)
         await self._db_context.insertItems([image_data])
 
-    async def index_image_batch(self, image: list[Image.Image], image_data: list[ImageData], skip_ocr=False):
-        for i in range(len(image)):
-            self._prepare_image(image[i], image_data[i], skip_ocr)
+    async def index_image_batch(self, image: list[Image.Image], image_data: list[ImageData],
+                                skip_ocr=False, allow_overwrite=False):
+        if not allow_overwrite and (await self._is_point_duplicate(image_data)):
+            raise PointDuplicateError("The uploaded points are contained in the database!")
+        for img, img_data in zip(image, image_data):
+            self._prepare_image(img, img_data, skip_ocr)
         await self._db_context.insertItems(image_data)
