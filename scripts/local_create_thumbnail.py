@@ -15,7 +15,7 @@ async def main():
     if not static_thumb_path.exists():
         static_thumb_path.mkdir()
     count = 0
-    for [item] in gather_valid_files(static_path, '*.*'):
+    for item in gather_valid_files(static_path, '*.*'):
         count += 1
         logger.info("[{}] Processing {}", str(count), str(item.relative_to(static_path)))
         size = item.stat().st_size
