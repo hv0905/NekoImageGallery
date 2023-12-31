@@ -13,8 +13,13 @@ from app.config import config
 from app.util import generate_uuid
 from .local_utility import gather_valid_files, fetch_path_uuid_list
 
+overall_count = 0
+
 
 async def copy_and_index(file_path: Path, uuid_str: str = None):
+    global overall_count
+    overall_count += 1
+    logger.info("[{}] Indexing {}", str(overall_count), str(file_path))
     try:
         img = Image.open(file_path)
     except PIL.UnidentifiedImageError as e:
@@ -47,19 +52,16 @@ async def main(args):
     static_path = Path(config.static_file.path)
     static_path.mkdir(exist_ok=True)
     # First, check if the database is empty
-    item_number, counter = await db_context.get_counts(exact=False), 0
+    item_number = await db_context.get_counts(exact=False)
     if item_number == 0:
         # database is empty, do as usual
         logger.warning("The database is empty, Will not check for duplicate points.")
         for item in gather_valid_files(root):
-            counter += 1
-            logger.info("[{}] Indexing {}", str(counter), str(item.relative_to(root)))
             await copy_and_index(item)
     else:
         # database is not empty, check for duplicate points
         logger.warning("The database is not empty, Will check for duplicate points.")
         for itm in gather_valid_files(root, max_files=5000):
-            counter += len(itm)
             local_file_path_with_uuid_list = fetch_path_uuid_list(itm)
             local_file_uuid_list = [itm[1] for itm in local_file_path_with_uuid_list]
             query_result = await db_context.retrieve_by_ids(local_file_uuid_list, with_payload=False)
@@ -74,4 +76,4 @@ async def main(args):
                 logger.info("Found {} duplicate points. {} items left.", 0, len(local_file_path_with_uuid_list))
             await copy_and_index_batch(local_file_path_with_uuid_list)
 
-    logger.success("Indexing completed! {} images indexed", counter)
+    logger.success("Indexing completed! {} images indexed", overall_count)
