@@ -60,6 +60,11 @@ class VectorDbContext:
                                              ids=image_id,
                                              with_payload=True,
                                              with_vectors=with_vectors)
+        if len(image_id) != len(result):
+            logger.error("{} points not exist.", len(image_id) - len(result))
+            result_point_ids = {t.id for t in result}
+            missing_point_ids = set(image_id) - result_point_ids
+            raise PointNotFoundError(str(missing_point_ids))
         return self._get_img_data_from_points(result)
 
     async def validate_ids(self, image_id: list[str]) -> list[str]:
