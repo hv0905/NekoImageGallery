@@ -18,11 +18,10 @@ class OCRService:
     def _image_preprocess(img: Image.Image) -> Image.Image:
         if img.mode != 'RGB':
             img = img.convert('RGB')
-        if img.size[0] > 1024 or img.size[1] > 1024:
-            img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
-        new_img = Image.new('RGB', (1024, 1024), (0, 0, 0))
-        new_img.paste(img, ((1024 - img.size[0]) // 2, (1024 - img.size[1]) // 2))
-        return new_img
+        # Limit maximum size to 960*960
+        if img.size[0] > 960 or img.size[1] > 960:
+            img.thumbnail((960, 960), Image.Resampling.LANCZOS)
+        return img
 
     def ocr_interface(self, img: Image.Image, need_preprocess=True) -> str:
         pass
@@ -32,7 +31,10 @@ class EasyPaddleOCRService(OCRService):
     def __init__(self):
         super().__init__()
         from easypaddleocr import EasyPaddleOCR
-        self._paddle_ocr_module = EasyPaddleOCR(use_angle_cls=True, needWarmUp=True, devices=self._device)
+        self._paddle_ocr_module = EasyPaddleOCR(use_angle_cls=True,
+                                                needWarmUp=True,
+                                                devices=self._device,
+                                                warmup_size=(960, 960))
         logger.success("EasyPaddleOCR loaded successfully")
 
     def _easy_paddleocr_process(self, img: Image.Image) -> str:
