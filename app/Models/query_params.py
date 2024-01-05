@@ -22,17 +22,33 @@ class FilterParams:
                 float, Query(gt=0, lt=1, description="The tolerance of the aspect ratio.")] = 0.1,
             min_width: Annotated[int | None, Query(geq=0, description="The minimum width of the image.")] = None,
             min_height: Annotated[int | None, Query(geq=0, description="The minimum height of the image.")] = None,
-            starred: Annotated[bool | None, Query(description="Whether the image is starred.")] = None):
+            starred: Annotated[bool | None, Query(description="Whether the image is starred.")] = None,
+            categories: Annotated[list[str] | None, Query(
+                description="The categories whitelist of the image. Image with **any of** the given categories will "
+                            "be included.")] = None,
+            categories_negative: Annotated[
+                list[str] | None, Query(
+                    description="The categories blacklist of the image. Image with **any of** the given categories "
+                                "will be ignored.")] = None,
+    ):
         self.preferred_ratio = preferred_ratio
         self.ratio_tolerance = ratio_tolerance
         self.min_width = min_width
         self.min_height = min_height
         self.starred = starred
+        self.categories = categories if categories is not None and len(categories) > 0 else None
+        self.categories_negative = categories_negative if categories_negative is not None and len(
+            categories_negative) > 0 else None
         self.ocr_text = None  # For exact search
 
-        if self.preferred_ratio:
-            self.min_ratio = self.preferred_ratio * (1 - self.ratio_tolerance)
-            self.max_ratio = self.preferred_ratio * (1 + self.ratio_tolerance)
-        else:
-            self.min_ratio = None
-            self.max_ratio = None
+    @property
+    def min_ratio(self) -> float | None:
+        if self.preferred_ratio is None:
+            return None
+        return self.preferred_ratio * (1 - self.ratio_tolerance)
+
+    @property
+    def max_ratio(self) -> float | None:
+        if self.preferred_ratio is None:
+            return None
+        return self.preferred_ratio * (1 + self.ratio_tolerance)

@@ -85,7 +85,7 @@ class VectorDbContext:
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self._client.search(collection_name=self.collection_name,
                                            query_vector=(query_vector_name, query_vector),
-                                           query_filter=self.getFiltersByFilterParam(filter_param),
+                                           query_filter=self._get_filters_by_filter_param(filter_param),
                                            limit=top_k,
                                            offset=skip,
                                            with_payload=True)
@@ -116,7 +116,7 @@ class VectorDbContext:
                                               negative=_negative_vectors,
                                               strategy=_strategy,
                                               with_vectors=_combined_search_need_vectors,
-                                              query_filter=self.getFiltersByFilterParam(filter_param),
+                                              query_filter=self._get_filters_by_filter_param(filter_param),
                                               limit=top_k,
                                               offset=skip,
                                               with_payload=True)
@@ -227,11 +227,12 @@ class VectorDbContext:
                 raise ValueError("Invalid basis")
 
     @staticmethod
-    def getFiltersByFilterParam(filter_param: FilterParams | None) -> models.Filter | None:
+    def _get_filters_by_filter_param(filter_param: FilterParams | None) -> models.Filter | None:
         if filter_param is None:
             return None
 
         filters = []
+        neg_filter = []
         if filter_param.min_width is not None and filter_param.min_width > 0:
             filters.append(models.FieldCondition(
                 key="width",
@@ -273,8 +274,23 @@ class VectorDbContext:
                 )
             ))
 
-        if len(filters) == 0:
+        if filter_param.categories is not None:
+            filters.append(models.FieldCondition(
+                key="categories",
+                match=models.MatchAny(
+                    any=filter_param.categories
+                )
+            ))
+
+        if filter_param.categories_negative is not None:
+            neg_filter.append(models.FieldCondition(
+                key="categories",
+                match=models.MatchAny(any=filter_param.categories_negative),
+            ))
+
+        if not filters and not neg_filter:
             return None
         return models.Filter(
-            must=filters
+            must=filters,
+            must_not=neg_filter
         )
