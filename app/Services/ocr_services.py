@@ -32,8 +32,18 @@ class EasyPaddleOCRService(OCRService):
     def __init__(self):
         super().__init__()
         from easypaddleocr import EasyPaddleOCR
-        self._paddle_ocr_module = EasyPaddleOCR(use_angle_cls=True, needWarmUp=True, devices=self._device)
+        self._paddle_ocr_module = EasyPaddleOCR(use_angle_cls=True,
+                                                needWarmUp=True,
+                                                devices=self._device,
+                                                warmup_size=(960, 960))
         logger.success("EasyPaddleOCR loaded successfully")
+
+    @staticmethod
+    def _image_preprocess(img: Image.Image) -> Image.Image:
+        # Optimized `easypaddleocr` doesn't require scaling preprocess
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        return img
 
     def _easy_paddleocr_process(self, img: Image.Image) -> str:
         _, ocr_result, _ = self._paddle_ocr_module.ocr(np.array(img))
