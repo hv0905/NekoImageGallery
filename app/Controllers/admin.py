@@ -54,7 +54,7 @@ async def delete_image(
 @admin_router.put("/update_opt/{image_id}", description="Update a image's optional information")
 async def update_image(image_id: Annotated[UUID, params.Path(description="The id of the image you want to delete.")],
                        model: ImageOptUpdateModel) -> NekoProtocol:
-    if model.starred is None:
+    if model.empty():
         raise HTTPException(422, "Nothing to update.")
     try:
         point = await db_context.retrieve_by_id(str(image_id))
@@ -63,6 +63,8 @@ async def update_image(image_id: Annotated[UUID, params.Path(description="The id
 
     if model.starred is not None:
         point.starred = model.starred
+    if model.categories is not None:
+        point.categories = model.categories
 
     await db_context.updatePayload(point)
     logger.success("Image {} updated.", point.id)
