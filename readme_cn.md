@@ -90,8 +90,15 @@
 
 #### 运行
 
-1. 按需修改docker-compose.yml文件
-2. 运行下面命令启动docker-compose
+1. 下载`docker-compose.yml`文件。
+   ```shell
+   # For cuda deployment (default)
+   wget https://raw.githubusercontent.com/hv0905/NekoImageGallery/master/docker-compose.yml
+   # For CPU-only deployment
+   wget https://raw.githubusercontent.com/hv0905/NekoImageGallery/master/docker-compose-cpu.yml && mv docker-compose-cpu.yml docker-compose.yml
+   ```
+2. 按需修改docker-compose.yml文件
+3. 运行下面命令启动docker-compose
    ```shell
    # start in foreground
    docker compose up

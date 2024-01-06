@@ -113,8 +113,15 @@ the [official documentation](https://docs.docker.com/config/containers/resource_
 
 #### Run the server
 
-1. Modify the docker-compose.yml file as needed
-2. Run the following command to start the server:
+1. Download the `docker-compose.yml` file from repository.
+   ```shell
+   # For cuda deployment (default)
+   wget https://raw.githubusercontent.com/hv0905/NekoImageGallery/master/docker-compose.yml
+   # For CPU-only deployment
+   wget https://raw.githubusercontent.com/hv0905/NekoImageGallery/master/docker-compose-cpu.yml && mv docker-compose-cpu.yml docker-compose.yml
+   ```
+2. Modify the docker-compose.yml file as needed
+3. Run the following command to start the server:
     ```shell
     # start in foreground
     docker compose up

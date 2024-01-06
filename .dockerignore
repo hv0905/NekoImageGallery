@@ -35,6 +35,8 @@
 
 static/
 web/
+tests/
+pylintrc.toml
 LICENSE
 readme.md
 readme_cn.md

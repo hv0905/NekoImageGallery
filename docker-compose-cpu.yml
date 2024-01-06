@@ -10,8 +10,8 @@ services:
     # Uncomment this section to build image from source code
     #    build:
     #      context: .
-    #      dockerfile: Dockerfile
-    image: edgeneko/neko-image-gallery:latest
+    #      dockerfile: cpu-only.Dockerfile
+    image: edgeneko/neko-image-gallery:latest-cpu
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
@@ -23,14 +23,6 @@ services:
       - APP_QDRANT__PREFER_GRPC=True
     depends_on:
       - qdrant-database
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities:
-                - gpu
 networks:
   default:
     name: neko-image-gallery
