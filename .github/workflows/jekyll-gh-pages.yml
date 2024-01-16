@@ -37,10 +37,10 @@ jobs:
         uses: actions/configure-pages@v4
       - name: prepare site src
         run: |
-          mkdir page_build -Force
+          mkdir -p page_build
           cp *.md page_build/
           cp web/ page_build/
-          ls -Recurse page_build/
+          ls -lR page_build/
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
