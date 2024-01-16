@@ -1,4 +1,4 @@
-from base import NekoProtocol
+from .base import NekoProtocol
 
 
 class ServerInfoResponse(NekoProtocol):

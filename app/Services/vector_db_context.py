@@ -6,7 +6,7 @@ from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
 from qdrant_client.models import RecommendStrategy
 
-from app.Models.api_model import SearchModelEnum, SearchBasisEnum
+from app.Models.api_models.search_api_model import SearchModelEnum, SearchBasisEnum
 from app.Models.img_data import ImageData
 from app.Models.query_params import FilterParams
 from app.Models.search_result import SearchResult

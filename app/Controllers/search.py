@@ -7,7 +7,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.params import File, Query, Path, Depends
 from loguru import logger
 
-from app.Models.api_model import AdvancedSearchModel, CombinedSearchModel, SearchBasisEnum, SearchCombinedBasisEnum
+from app.Models.api_models.search_api_model import AdvancedSearchModel, CombinedSearchModel, SearchBasisEnum, \
+    SearchCombinedBasisEnum
 from app.Models.api_response.search_api_response import SearchApiResponse
 from app.Models.query_params import SearchPagingParams, FilterParams
 from app.Models.search_result import SearchResult

@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, params
 from loguru import logger
 
-from app.Models.admin_api_model import ImageOptUpdateModel
+from app.Models.api_models.admin_api_model import ImageOptUpdateModel
 from app.Models.api_response.admin_api_response import ServerInfoResponse
 from app.Models.api_response.base import NekoProtocol
 from app.Services.authentication import force_admin_token_verify
