@@ -39,7 +39,7 @@ jobs:
         run: |
           mkdir -p page_build
           cp *.md page_build/
-          cp web/ page_build/
+          cp web/ page_build/ -r
           ls -lR page_build/
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
