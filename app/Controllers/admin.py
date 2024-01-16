@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, params
 from loguru import logger
 
 from app.Models.admin_api_model import ImageOptUpdateModel
+from app.Models.api_response.admin_api_response import ServerInfoResponse
 from app.Models.api_response.base import NekoProtocol
 from app.Services.authentication import force_admin_token_verify
 from app.Services.provider import db_context
@@ -70,3 +71,9 @@ async def update_image(image_id: Annotated[UUID, params.Path(description="The id
     logger.success("Image {} updated.", point.id)
 
     return NekoProtocol(message="Image updated.")
+
+
+@admin_router.get("/server_info", description="Get server information")
+async def server_info():
+    return ServerInfoResponse(message="Successfully get server information!",
+                              image_count=await db_context.get_counts(exact=True))
