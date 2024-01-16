@@ -3,10 +3,12 @@ from typing import Optional
 from uuid import UUID
 
 from numpy import ndarray
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, ConfigDict
 
 
 class ImageData(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     id: UUID
     url: str
     thumbnail_url: Optional[str] = None
@@ -47,6 +49,3 @@ class ImageData(BaseModel):
                    **payload,
                    image_vector=image_vector if image_vector is not None else None,
                    text_contain_vector=text_contain_vector if text_contain_vector is not None else None)
-
-    class Config:
-        arbitrary_types_allowed = True
