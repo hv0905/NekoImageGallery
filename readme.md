@@ -24,6 +24,8 @@ image search.
 ![Screenshot2](web/screenshots/2.png)
 ![Screenshot3](web/screenshots/3.png)
 ![Screenshot4](web/screenshots/4.png)
+![Screenshot5](web/screenshots/5.png)
+![Screenshot6](web/screenshots/6.png)
 
 > The above screenshots may contain copyrighted images from different artists, please do not use them for other
 > purposes.
