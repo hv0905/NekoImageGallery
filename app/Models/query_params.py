@@ -26,22 +26,18 @@ class FilterParams:
             categories: Annotated[str | None, Query(
                 description="The categories whitelist of the image. Image with **any of** the given categories will "
                             "be included. The entries should be seperated by comma.",
-                example="stickers, cg")] = None,
+                examples=["stickers, cg"])] = None,
             categories_negative: Annotated[
                 str | None, Query(
                     description="The categories blacklist of the image. Image with **any of** the given categories "
                                 "will be ignored. The entries should be seperated by comma.",
-                    example="stickers, cg")] = None,
+                    examples=["stickers, cg"])] = None,
     ):
         self.preferred_ratio = preferred_ratio
         self.ratio_tolerance = ratio_tolerance
         self.min_width = min_width
         self.min_height = min_height
         self.starred = starred
-        # self.categories = categories if categories is not None and len(categories) > 0 else None
-        # self.categories_negative = categories_negative if categories_negative is not None and len(
-        #     categories_negative) > 0 else None
-        bool("fff")
         self.categories = [t.strip() for t in categories.split(',') if t.strip()] if categories else None
         self.categories_negative = [t.strip() for t in categories_negative.split(',') if
                                     t.strip()] if categories_negative else None

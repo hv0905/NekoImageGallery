@@ -35,6 +35,5 @@ async def migrate(from_version: int):
             await migrate_v1_v2()
         case 2:
             logger.info("Already up to date.")
-            pass
         case _:
-            raise Exception(f"Unknown version {from_version}")
+            raise ValueError(f"Unknown version {from_version}")
