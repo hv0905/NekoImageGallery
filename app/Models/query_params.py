@@ -23,22 +23,27 @@ class FilterParams:
             min_width: Annotated[int | None, Query(geq=0, description="The minimum width of the image.")] = None,
             min_height: Annotated[int | None, Query(geq=0, description="The minimum height of the image.")] = None,
             starred: Annotated[bool | None, Query(description="Whether the image is starred.")] = None,
-            categories: Annotated[list[str] | None, Query(
+            categories: Annotated[str | None, Query(
                 description="The categories whitelist of the image. Image with **any of** the given categories will "
-                            "be included.")] = None,
+                            "be included. The entries should be seperated by comma.",
+                example="stickers, cg")] = None,
             categories_negative: Annotated[
-                list[str] | None, Query(
+                str | None, Query(
                     description="The categories blacklist of the image. Image with **any of** the given categories "
-                                "will be ignored.")] = None,
+                                "will be ignored. The entries should be seperated by comma.",
+                    example="stickers, cg")] = None,
     ):
         self.preferred_ratio = preferred_ratio
         self.ratio_tolerance = ratio_tolerance
         self.min_width = min_width
         self.min_height = min_height
         self.starred = starred
-        self.categories = categories if categories is not None and len(categories) > 0 else None
-        self.categories_negative = categories_negative if categories_negative is not None and len(
-            categories_negative) > 0 else None
+        # self.categories = categories if categories is not None and len(categories) > 0 else None
+        # self.categories_negative = categories_negative if categories_negative is not None and len(
+        #     categories_negative) > 0 else None
+        bool("fff")
+        self.categories = [t for t in categories.split(',') if t] if categories else None
+        self.categories_negative = [t for t in categories_negative.split(',') if t] if categories_negative else None
         self.ocr_text = None  # For exact search
 
     @property

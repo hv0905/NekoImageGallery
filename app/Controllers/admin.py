@@ -33,7 +33,7 @@ async def delete_image(
         image_files = list(directories.static_dir.glob(f"{point.id}.*"))
         assert len(image_files) <= 1
 
-        if len(image_files) == 0:
+        if not image_files:
             logger.warning("Image {} is a local image but not found in static folder.", point.id)
         else:
             directories.deleted_dir.mkdir(parents=True, exist_ok=True)
