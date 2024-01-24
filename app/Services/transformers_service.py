@@ -58,7 +58,7 @@ class TransformersService:
         logger.info("Inferencing with BERT model...")
         inputs = self._bert_tokenizer(text.strip().lower(), return_tensors="pt").to(self.device)
         outputs = self._bert_model(**inputs)
-        vector = outputs.last_hidden_state.mean(dim=1).squeeze()
+        vector = outputs.pooler_output.squeeze(0)
         logger.success("BERT inference done. Time elapsed: {:.2f}s", time() - start_time)
         return vector.cpu().numpy()
 
