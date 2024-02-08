@@ -1,29 +1,25 @@
+import io
 import uuid
-from pathlib import Path
 
 from PIL import Image
 from loguru import logger
 
-from app.Services.provider import db_context
-from app.config import config
-from .local_utility import gather_valid_files
+from app.Services.provider import db_context, storage_service
 
 
 async def main():
-    static_path = Path(config.static_file.path)
-    static_thumb_path = static_path / 'thumbnails'
-    if not static_thumb_path.exists():
-        static_thumb_path.mkdir()
+    # Here path maybe either local path or pure path
     count = 0
-    for item in gather_valid_files(static_path, '*.*'):
+    async for item in storage_service.active_storage.list_files("", '*.*', batch_max_files=1):
+        item = item[0]
         count += 1
-        logger.info("[{}] Processing {}", str(count), str(item.relative_to(static_path)))
-        size = item.stat().st_size
+        logger.info("[{}] Processing {}", str(count), str(item))
+        size = await storage_service.active_storage.size(item)
         if size < 1024 * 500:
             logger.warning("File size too small: {}. Skip...", size)
             continue
         try:
-            if (static_thumb_path / f'{item.stem}.webp').exists():
+            if await storage_service.active_storage.is_exist(f'thumbnails/{item.stem}.webp'):
                 logger.warning("Thumbnail for {} already exists. Skip...", item.stem)
                 continue
             image_id = uuid.UUID(item.stem)
@@ -36,19 +32,21 @@ async def main():
             logger.error("Error when retrieving image {}: {}", image_id, e)
             continue
         try:
-            img = Image.open(item)
+            img_byte = await storage_service.active_storage.fetch(item)
+            img = Image.open(io.BytesIO(img_byte))
         except Exception as e:
             logger.error("Error when opening image {}: {}", item, e)
             continue
 
         # generate thumbnail max size 256*256
         img.thumbnail((256, 256))
-        img.save(static_thumb_path / f'{str(image_id)}.webp', 'WebP')
-        img.close()
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr, 'WebP')
+        await storage_service.active_storage.upload(img_byte_arr.getvalue(), f'thumbnails/{str(image_id)}.webp')
         logger.success("Thumbnail for {} generated!", image_id)
 
         # update payload
-        imgdata.thumbnail_url = f'/static/thumbnails/{str(image_id)}.webp'
+        imgdata.thumbnail_url = await storage_service.active_storage.url(f'thumbnails/{str(image_id)}.webp')
         await db_context.updatePayload(imgdata)
         logger.success("Payload for {} updated!", image_id)
 
