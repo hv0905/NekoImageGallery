@@ -21,7 +21,13 @@ easypaddleocr>=0.1.2
 # Vector Database
 qdrant-client
 
+# Storage
+opendal
+
 # Misc
+aiofiles
+aiopath
+wcmatch
 pyyaml
 loguru
 httpx
