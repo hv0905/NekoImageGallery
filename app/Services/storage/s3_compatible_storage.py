@@ -1,3 +1,7 @@
+# pylint now reporting `opendal` as a `no-name-in-module` error, so we need to disable it as a temporary workaround
+# Related issue: https://github.com/pylint-dev/pylint/issues/9185
+# Remove below `# pylint` once the issue is resolved
+# pylint: disable=import-error,no-name-in-module
 import os
 import urllib.parse
 
@@ -45,7 +49,6 @@ class S3Storage(BaseStorage[FileMetaDataT: None]):
         self._res_endpoint = self._resolve_endpoint()
         self._access_key_id = config.storage.s3.access_key_id
         self._secret_access_key = config.storage.s3.secret_access_key
-        self.file_path_warp = lambda x: PurePosixPath(x)
         self.file_path_str_warp = lambda x: str(PurePosixPath(x))
         self.op = AsyncOperator("s3",
                                 root=str(self.static_dir),

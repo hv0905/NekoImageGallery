@@ -365,12 +365,7 @@ confidence = ["HIGH", "CONTROL_FLOW", "INFERENCE", "INFERENCE_FAILURE", "UNDEFIN
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-
-# pylint now reporting `opendal` as a `no-name-in-module` error, so we need to disable it as a temporary workaround
-# Related issue: https://github.com/pylint-dev/pylint/issues/9185
-# Remove `no-name-in-module` and `import-error` once the issue is resolved
-
-disable = ["no-name-in-module", "import-error", "raw-checker-failed", "bad-inline-option", "locally-disabled", "file-ignored", "suppressed-message", "useless-suppression", "deprecated-pragma", "use-symbolic-message-instead", "use-implicit-booleaness-not-comparison-to-string", "use-implicit-booleaness-not-comparison-to-zero", "missing-function-docstring", "missing-class-docstring", "missing-module-docstring"]
+disable = ["raw-checker-failed", "bad-inline-option", "locally-disabled", "file-ignored", "suppressed-message", "useless-suppression", "deprecated-pragma", "use-symbolic-message-instead", "use-implicit-booleaness-not-comparison-to-string", "use-implicit-booleaness-not-comparison-to-zero", "missing-function-docstring", "missing-class-docstring", "missing-module-docstring"]
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
