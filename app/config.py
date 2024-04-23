@@ -53,4 +53,8 @@ class Environment(BaseModel):
 
 
 config = Config()
+if config.access_token:
+    config.access_token = config.access_token.strip(' \n\t\r')
+if config.admin_token:
+    config.admin_token = config.admin_token.strip(' \n\t\r')
 environment = Environment()
