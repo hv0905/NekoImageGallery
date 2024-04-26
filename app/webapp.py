@@ -1,3 +1,4 @@
+import pathlib
 from datetime import datetime
 from typing import Annotated
 
@@ -12,7 +13,6 @@ from app.Services.authentication import permissive_access_token_verify, permissi
 from app.config import config
 from .Models.api_response.base import WelcomeApiResponse, WelcomeApiAuthenticationResponse, \
     WelcomeApiAdminPortalAuthenticationResponse
-from .util import directories
 from .util.fastapi_log_handler import init_logging
 
 app = FastAPI()
@@ -30,8 +30,8 @@ app.include_router(searchRouter, prefix="/search")
 if config.admin_api_enable:
     app.include_router(admin_router, prefix="/admin")
 
-if config.static_file.enable:
-    app.mount("/static", StaticFiles(directory=directories.static_dir), name="static")
+if config.storage.method == "local":
+    app.mount("/static", StaticFiles(directory=pathlib.Path(config.storage.local.path)), name="static")
 
 
 @app.get("/", description="Default portal. Test for server availability.")
