@@ -9,7 +9,6 @@ from fastapi.staticfiles import StaticFiles
 
 from app.Controllers.admin import admin_router
 from app.Controllers.search import searchRouter
-from app.Middleware.presign_url import PresignUrlMiddleware
 from app.Services.authentication import permissive_access_token_verify, permissive_admin_token_verify
 from app.config import config
 from .Models.api_response.base import WelcomeApiResponse, WelcomeApiAuthenticationResponse, \
@@ -33,8 +32,6 @@ if config.admin_api_enable:
 
 if config.storage.method == "local":
     app.mount("/static", StaticFiles(directory=pathlib.Path(config.storage.local.path)), name="static")
-if config.storage.method == "s3":
-    app.add_middleware(PresignUrlMiddleware)
 
 
 @app.get("/", description="Default portal. Test for server availability.")

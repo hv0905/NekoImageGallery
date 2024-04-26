@@ -1,19 +1,20 @@
 import os
-from shutil import copy2, move
 from asyncio import to_thread
-from typing import Optional, AsyncGenerator
 from pathlib import Path as syncPath
-from aiopath import Path as asyncPath
+from shutil import copy2, move
+from typing import Optional, AsyncGenerator
+
 import aiofiles
+from aiopath import Path as asyncPath
 from loguru import logger
 
-from app.config import config
 from app.Services.storage.base import BaseStorage, FileMetaDataT, RemoteFilePathType, LocalFilePathType
 from app.Services.storage.exception import RemoteFileNotFoundError, LocalFileNotFoundError, RemoteFilePermissionError, \
     LocalFilePermissionError, LocalFileExistsError, RemoteFileExistsError
+from app.config import config
 
 
-def transform_exception(param):
+def transform_exception(param: str):
     file_not_found_exp_map = {"local": LocalFileNotFoundError, "remote": RemoteFileNotFoundError}
     permission_exp_map = {"remote": RemoteFilePermissionError, "local": LocalFilePermissionError}
     file_exist_map = {"local": LocalFileExistsError, "remote": RemoteFileExistsError}
@@ -42,6 +43,9 @@ class LocalStorage(BaseStorage[FileMetaDataT: None]):
         self.deleted_dir = self.static_dir / "_deleted"
         self.file_metadata = None
         self.file_path_warp = lambda x: self.static_dir / syncPath(x)
+
+    def file_path_wrap(self, path: RemoteFilePathType) -> syncPath:
+        return self.static_dir / syncPath(path)
 
     def pre_check(self):
         if not self.static_dir.is_dir():

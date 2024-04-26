@@ -1,3 +1,5 @@
+from enum import Enum
+
 from loguru import logger
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -7,7 +9,7 @@ class QdrantSettings(BaseModel):
     host: str = 'localhost'
     port: int = 6333
     grpc_port: int = 6334
-    coll: str = ''
+    coll: str = 'NekoImageGallery'
     prefer_grpc: bool = False
     api_key: str | None = None
 
@@ -38,8 +40,18 @@ class LocalStorageSettings(BaseModel):
     path: str = './static'
 
 
+class StorageMode(str, Enum):
+    LOCAL = 'local'
+    S3 = 's3'
+    DISABLED = 'disabled'
+
+    @property
+    def enabled(self):
+        return self != StorageMode.DISABLED
+
+
 class StorageSettings(BaseModel):
-    method: str = '[DISABLED]'  # set designed to be "disabled" for compatibility checking in StaticFileSettings
+    method: StorageMode = StorageMode.DISABLED  # set designed to be "disabled" for compatibility checking in StaticFileSettings
     s3: S3StorageSettings = S3StorageSettings()
     local: LocalStorageSettings = LocalStorageSettings()
 
@@ -47,7 +59,7 @@ class StorageSettings(BaseModel):
 # [Deprecated]
 class StaticFileSettings(BaseModel):
     path: str = '[DEPRECATED]'
-    enable: bool = True
+    enable: bool = True  # Deprecated
 
 
 class Config(BaseSettings):
@@ -77,8 +89,8 @@ class Environment(BaseModel):
 def _check_deprecated_settings(_config):
     if _config.static_file.path != '[DEPRECATED]':
         logger.warning("Config StaticFileSettings is deprecated and should not be set.")
-    if _config.storage.method == '[DISABLED]':
-        raise DeprecationWarning("Config StaticFileSettings is deprecated, use StorageSettings instead!")
+    # if _config.storage.method == '[DISABLED]':
+    #     raise DeprecationWarning("Config StaticFileSettings is deprecated, use StorageSettings instead!")
 
 
 config = Config()

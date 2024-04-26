@@ -1,6 +1,8 @@
-import os
 import abc
+import os
 from typing import TypeVar, Generic, TypeAlias, Optional, AsyncGenerator
+
+from app.Models.img_data import ImageData
 
 FileMetaDataT = TypeVar('FileMetaDataT')
 
@@ -24,7 +26,7 @@ class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
 
     @abc.abstractmethod
     async def is_exist(self,
-                       remote_file: "RemoteFilePathType") -> bool:
+                       remote_file: RemoteFilePathType) -> bool:
         """
         Check if a remote_file exists.
         :param remote_file: The file path relative to static_dir
@@ -34,7 +36,7 @@ class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
 
     @abc.abstractmethod
     async def size(self,
-                   remote_file: "RemoteFilePathType") -> int:
+                   remote_file: RemoteFilePathType) -> int:
         """
         Get the size of a file in static_dir
         :param remote_file: The file path relative to static_dir
@@ -44,7 +46,7 @@ class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
 
     @abc.abstractmethod
     async def url(self,
-                  remote_file: "RemoteFilePathType") -> str:
+                  remote_file: RemoteFilePathType) -> str:
         """
         Get the original URL of a file in static_dir.
         This url will be placed in the payload field of the qdrant.
@@ -55,7 +57,7 @@ class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
 
     @abc.abstractmethod
     async def presign_url(self,
-                          remote_file: "RemoteFilePathType",
+                          remote_file: RemoteFilePathType,
                           expire_second: int = 3600) -> str:
         """
         Get the presign URL of a file in static_dir.
@@ -67,7 +69,7 @@ class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
 
     @abc.abstractmethod
     async def fetch(self,
-                    remote_file: "RemoteFilePathType") -> bytes:
+                    remote_file: RemoteFilePathType) -> bytes:
         """
         Fetch a file from static_dir
         :param remote_file: The file path relative to static_dir
@@ -78,7 +80,7 @@ class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
     @abc.abstractmethod
     async def upload(self,
                      local_file: "LocalFilePathType",
-                     remote_file: "RemoteFilePathType") -> None:
+                     remote_file: RemoteFilePathType) -> None:
         """
         Move a local picture file to the static_dir.
         :param local_file: The absolute path to the local file or bytes.
@@ -88,8 +90,8 @@ class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
 
     @abc.abstractmethod
     async def copy(self,
-                   old_remote_file: "RemoteFilePathType",
-                   new_remote_file: "RemoteFilePathType") -> None:
+                   old_remote_file: RemoteFilePathType,
+                   new_remote_file: RemoteFilePathType) -> None:
         """
         Copy a file in static_dir.
         :param old_remote_file: The file path relative to static_dir
@@ -99,8 +101,8 @@ class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
 
     @abc.abstractmethod
     async def move(self,
-                   old_remote_file: "RemoteFilePathType",
-                   new_remote_file: "RemoteFilePathType") -> None:
+                   old_remote_file: RemoteFilePathType,
+                   new_remote_file: RemoteFilePathType) -> None:
         """
         Move a file in static_dir.
         :param old_remote_file: The file path relative to static_dir
@@ -110,7 +112,7 @@ class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
 
     @abc.abstractmethod
     async def delete(self,
-                     remote_file: "RemoteFilePathType") -> None:
+                     remote_file: RemoteFilePathType) -> None:
         """
         Move a file in static_dir.
         :param remote_file: The file path relative to static_dir
@@ -143,6 +145,9 @@ class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
 
     @abc.abstractmethod
     async def update_metadata(self,
-                              local_file_metadata: "LocalFileMetaDataType",
-                              remote_file_metadata: "RemoteFileMetaDataType") -> None:
+                              local_file_metadata: LocalFileMetaDataType,
+                              remote_file_metadata: RemoteFileMetaDataType) -> None:
         raise NotImplementedError
+
+    async def get_image_url(self, img: ImageData) -> str:
+        return img.url

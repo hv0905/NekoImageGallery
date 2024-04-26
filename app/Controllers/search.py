@@ -13,12 +13,21 @@ from app.Models.api_response.search_api_response import SearchApiResponse
 from app.Models.query_params import SearchPagingParams, FilterParams
 from app.Models.search_result import SearchResult
 from app.Services.authentication import force_access_token_verify
-from app.Services.provider import db_context, transformers_service
+from app.Services.provider import db_context, transformers_service, storage_service
 from app.config import config
 from app.util.calculate_vectors_cosine import calculate_vectors_cosine
 
 searchRouter = APIRouter(dependencies=([Depends(force_access_token_verify)] if config.access_protected else None),
                          tags=["Search"])
+
+
+async def result_postprocessing(resp: SearchApiResponse) -> SearchApiResponse:
+    for item in resp.result:
+        if item.img.local and config.storage.method.enabled:
+            item.img.url = await storage_service.active_storage.get_image_url(item.img)
+            if item.img.thumbnail_url is not None:
+                item.img.thumbnail_url = await storage_service.active_storage.get_url(item.img.thumbnail_url)
+    return resp
 
 
 class SearchBasisParams:

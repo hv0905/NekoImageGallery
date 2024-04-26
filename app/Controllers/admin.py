@@ -28,7 +28,7 @@ async def delete_image(
     await db_context.deleteItems([str(point.id)])
     logger.success("Image {} deleted from database.", point.id)
 
-    if point.url.startswith('/') and config.static_file.enable:  # local image
+    if point.local and config.storage.method.enabled:  # local image
         image_files = [itm[0] async for itm in storage_service.active_storage.list_files("", f"{point.id}.*")]
         assert len(image_files) <= 1
 
