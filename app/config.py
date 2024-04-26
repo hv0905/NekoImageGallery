@@ -79,7 +79,8 @@ class Config(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="app_", env_nested_delimiter='__',
                                       env_file=('config/default.env', 'config/local.env'),
-                                      env_file_encoding='utf-8')
+                                      env_file_encoding='utf-8',
+                                      secrets_dir='/run/secrets')  # for docker secret
 
 
 class Environment(BaseModel):
