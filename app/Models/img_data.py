@@ -22,7 +22,7 @@ class ImageData(BaseModel):
     starred: Optional[bool] = False
     categories: Optional[list[str]] = []
     local: Optional[bool] = False
-    type: Optional[str] = None  # required for s3 local storage
+    format: Optional[str] = None  # required for s3 local storage
 
     @computed_field()
     @property

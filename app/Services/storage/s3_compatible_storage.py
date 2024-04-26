@@ -177,4 +177,4 @@ class S3Storage(BaseStorage[FileMetaDataT: None]):
 
     async def get_image_url(self, img: ImageData) -> str:
         assert img.local, "The image is not a local image."
-        return await self.presign_url(f"{self._res_endpoint}/{str(self.static_dir)}/{str(img.id)}.{img.type}")
+        return await self.presign_url(f"{self._res_endpoint}/{str(self.static_dir)}/{str(img.id)}.{img.format}")
