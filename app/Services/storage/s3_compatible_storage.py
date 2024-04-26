@@ -68,9 +68,6 @@ class S3Storage(BaseStorage[FileMetaDataT: None]):
     def pre_check(self):
         pass
 
-    def file_path_str_warp(self, p: str):
-        return str(self._file_path_wrap(p))
-
     async def is_exist(self,
                        remote_file: "RemoteFilePathType") -> bool:
         try:
