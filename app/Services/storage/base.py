@@ -151,3 +151,6 @@ class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
 
     async def get_image_url(self, img: ImageData) -> str:
         return img.url
+
+    async def get_image_thumbnails_url(self, img: ImageData) -> str:
+        return img.thumbnail_url

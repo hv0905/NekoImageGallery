@@ -26,7 +26,7 @@ async def result_postprocessing(resp: SearchApiResponse) -> SearchApiResponse:
         if item.img.local and config.storage.method.enabled:
             item.img.url = await storage_service.active_storage.get_image_url(item.img)
             if item.img.thumbnail_url is not None:
-                item.img.thumbnail_url = await storage_service.active_storage.get_url(item.img.thumbnail_url)
+                item.img.thumbnail_url = await storage_service.active_storage.get_image_thumbnails_url(item.img)
     return resp
 
 
@@ -70,7 +70,8 @@ async def textSearch(
                                            filter_param=filter_param,
                                            top_k=paging.count,
                                            skip=paging.skip)
-    return SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4())
+    return await result_postprocessing(
+        SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4()))
 
 
 @searchRouter.post("/image", description="Search images by image")
@@ -88,7 +89,8 @@ async def imageSearch(
                                            top_k=paging.count,
                                            skip=paging.skip,
                                            filter_param=filter_param)
-    return SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4())
+    return await result_postprocessing(
+        SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4()))
 
 
 @searchRouter.get("/similar/{image_id}",
@@ -106,7 +108,8 @@ async def similarWith(
                                             skip=paging.skip,
                                             filter_param=filter_param,
                                             query_vector_name=db_context.getVectorByBasis(basis.basis))
-    return SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4())
+    return await result_postprocessing(
+        SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4()))
 
 
 @searchRouter.post("/advanced", description="Search with multiple criteria")
@@ -119,7 +122,8 @@ async def advancedSearch(
         raise HTTPException(status_code=422, detail="At least one criteria should be provided.")
     logger.info("Advanced search request received: {}", model)
     result = await process_advanced_and_combined_search_query(model, basis, filter_param, paging)
-    return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
+    return await result_postprocessing(
+        SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4()))
 
 
 @searchRouter.post("/combined", description="Search with combined criteria")
@@ -134,7 +138,8 @@ async def combinedSearch(
     result = await process_advanced_and_combined_search_query(model, basis, filter_param, paging)
     calculate_and_sort_by_combined_scores(model, basis, result)
     result = result[:paging.count] if len(result) > paging.count else result
-    return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
+    return await result_postprocessing(
+        SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4()))
 
 
 @searchRouter.get("/random", description="Get random images")
@@ -144,7 +149,8 @@ async def randomPick(
     logger.info("Random pick request received")
     random_vector = transformers_service.get_random_vector()
     result = await db_context.querySearch(random_vector, top_k=paging.count, filter_param=filter_param)
-    return SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4())
+    return await result_postprocessing(
+        SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4()))
 
 
 @searchRouter.get("/recall/{query_id}", description="Recall the query with given queryId")
