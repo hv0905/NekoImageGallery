@@ -29,7 +29,7 @@ async def copy_and_index(file_path: Path, uuid_str: str = None):
     imgdata = ImageData(id=image_id,
                         url=await storage_service.active_storage.url(f'{image_id}{img_ext}'),
                         index_date=datetime.now(),
-                        format=img_ext,
+                        format=img_ext[1:],
                         local=True)
     try:
         # This has already been checked for duplicated, so there's no need to double-check.
