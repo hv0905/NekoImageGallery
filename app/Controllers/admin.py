@@ -2,10 +2,10 @@ from pathlib import PurePath
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, params
+from fastapi import APIRouter, Depends, HTTPException, params, BackgroundTasks, UploadFile, File
 from loguru import logger
 
-from app.Models.api_models.admin_api_model import ImageOptUpdateModel
+from app.Models.api_models.admin_api_model import ImageOptUpdateModel, UploadImageModel
 from app.Models.api_response.admin_api_response import ServerInfoResponse
 from app.Models.api_response.base import NekoProtocol
 from app.Services.authentication import force_admin_token_verify
@@ -67,6 +67,18 @@ async def update_image(image_id: Annotated[UUID, params.Path(description="The id
     logger.success("Image {} updated.", point.id)
 
     return NekoProtocol(message="Image updated.")
+
+
+async def upload_task():
+    raise NotImplementedError
+
+
+@admin_router.post("/upload",
+                   description="Upload image to server. The image will be indexed and stored in the database. If local is set to true, the image will be uploaded to local storage.")
+async def upload_image(image_file: Annotated[UploadFile, File(description="The image to be uploaded.")],
+                       model: UploadImageModel,
+                       background_tasks: BackgroundTasks):
+    raise NotImplementedError
 
 
 @admin_router.get("/server_info", description="Get server information")

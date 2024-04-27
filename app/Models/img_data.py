@@ -31,7 +31,6 @@ class ImageData(BaseModel):
             return None
         return self.ocr_text.lower()
 
-
     @property
     def payload(self):
         result = self.model_dump(exclude={'id', 'index_date'})
