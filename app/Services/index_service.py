@@ -38,8 +38,8 @@ class IndexService:
         result = await self._db_context.validate_ids(image_id_list)
         return len(result) != 0
 
-    async def index_image(self, image: Image.Image, image_data: ImageData, skip_ocr=False, allow_overwrite=False):
-        if not allow_overwrite and (await self._is_point_duplicate([image_data])):
+    async def index_image(self, image: Image.Image, image_data: ImageData, skip_ocr=False, skip_duplicate_check=False):
+        if not skip_duplicate_check and (await self._is_point_duplicate([image_data])):
             raise PointDuplicateError("The uploaded points are contained in the database!")
         self._prepare_image(image, image_data, skip_ocr)
         await self._db_context.insertItems([image_data])
