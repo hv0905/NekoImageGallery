@@ -7,8 +7,8 @@ from PIL import Image
 from loguru import logger
 
 from app.Models.img_data import ImageData
-from app.Services.provider import storage_service
 from app.Services.provider import index_service, db_context
+from app.Services.provider import storage_service
 from app.util import generate_uuid
 from .local_utility import fetch_path_uuid_list
 
@@ -33,7 +33,7 @@ async def copy_and_index(file_path: Path, uuid_str: str = None):
                         local=True)
     try:
         # This has already been checked for duplicated, so there's no need to double-check.
-        await index_service.index_image(img, imgdata, allow_overwrite=True)
+        await index_service.index_image(img, imgdata, skip_duplicate_check=True)
     except Exception as e:
         logger.error("Error when processing image {}: {}", file_path, e)
         return

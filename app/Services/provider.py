@@ -1,4 +1,5 @@
 from loguru import logger
+
 from .index_service import IndexService
 from .storage import StorageService
 from .transformers_service import TransformersService
@@ -9,7 +10,7 @@ transformers_service = TransformersService()
 db_context = VectorDbContext()
 ocr_service = None
 
-if environment.local_indexing:
+if environment.local_indexing or config.admin_api_enable:
     match config.ocr_search.ocr_module:
         case "easyocr":
             from .ocr_services import EasyOCRService

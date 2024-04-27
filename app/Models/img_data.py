@@ -10,7 +10,7 @@ class ImageData(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     id: UUID
-    url: str
+    url: Optional[str] = None
     thumbnail_url: Optional[str] = None
     ocr_text: Optional[str] = None
     image_vector: Optional[ndarray] = Field(None, exclude=True)
