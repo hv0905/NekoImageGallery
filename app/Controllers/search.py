@@ -24,7 +24,7 @@ searchRouter = APIRouter(dependencies=([Depends(force_access_token_verify)] if c
 async def result_postprocessing(resp: SearchApiResponse) -> SearchApiResponse:
     for item in resp.result:
         if item.img.local and config.storage.method.enabled:
-            img_extension = item.img.url.split('.')[-1]
+            img_extension = item.img.format or item.img.url.split('.')[-1]
             img_remote_filename = f"{item.img.id}.{img_extension}"
             item.img.url = await storage_service.active_storage.presign_url(img_remote_filename)
             if item.img.thumbnail_url is not None:
