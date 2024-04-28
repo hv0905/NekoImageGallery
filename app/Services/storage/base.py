@@ -148,9 +148,3 @@ class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
                               local_file_metadata: LocalFileMetaDataType,
                               remote_file_metadata: RemoteFileMetaDataType) -> None:
         raise NotImplementedError
-
-    async def get_image_url(self, img: ImageData) -> str:
-        return img.url
-
-    async def get_image_thumbnails_url(self, img: ImageData) -> str:
-        return img.thumbnail_url
