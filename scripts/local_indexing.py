@@ -9,7 +9,7 @@ from loguru import logger
 from app.Models.img_data import ImageData
 from app.Services.provider import index_service, db_context
 from app.Services.provider import storage_service
-from app.util import generate_uuid
+from app.util.generate_uuid import generate_uuid
 from .local_utility import fetch_path_uuid_list
 
 overall_count = 0
@@ -24,7 +24,7 @@ async def copy_and_index(file_path: Path, uuid_str: str = None):
     except PIL.UnidentifiedImageError as e:
         logger.error("Error when opening image {}: {}", file_path, e)
         return
-    image_id = uuid.UUID(uuid_str) if uuid_str else generate_uuid.generate(file_path)
+    image_id = uuid.UUID(uuid_str) if uuid_str else generate_uuid(file_path)
     img_ext = file_path.suffix
     imgdata = ImageData(id=image_id,
                         url=await storage_service.active_storage.url(f'{image_id}{img_ext}'),
