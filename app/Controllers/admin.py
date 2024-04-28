@@ -17,7 +17,7 @@ from app.Services.authentication import force_admin_token_verify
 from app.Services.provider import db_context, storage_service, index_service
 from app.Services.vector_db_context import PointNotFoundError
 from app.config import config
-from app.util.generate_uuid import generate
+from app.util.generate_uuid import generate_uuid
 
 admin_router = APIRouter(dependencies=[Depends(force_admin_token_verify)], tags=["Admin"])
 
@@ -125,7 +125,7 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
     if not img_type:
         raise HTTPException(415, "Unsupported image format.")
     img_bytes = await image_file.read()
-    img_id = generate(img_bytes)
+    img_id = generate_uuid(img_bytes)
     if len(await db_context.validate_ids([str(img_id)])) != 0:  # check for duplicate points
         raise HTTPException(409, f"The uploaded point is already contained in the database! entity id: {img_id}")
 
