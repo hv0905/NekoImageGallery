@@ -7,7 +7,7 @@ NAMESPACE_STR = 'github.com/hv0905/NekoImageGallery'
 namespace_uuid = uuid5(NAMESPACE_DNS, NAMESPACE_STR)
 
 
-def generate(file_input: pathlib.Path | io.BytesIO | bytes) -> UUID:
+def generate_uuid(file_input: pathlib.Path | io.BytesIO | bytes) -> UUID:
     if isinstance(file_input, pathlib.Path):
         with open(file_input, 'rb') as f:
             file_content = f.read()
