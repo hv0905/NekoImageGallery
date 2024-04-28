@@ -17,7 +17,7 @@ class UploadImageModel:
                  skip_ocr: bool = Query(False, description="Whether to skip the OCR process.")):
         self.url = url
         self.thumbnail_url = thumbnail_url
-        self.categories = categories.split(',') if categories else None
+        self.categories = [t.strip() for t in categories.split(',') if t.strip()] if categories else None
         self.starred = starred
         self.local = local
         self.skip_ocr = skip_ocr
