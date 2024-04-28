@@ -96,7 +96,7 @@ async def upload_task(img: Image.Image, img_data: ImageData, img_bytes: bytes, s
         if len(img_bytes) > 1024 * 500:
             img_thumb.thumbnail((256, 256))
             img_byte_arr = BytesIO()
-            img.save(img_byte_arr, 'WebP')
+            img_thumb.save(img_byte_arr, 'WebP')
             await storage_service.active_storage.upload(img_byte_arr.getvalue(), thumb_path)
             logger.success("Thumbnail for {} generated and uploaded!", img_data.id)
 
