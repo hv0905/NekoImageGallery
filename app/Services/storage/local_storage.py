@@ -76,7 +76,7 @@ class LocalStorage(BaseStorage[FileMetaDataT: None]):
     async def presign_url(self,
                           remote_file: "RemoteFilePathType",
                           expire_second: int = 3600) -> str:
-        raise f"/static/{str(remote_file)}"
+        return f"/static/{str(remote_file)}"
 
     @transform_exception("remote")
     async def fetch(self,
