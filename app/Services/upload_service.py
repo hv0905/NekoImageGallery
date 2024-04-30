@@ -52,7 +52,7 @@ class UploadService:
             await self._storage_service.active_storage.upload(img_bytes, file_name)
             logger.success("Image {} uploaded to local storage.", img_data.id)
             if len(img_bytes) > 1024 * 500:
-                img_thumb.thumbnail((256, 256), resample=Image.LANCZOS)
+                img_thumb.thumbnail((256, 256), resample=Image.Resampling.LANCZOS)
                 img_byte_arr = BytesIO()
                 img_thumb.save(img_byte_arr, 'WebP')
                 await self._storage_service.active_storage.upload(img_byte_arr.getvalue(), thumb_path)
