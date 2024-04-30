@@ -9,8 +9,8 @@ class QdrantSettings(BaseModel):
     host: str = 'localhost'
     port: int = 6333
     grpc_port: int = 6334
-    coll: str = 'NekoImageGallery'
-    prefer_grpc: bool = False
+    coll: str = 'NekoImg'
+    prefer_grpc: bool = True
     api_key: str | None = None
 
 

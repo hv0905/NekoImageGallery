@@ -5,7 +5,7 @@ from typing import Annotated
 from uuid import UUID
 
 from PIL import Image, UnidentifiedImageError
-from fastapi import APIRouter, Depends, HTTPException, params, BackgroundTasks, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, params, UploadFile, File
 from loguru import logger
 
 from app.Models.api_models.admin_api_model import ImageOptUpdateModel
@@ -14,7 +14,7 @@ from app.Models.api_response.admin_api_response import ServerInfoResponse, Image
 from app.Models.api_response.base import NekoProtocol
 from app.Models.img_data import ImageData
 from app.Services.authentication import force_admin_token_verify
-from app.Services.provider import db_context, storage_service, index_service
+from app.Services.provider import db_context, storage_service, upload_service
 from app.Services.vector_db_context import PointNotFoundError
 from app.config import config
 from app.util.generate_uuid import generate_uuid
@@ -75,32 +75,6 @@ async def update_image(image_id: Annotated[UUID, params.Path(description="The id
     return NekoProtocol(message="Image updated.")
 
 
-async def upload_task(img: Image.Image, img_data: ImageData, img_bytes: bytes, skip_ocr: bool):
-    logger.info('Start indexing image {}. Local: {}', img_data.id, img_data.local)
-    logger.info('Content length is {} bytes.', len(img_bytes))
-    file_name = f"{img_data.id}.{img_data.format}"
-    thumb_path = f"thumbnails/{img_data.id}.webp"
-    if img_data.local:
-        img_data.url = await storage_service.active_storage.url(file_name)
-        if len(img_bytes) > 1024 * 500:
-            img_thumb = img.copy()
-            img_data.thumbnail_url = await storage_service.active_storage.url(f"thumbnails/{img_data.id}.webp")
-
-    await index_service.index_image(img, img_data, skip_ocr=skip_ocr)  # The img might be modified after calling this
-    logger.success("Image {} indexed.", img_data.id)
-
-    if img_data.local:
-        logger.info("Start uploading image {} to local storage.", img_data.id)
-        await storage_service.active_storage.upload(img_bytes, file_name)
-        logger.success("Image {} uploaded to local storage.", img_data.id)
-        if len(img_bytes) > 1024 * 500:
-            img_thumb.thumbnail((256, 256))
-            img_byte_arr = BytesIO()
-            img_thumb.save(img_byte_arr, 'WebP')
-            await storage_service.active_storage.upload(img_byte_arr.getvalue(), thumb_path)
-            logger.success("Thumbnail for {} generated and uploaded!", img_data.id)
-
-
 IMAGE_MIMES = {
     "image/jpeg": "jpeg",
     "image/png": "png",
@@ -112,8 +86,7 @@ IMAGE_MIMES = {
 @admin_router.post("/upload",
                    description="Upload image to server. The image will be indexed and stored in the database. If local is set to true, the image will be uploaded to local storage.")
 async def upload_image(image_file: Annotated[UploadFile, File(description="The image to be uploaded.")],
-                       model: Annotated[UploadImageModel, Depends()],
-                       background_tasks: BackgroundTasks):
+                       model: Annotated[UploadImageModel, Depends()]):
     # generate an ID for the image
     img_type = None
     if image_file.content_type.lower() in IMAGE_MIMES:
@@ -143,7 +116,7 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
                            format=img_type,
                            index_date=datetime.now())
 
-    background_tasks.add_task(upload_task, image, image_data, img_bytes, model.skip_ocr)
+    await upload_service.upload_image(image, image_data, img_bytes, model.skip_ocr)
     return ImageUploadResponse(message="OK. Image added to upload queue.", image_id=img_id)
 
 

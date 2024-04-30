@@ -3,6 +3,7 @@ from loguru import logger
 from .index_service import IndexService
 from .storage import StorageService
 from .transformers_service import TransformersService
+from .upload_service import UploadService
 from .vector_db_context import VectorDbContext
 from ..config import config, environment
 
@@ -35,3 +36,8 @@ logger.info(f"OCR service '{type(ocr_service).__name__}' initialized.")
 index_service = IndexService(ocr_service, transformers_service, db_context)
 storage_service = StorageService()
 logger.info(f"Storage service '{type(storage_service.active_storage).__name__}' initialized.")
+
+upload_service = None
+
+if config.admin_api_enable:
+    upload_service = UploadService(storage_service, db_context, index_service)
