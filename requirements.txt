@@ -14,7 +14,7 @@ pillow>9.3.0
 numpy
 
 # OCR - you can choose other option if necessary, or completely disable it if you don't need this feature
-easypaddleocr>=0.1.5
+easypaddleocr>=0.2.0
 # easyocr
 # paddleocr
 
