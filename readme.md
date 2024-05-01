@@ -131,6 +131,19 @@ the [official documentation](https://docs.docker.com/config/containers/resource_
     docker compose up -d
     ```
 
+## 📚 API Documentation
+
+The API documentation is provided by FastAPI's built-in Swagger UI. You can access the API documentation by visiting
+the `/docs` or `/redoc` path of the server.
+
+## ⚡ Related Project
+
+Those project works with NekoImageGallery :D
+
+[![NekoImageGallery.App](https://github-readme-stats.vercel.app/api/pin/?username=hv0905&repo=NekoImageGallery.App&show_owner=true)](https://github.com/hv0905/NekoImageGallery.App)
+[![LiteLoaderQQNT-NekoImageGallerySearch](https://github-readme-stats.vercel.app/api/pin/?username=pk5ls20&repo=LiteLoaderQQNT-NekoImageGallerySearch&show_owner=true)](https://github.com/pk5ls20/LiteLoaderQQNT-NekoImageGallerySearch)
+[![nonebot-plugin-nekoimage](https://github-readme-stats.vercel.app/api/pin/?username=pk5ls20&repo=nonebot-plugin-nekoimage&show_owner=true)](https://github.com/pk5ls20/pk5ls20/nonebot-plugin-nekoimage)
+
 ## 📊 Repository Summary
 
 ![Alt](https://repobeats.axiom.co/api/embed/ac080afa0d2d8af0345f6818b9b7c35bf8de1d31.svg "Repobeats analytics image")
