@@ -75,7 +75,7 @@ class Config(BaseSettings):
     admin_token: str = ''
 
     access_protected: bool = False
-    access_token: str = 'default-access-token'
+    access_token: str = ''
 
     model_config = SettingsConfigDict(env_prefix="app_", env_nested_delimiter='__',
                                       env_file=('config/default.env', 'config/local.env'),
