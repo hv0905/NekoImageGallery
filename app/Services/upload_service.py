@@ -1,4 +1,5 @@
 import asyncio
+import gc
 from io import BytesIO
 
 from PIL import Image
@@ -19,6 +20,8 @@ class UploadService:
         self._queue = asyncio.Queue(200)
         self._upload_worker_task = asyncio.create_task(self._upload_worker())
 
+        self._processed_count = 0
+
     async def _upload_worker(self):
         while True:
             img, img_data, img_bytes, skip_ocr = await self._queue.get()
@@ -30,6 +33,9 @@ class UploadService:
                 logger.exception(ex)
             finally:
                 self._queue.task_done()
+                self._processed_count += 1
+                if self._processed_count % 50 == 0:
+                    gc.collect()
 
     async def _upload_task(self, img: Image.Image, img_data: ImageData, img_bytes: bytes, skip_ocr: bool):
         logger.info('Start indexing image {}. Local: {}. Size: {}', img_data.id, img_data.local, len(img_bytes))
@@ -58,7 +64,6 @@ class UploadService:
                 logger.success("Thumbnail for {} generated and uploaded!", img_data.id)
 
         img.close()
-        del img_bytes
 
     async def upload_image(self, img: Image.Image, img_data: ImageData, img_bytes: bytes, skip_ocr: bool):
         await self._queue.put((img, img_data, img_bytes, skip_ocr))
