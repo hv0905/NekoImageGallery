@@ -25,6 +25,8 @@ class IndexService:
 
         if image.mode != 'RGB':
             image = image.convert('RGB')  # to reduce convert in next steps
+        else:
+            image = image.copy()
         image_data.image_vector = self._transformers_service.get_image_vector(image)
         if not skip_ocr and config.ocr_search.enable:
             image_data.ocr_text = self._ocr_service.ocr_interface(image)

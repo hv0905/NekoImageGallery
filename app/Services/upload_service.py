@@ -39,7 +39,6 @@ class UploadService:
         if img_data.local:
             img_data.url = await self._storage_service.active_storage.url(file_name)
             if len(img_bytes) > 1024 * 500:
-                img_thumb = img.copy()
                 img_data.thumbnail_url = await self._storage_service.active_storage.url(
                     f"thumbnails/{img_data.id}.webp")
 
@@ -52,11 +51,14 @@ class UploadService:
             await self._storage_service.active_storage.upload(img_bytes, file_name)
             logger.success("Image {} uploaded to local storage.", img_data.id)
             if len(img_bytes) > 1024 * 500:
-                img_thumb.thumbnail((256, 256), resample=Image.Resampling.LANCZOS)
+                img.thumbnail((256, 256), resample=Image.Resampling.LANCZOS)
                 img_byte_arr = BytesIO()
-                img_thumb.save(img_byte_arr, 'WebP')
+                img.save(img_byte_arr, 'WebP')
                 await self._storage_service.active_storage.upload(img_byte_arr.getvalue(), thumb_path)
                 logger.success("Thumbnail for {} generated and uploaded!", img_data.id)
+
+        img.close()
+        del img_bytes
 
     async def upload_image(self, img: Image.Image, img_data: ImageData, img_bytes: bytes, skip_ocr: bool):
         await self._queue.put((img, img_data, img_bytes, skip_ocr))
