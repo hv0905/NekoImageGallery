@@ -51,7 +51,7 @@ class StorageMode(str, Enum):
 
 
 class StorageSettings(BaseModel):
-    method: StorageMode = StorageMode.DISABLED  # set designed to be "disabled" for compatibility checking in StaticFileSettings
+    method: StorageMode = StorageMode.LOCAL  # set designed to be "disabled" for compatibility checking in StaticFileSettings
     s3: S3StorageSettings = S3StorageSettings()
     local: LocalStorageSettings = LocalStorageSettings()
 
