@@ -1,4 +1,5 @@
 import pathlib
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Annotated
 
@@ -7,15 +8,25 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.params import Depends
 from fastapi.staticfiles import StaticFiles
 
-from app.Controllers.admin import admin_router
-from app.Controllers.search import searchRouter
+import app.Controllers.admin as admin_controller
+import app.Controllers.search as search_controller
 from app.Services.authentication import permissive_access_token_verify, permissive_admin_token_verify
+from app.Services.provider import ServiceProvider
 from app.config import config
 from .Models.api_response.base import WelcomeApiResponse, WelcomeApiAuthenticationResponse, \
     WelcomeApiAdminPortalAuthenticationResponse
 from .util.fastapi_log_handler import init_logging
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    provider = ServiceProvider()
+    search_controller.services = provider
+    admin_controller.services = provider
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 init_logging()
 
 app.add_middleware(
@@ -26,9 +37,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(searchRouter, prefix="/search")
+app.include_router(search_controller.search_router, prefix="/search")
 if config.admin_api_enable:
-    app.include_router(admin_router, prefix="/admin")
+    app.include_router(admin_controller.admin_router, prefix="/admin")
 
 if config.storage.method == "local":
     app.mount("/static", StaticFiles(directory=pathlib.Path(config.storage.local.path)), name="static")

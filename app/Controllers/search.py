@@ -13,24 +13,14 @@ from app.Models.api_response.search_api_response import SearchApiResponse
 from app.Models.query_params import SearchPagingParams, FilterParams
 from app.Models.search_result import SearchResult
 from app.Services.authentication import force_access_token_verify
-from app.Services.provider import db_context, transformers_service, storage_service
+from app.Services.provider import ServiceProvider
 from app.config import config
 from app.util.calculate_vectors_cosine import calculate_vectors_cosine
 
-searchRouter = APIRouter(dependencies=([Depends(force_access_token_verify)] if config.access_protected else None),
+search_router = APIRouter(dependencies=([Depends(force_access_token_verify)] if config.access_protected else None),
                          tags=["Search"])
 
-
-async def result_postprocessing(resp: SearchApiResponse) -> SearchApiResponse:
-    for item in resp.result:
-        if item.img.local and config.storage.method.enabled:
-            img_extension = item.img.format or item.img.url.split('.')[-1]
-            img_remote_filename = f"{item.img.id}.{img_extension}"
-            item.img.url = await storage_service.active_storage.presign_url(img_remote_filename)
-            if item.img.thumbnail_url is not None:
-                thumbnail_remote_filename = f"thumbnails/{item.img.id}.webp"
-                item.img.thumbnail_url = await storage_service.active_storage.presign_url(thumbnail_remote_filename)
-    return resp
+services: ServiceProvider | None = None  # The service provider will be injected in the webapp initialize
 
 
 class SearchBasisParams:
@@ -52,7 +42,20 @@ class SearchCombinedParams:
         self.basis = basis
 
 
-@searchRouter.get("/text/{prompt}", description="Search images by text prompt")
+async def result_postprocessing(resp: SearchApiResponse) -> SearchApiResponse:
+    for item in resp.result:
+        if item.img.local and config.storage.method.enabled:
+            img_extension = item.img.format or item.img.url.split('.')[-1]
+            img_remote_filename = f"{item.img.id}.{img_extension}"
+            item.img.url = await services.storage_service.active_storage.presign_url(img_remote_filename)
+            if item.img.thumbnail_url is not None:
+                thumbnail_remote_filename = f"thumbnails/{item.img.id}.webp"
+                item.img.thumbnail_url = await services.storage_service.active_storage.presign_url(
+                    thumbnail_remote_filename)
+    return resp
+
+
+@search_router.get("/text/{prompt}", description="Search images by text prompt")
 async def textSearch(
         prompt: Annotated[
             str, Path(max_length=100, description="The image prompt text you want to search.")],
@@ -64,20 +67,20 @@ async def textSearch(
                         "criteria you have given. This won't take any effect in vision search.")] = False
 ) -> SearchApiResponse:
     logger.info("Text search request received, prompt: {}", prompt)
-    text_vector = transformers_service.get_text_vector(prompt) if basis.basis == SearchBasisEnum.vision \
-        else transformers_service.get_bert_vector(prompt)
+    text_vector = services.transformers_service.get_text_vector(prompt) if basis.basis == SearchBasisEnum.vision \
+        else services.transformers_service.get_bert_vector(prompt)
     if basis.basis == SearchBasisEnum.ocr and exact:
         filter_param.ocr_text = prompt
-    results = await db_context.querySearch(text_vector,
-                                           query_vector_name=db_context.getVectorByBasis(basis.basis),
-                                           filter_param=filter_param,
-                                           top_k=paging.count,
-                                           skip=paging.skip)
+    results = await services.db_context.querySearch(text_vector,
+                                                    query_vector_name=services.db_context.getVectorByBasis(basis.basis),
+                                                    filter_param=filter_param,
+                                                    top_k=paging.count,
+                                                    skip=paging.skip)
     return await result_postprocessing(
         SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4()))
 
 
-@searchRouter.post("/image", description="Search images by image")
+@search_router.post("/image", description="Search images by image")
 async def imageSearch(
         image: Annotated[bytes, File(max_length=10 * 1024 * 1024, media_type="image/*",
                                      description="The image you want to search.")],
@@ -87,16 +90,16 @@ async def imageSearch(
     fakefile = BytesIO(image)
     img = Image.open(fakefile)
     logger.info("Image search request received")
-    image_vector = transformers_service.get_image_vector(img)
-    results = await db_context.querySearch(image_vector,
-                                           top_k=paging.count,
-                                           skip=paging.skip,
-                                           filter_param=filter_param)
+    image_vector = services.transformers_service.get_image_vector(img)
+    results = await services.db_context.querySearch(image_vector,
+                                                    top_k=paging.count,
+                                                    skip=paging.skip,
+                                                    filter_param=filter_param)
     return await result_postprocessing(
         SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4()))
 
 
-@searchRouter.get("/similar/{image_id}",
+@search_router.get("/similar/{image_id}",
                   description="Search images similar to the image with given id. "
                               "Won't include the given image itself in the result.")
 async def similarWith(
@@ -106,16 +109,17 @@ async def similarWith(
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]
 ) -> SearchApiResponse:
     logger.info("Similar search request received, id: {}", image_id)
-    results = await db_context.querySimilar(search_id=str(image_id),
-                                            top_k=paging.count,
-                                            skip=paging.skip,
-                                            filter_param=filter_param,
-                                            query_vector_name=db_context.getVectorByBasis(basis.basis))
+    results = await services.db_context.querySimilar(search_id=str(image_id),
+                                                     top_k=paging.count,
+                                                     skip=paging.skip,
+                                                     filter_param=filter_param,
+                                                     query_vector_name=services.db_context.getVectorByBasis(
+                                                         basis.basis))
     return await result_postprocessing(
         SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4()))
 
 
-@searchRouter.post("/advanced", description="Search with multiple criteria")
+@search_router.post("/advanced", description="Search with multiple criteria")
 async def advancedSearch(
         model: AdvancedSearchModel,
         basis: Annotated[SearchBasisParams, Depends(SearchBasisParams)],
@@ -129,7 +133,7 @@ async def advancedSearch(
         SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4()))
 
 
-@searchRouter.post("/combined", description="Search with combined criteria")
+@search_router.post("/combined", description="Search with combined criteria")
 async def combinedSearch(
         model: CombinedSearchModel,
         basis: Annotated[SearchCombinedParams, Depends(SearchCombinedParams)],
@@ -145,18 +149,18 @@ async def combinedSearch(
         SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4()))
 
 
-@searchRouter.get("/random", description="Get random images")
+@search_router.get("/random", description="Get random images")
 async def randomPick(
         filter_param: Annotated[FilterParams, Depends(FilterParams)],
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
     logger.info("Random pick request received")
-    random_vector = transformers_service.get_random_vector()
-    result = await db_context.querySearch(random_vector, top_k=paging.count, filter_param=filter_param)
+    random_vector = services.transformers_service.get_random_vector()
+    result = await services.db_context.querySearch(random_vector, top_k=paging.count, filter_param=filter_param)
     return await result_postprocessing(
         SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4()))
 
 
-@searchRouter.get("/recall/{query_id}", description="Recall the query with given queryId")
+@search_router.get("/recall/{query_id}", description="Recall the query with given queryId")
 async def recallQuery(query_id: str):
     raise NotImplementedError()
 
@@ -166,21 +170,22 @@ async def process_advanced_and_combined_search_query(model: Union[AdvancedSearch
                                                      filter_param: FilterParams,
                                                      paging: SearchPagingParams) -> List[SearchResult]:
     if basis.basis == SearchBasisEnum.ocr:
-        positive_vectors = [transformers_service.get_bert_vector(t) for t in model.criteria]
-        negative_vectors = [transformers_service.get_bert_vector(t) for t in model.negative_criteria]
+        positive_vectors = [services.transformers_service.get_bert_vector(t) for t in model.criteria]
+        negative_vectors = [services.transformers_service.get_bert_vector(t) for t in model.negative_criteria]
     else:
-        positive_vectors = [transformers_service.get_text_vector(t) for t in model.criteria]
-        negative_vectors = [transformers_service.get_text_vector(t) for t in model.negative_criteria]
+        positive_vectors = [services.transformers_service.get_text_vector(t) for t in model.criteria]
+        negative_vectors = [services.transformers_service.get_text_vector(t) for t in model.negative_criteria]
     # In order to ensure the query effect of the combined query, modify the actual top_k
     _query_top_k = min(max(30, paging.count * 3), 100) if isinstance(model, CombinedSearchModel) else paging.count
-    result = await db_context.querySimilar(query_vector_name=db_context.getVectorByBasis(basis.basis),
-                                           positive_vectors=positive_vectors,
-                                           negative_vectors=negative_vectors,
-                                           mode=model.mode,
-                                           filter_param=filter_param,
-                                           with_vectors=True if isinstance(basis, SearchCombinedParams) else False,
-                                           top_k=_query_top_k,
-                                           skip=paging.skip)
+    result = await services.db_context.querySimilar(query_vector_name=services.db_context.getVectorByBasis(basis.basis),
+                                                    positive_vectors=positive_vectors,
+                                                    negative_vectors=negative_vectors,
+                                                    mode=model.mode,
+                                                    filter_param=filter_param,
+                                                    with_vectors=True if isinstance(basis,
+                                                                                    SearchCombinedParams) else False,
+                                                    top_k=_query_top_k,
+                                                    skip=paging.skip)
     return result
 
 
@@ -188,9 +193,9 @@ def calculate_and_sort_by_combined_scores(model: CombinedSearchModel,
                                           basis: SearchCombinedParams,
                                           result: List[SearchResult]) -> None:
     # First, calculate the extra prompt vector
-    extra_prompt_vector = transformers_service.get_text_vector(model.extra_prompt) \
+    extra_prompt_vector = services.transformers_service.get_text_vector(model.extra_prompt) \
         if basis.basis == SearchCombinedBasisEnum.ocr \
-        else transformers_service.get_bert_vector(model.extra_prompt)
+        else services.transformers_service.get_bert_vector(model.extra_prompt)
     # Then, calculate combined_similar_score (original score * similar_score) and write to SearchResult.score
     for itm in result:
         extra_vector = itm.img.image_vector if itm.img.image_vector is not None else itm.img.text_contain_vector

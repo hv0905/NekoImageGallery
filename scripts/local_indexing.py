@@ -7,12 +7,13 @@ from PIL import Image
 from loguru import logger
 
 from app.Models.img_data import ImageData
-from app.Services.provider import index_service, db_context
-from app.Services.provider import storage_service
+from app.Services.provider import ServiceProvider
 from app.util.generate_uuid import generate_uuid
 from .local_utility import fetch_path_uuid_list
 
 overall_count = 0
+
+services: ServiceProvider | None = None
 
 
 async def copy_and_index(file_path: Path, uuid_str: str = None):
@@ -27,18 +28,18 @@ async def copy_and_index(file_path: Path, uuid_str: str = None):
     image_id = uuid.UUID(uuid_str) if uuid_str else generate_uuid(file_path)
     img_ext = file_path.suffix
     imgdata = ImageData(id=image_id,
-                        url=await storage_service.active_storage.url(f'{image_id}{img_ext}'),
+                        url=await services.storage_service.active_storage.url(f'{image_id}{img_ext}'),
                         index_date=datetime.now(),
                         format=img_ext[1:],
                         local=True)
     try:
         # This has already been checked for duplicated, so there's no need to double-check.
-        await index_service.index_image(img, imgdata, skip_duplicate_check=True)
+        await services.index_service.index_image(img, imgdata, skip_duplicate_check=True)
     except Exception as e:
         logger.error("Error when processing image {}: {}", file_path, e)
         return
     # copy to static
-    await storage_service.active_storage.upload(file_path, f'{image_id}{img_ext}')
+    await services.storage_service.active_storage.upload(file_path, f'{image_id}{img_ext}')
 
 
 async def copy_and_index_batch(file_path_list: list[tuple[Path, str]]):
@@ -48,21 +49,23 @@ async def copy_and_index_batch(file_path_list: list[tuple[Path, str]]):
 
 @logger.catch()
 async def main(args):
+    global services
+    services = ServiceProvider()
     root = Path(args.local_index_target_dir)
     # First, check if the database is empty
-    item_number = await db_context.get_counts(exact=False)
+    item_number = await services.db_context.get_counts(exact=False)
     if item_number == 0:
         # database is empty, do as usual
         logger.warning("The database is empty, Will not check for duplicate points.")
-        async for item in storage_service.local_storage.list_files(root, batch_max_files=1):
+        async for item in services.storage_service.local_storage.list_files(root, batch_max_files=1):
             await copy_and_index(item[0])
     else:
         # database is not empty, check for duplicate points
         logger.warning("The database is not empty, Will check for duplicate points.")
-        async for itm in storage_service.local_storage.list_files(root, batch_max_files=5000):
+        async for itm in services.storage_service.local_storage.list_files(root, batch_max_files=5000):
             local_file_path_with_uuid_list = fetch_path_uuid_list(itm)
             local_file_uuid_list = [itm[1] for itm in local_file_path_with_uuid_list]
-            duplicate_uuid_list = await db_context.validate_ids(local_file_uuid_list)
+            duplicate_uuid_list = await services.db_context.validate_ids(local_file_uuid_list)
             if len(duplicate_uuid_list) > 0:
                 duplicate_uuid_list = set(duplicate_uuid_list)
                 local_file_path_with_uuid_list = [item for item in local_file_path_with_uuid_list

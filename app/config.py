@@ -1,8 +1,11 @@
+import os
 from enum import Enum
 
 from loguru import logger
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DOCKER_SECRETS_DIR = '/run/secrets'
 
 
 class QdrantSettings(BaseModel):
@@ -16,6 +19,7 @@ class QdrantSettings(BaseModel):
 
 class ClipSettings(BaseModel):
     model: str = 'openai/clip-vit-large-patch14'
+    bert: str = 'bert-base-chinese'
 
 
 class OCRSearchSettings(BaseModel):
@@ -80,7 +84,8 @@ class Config(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="app_", env_nested_delimiter='__',
                                       env_file=('config/default.env', 'config/local.env'),
                                       env_file_encoding='utf-8',
-                                      secrets_dir='/run/secrets')  # for docker secret
+                                      secrets_dir=DOCKER_SECRETS_DIR if os.path.exists(
+                                          DOCKER_SECRETS_DIR) else None)  # for docker secret
 
 
 class Environment(BaseModel):

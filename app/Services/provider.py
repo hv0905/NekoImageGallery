@@ -7,37 +7,40 @@ from .upload_service import UploadService
 from .vector_db_context import VectorDbContext
 from ..config import config, environment
 
-transformers_service = TransformersService()
-db_context = VectorDbContext()
-ocr_service = None
 
-if environment.local_indexing or config.admin_api_enable:
-    match config.ocr_search.ocr_module:
-        case "easyocr":
-            from .ocr_services import EasyOCRService
+class ServiceProvider:
+    def __init__(self):
+        self.transformers_service = TransformersService()
+        self.db_context = VectorDbContext()
+        self.ocr_service = None
 
-            ocr_service = EasyOCRService()
-        case "easypaddleocr":
-            from .ocr_services import EasyPaddleOCRService
+        if environment.local_indexing or config.admin_api_enable:
+            match config.ocr_search.ocr_module:
+                case "easyocr":
+                    from .ocr_services import EasyOCRService
 
-            ocr_service = EasyPaddleOCRService()
-        case "paddleocr":
-            from .ocr_services import PaddleOCRService
+                    self.ocr_service = EasyOCRService()
+                case "easypaddleocr":
+                    from .ocr_services import EasyPaddleOCRService
 
-            ocr_service = PaddleOCRService()
-        case _:
-            raise NotImplementedError(f"OCR module {config.ocr_search.ocr_module} not implemented.")
-else:
-    from .ocr_services import DisabledOCRService
+                    self.ocr_service = EasyPaddleOCRService()
+                case "paddleocr":
+                    from .ocr_services import PaddleOCRService
 
-    ocr_service = DisabledOCRService()
-logger.info(f"OCR service '{type(ocr_service).__name__}' initialized.")
+                    self.ocr_service = PaddleOCRService()
+                case _:
+                    raise NotImplementedError(f"OCR module {config.ocr_search.ocr_module} not implemented.")
+        else:
+            from .ocr_services import DisabledOCRService
 
-index_service = IndexService(ocr_service, transformers_service, db_context)
-storage_service = StorageService()
-logger.info(f"Storage service '{type(storage_service.active_storage).__name__}' initialized.")
+            self.ocr_service = DisabledOCRService()
+        logger.info(f"OCR service '{type(self.ocr_service).__name__}' initialized.")
 
-upload_service = None
+        self.index_service = IndexService(self.ocr_service, self.transformers_service, self.db_context)
+        self.storage_service = StorageService()
+        logger.info(f"Storage service '{type(self.storage_service.active_storage).__name__}' initialized.")
 
-if config.admin_api_enable:
-    upload_service = UploadService(storage_service, db_context, index_service)
+        self.upload_service = None
+
+        if config.admin_api_enable:
+            self.upload_service = UploadService(self.storage_service, self.db_context, self.index_service)
