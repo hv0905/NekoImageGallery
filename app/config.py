@@ -17,14 +17,14 @@ class QdrantSettings(BaseModel):
     api_key: str | None = None
 
 
-class ClipSettings(BaseModel):
-    model: str = 'openai/clip-vit-large-patch14'
+class ModelsSettings(BaseModel):
+    clip: str = 'openai/clip-vit-large-patch14'
     bert: str = 'bert-base-chinese'
+    easypaddleocr: str | None = None
 
 
 class OCRSearchSettings(BaseModel):
     enable: bool = True
-    bert_model: str = 'bert-base-chinese'
     ocr_module: str = 'easypaddleocr'
     ocr_language: list[str] = ['ch_sim', 'en']
     ocr_min_confidence: float = 1e-2
@@ -68,7 +68,7 @@ class StaticFileSettings(BaseModel):
 
 class Config(BaseSettings):
     qdrant: QdrantSettings = QdrantSettings()
-    clip: ClipSettings = ClipSettings()
+    model: ModelsSettings = ModelsSettings()
     ocr_search: OCRSearchSettings = OCRSearchSettings()
     static_file: StaticFileSettings = StaticFileSettings()  # [Deprecated]
     storage: StorageSettings = StorageSettings()
