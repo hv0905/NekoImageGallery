@@ -42,7 +42,9 @@ if config.admin_api_enable:
     app.include_router(admin_controller.admin_router, prefix="/admin")
 
 if config.storage.method == "local":
-    app.mount("/static", StaticFiles(directory=pathlib.Path(config.storage.local.path)), name="static")
+    # Since we will check & create the static directory soon later when the StorageService initialized, we don't need to
+    # check it here.
+    app.mount("/static", StaticFiles(directory=pathlib.Path(config.storage.local.path), check_dir=False), name="static")
 
 
 @app.get("/", description="Default portal. Test for server availability.")

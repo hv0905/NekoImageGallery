@@ -17,13 +17,13 @@ class TransformersService:
         if self.device == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         logger.info("Using device: {}; CLIP Model: {}, BERT Model: {}",
-                    self.device, config.clip.model, config.ocr_search.bert_model)
-        self._clip_model = CLIPModel.from_pretrained(config.clip.model).to(self.device)
-        self._clip_processor = CLIPProcessor.from_pretrained(config.clip.model)
+                    self.device, config.model.clip, config.model.bert)
+        self._clip_model = CLIPModel.from_pretrained(config.model.clip).to(self.device)
+        self._clip_processor = CLIPProcessor.from_pretrained(config.model.clip)
         logger.success("CLIP Model loaded successfully")
         if config.ocr_search.enable:
-            self._bert_model = BertModel.from_pretrained(config.ocr_search.bert_model).to(self.device)
-            self._bert_tokenizer = BertTokenizer.from_pretrained(config.ocr_search.bert_model)
+            self._bert_model = BertModel.from_pretrained(config.model.bert).to(self.device)
+            self._bert_tokenizer = BertTokenizer.from_pretrained(config.model.bert)
             logger.success("BERT Model loaded successfully")
         else:
             logger.info("OCR search is disabled. Skipping OCR and BERT model loading.")
