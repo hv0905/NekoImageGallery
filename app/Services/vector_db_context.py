@@ -1,6 +1,8 @@
 from typing import Optional
 
 import numpy
+from grpc.aio import AioRpcError
+from httpx import HTTPError
 from loguru import logger
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
@@ -11,6 +13,7 @@ from app.Models.img_data import ImageData
 from app.Models.query_params import FilterParams
 from app.Models.search_result import SearchResult
 from app.config import config
+from app.util.retry_deco_async import wrap_object, retry_async
 
 
 class PointNotFoundError(ValueError):
@@ -28,6 +31,8 @@ class VectorDbContext:
         self._client = AsyncQdrantClient(host=config.qdrant.host, port=config.qdrant.port,
                                          grpc_port=config.qdrant.grpc_port, api_key=config.qdrant.api_key,
                                          prefer_grpc=config.qdrant.prefer_grpc)
+
+        wrap_object(self._client, retry_async((AioRpcError, HTTPError)))
         self.collection_name = config.qdrant.coll
 
     async def retrieve_by_id(self, image_id: str, with_vectors=False) -> ImageData:

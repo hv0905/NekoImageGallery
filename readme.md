@@ -32,7 +32,7 @@ image search.
 
 ## ✈️ Deployment
 
-### Local Deployment
+### 🖥️ Local Deployment
 
 #### Deploy Qdrant Database
 
@@ -95,15 +95,9 @@ the [online service provided by Qdrant](https://qdrant.tech/documentation/cloud/
    is a simple web front-end application for this project. If you want to deploy it, please refer to
    its [deployment documentation](https://github.com/hv0905/NekoImageGallery.App).
 
-### Docker Compose Containerized Deployment
+### 🐋 Docker Deployment
 
-> [!WARNING]
-> Docker compose support is in an alpha state, and may not work for everyone(especially CUDA acceleration).
-> Please make sure you are familiar with [Docker documentation](https://docs.docker.com/) before using this deployment
-> method.
-> If you encounter any problems during deployment, please submit an issue.
-
-#### Prepare `nvidia-container-runtime`
+#### Prepare `nvidia-container-runtime` (CUDA users only)
 
 If you want to use CUDA acceleration, you need to install `nvidia-container-runtime` on your system. Please refer to
 the [official documentation](https://docs.docker.com/config/containers/resource_constraints/#gpu) for installation.
