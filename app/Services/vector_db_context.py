@@ -182,6 +182,24 @@ class VectorDbContext:
         resp = await self._client.count(collection_name=self.collection_name, exact=exact)
         return resp.count
 
+    async def check_collection(self) -> bool:
+        resp = await self._client.get_collections()
+        resp = [t.name for t in resp.collections]
+        return self.collection_name in resp
+
+    async def initialize_collection(self):
+        if await self.check_collection():
+            logger.warning("Collection already exists. Skip initialization.")
+            return
+        logger.info("Initializing database, collection name: {}", self.collection_name)
+        vectors_config = {
+            self.IMG_VECTOR: models.VectorParams(size=768, distance=models.Distance.COSINE),
+            self.TEXT_VECTOR: models.VectorParams(size=768, distance=models.Distance.COSINE)
+        }
+        await self._client.create_collection(collection_name=self.collection_name,
+                                             vectors_config=vectors_config)
+        logger.success("Collection created!")
+
     @classmethod
     def _get_vector_from_img_data(cls, img_data: ImageData) -> models.PointVectors:
         vector = {}
