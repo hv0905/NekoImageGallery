@@ -1,6 +1,8 @@
 from typing import Optional
 
 import numpy
+from grpc.aio import AioRpcError
+from httpx import HTTPError
 from loguru import logger
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
@@ -11,6 +13,7 @@ from app.Models.img_data import ImageData
 from app.Models.query_params import FilterParams
 from app.Models.search_result import SearchResult
 from app.config import config
+from app.util.retry_deco_async import wrap_object, retry_async
 
 
 class PointNotFoundError(ValueError):
@@ -28,6 +31,8 @@ class VectorDbContext:
         self._client = AsyncQdrantClient(host=config.qdrant.host, port=config.qdrant.port,
                                          grpc_port=config.qdrant.grpc_port, api_key=config.qdrant.api_key,
                                          prefer_grpc=config.qdrant.prefer_grpc)
+
+        wrap_object(self._client, retry_async((AioRpcError, HTTPError)))
         self.collection_name = config.qdrant.coll
 
     async def retrieve_by_id(self, image_id: str, with_vectors=False) -> ImageData:
@@ -176,6 +181,24 @@ class VectorDbContext:
     async def get_counts(self, exact: bool) -> int:
         resp = await self._client.count(collection_name=self.collection_name, exact=exact)
         return resp.count
+
+    async def check_collection(self) -> bool:
+        resp = await self._client.get_collections()
+        resp = [t.name for t in resp.collections]
+        return self.collection_name in resp
+
+    async def initialize_collection(self):
+        if await self.check_collection():
+            logger.warning("Collection already exists. Skip initialization.")
+            return
+        logger.info("Initializing database, collection name: {}", self.collection_name)
+        vectors_config = {
+            self.IMG_VECTOR: models.VectorParams(size=768, distance=models.Distance.COSINE),
+            self.TEXT_VECTOR: models.VectorParams(size=768, distance=models.Distance.COSINE)
+        }
+        await self._client.create_collection(collection_name=self.collection_name,
+                                             vectors_config=vectors_config)
+        logger.success("Collection created!")
 
     @classmethod
     def _get_vector_from_img_data(cls, img_data: ImageData) -> models.PointVectors:

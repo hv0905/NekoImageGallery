@@ -50,7 +50,7 @@ if __name__ == '__main__':
         from scripts import qdrant_create_collection
         from app.config import config
 
-        qdrant_create_collection.create_coll(config.qdrant.host, config.qdrant.port, config.qdrant.coll)
+        asyncio.run(qdrant_create_collection.main())
 
     elif args.migrate_from_version is not None:
         from scripts import db_migrations

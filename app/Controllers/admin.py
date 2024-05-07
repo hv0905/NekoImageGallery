@@ -85,7 +85,8 @@ IMAGE_MIMES = {
 
 
 @admin_router.post("/upload",
-                   description="Upload image to server. The image will be indexed and stored in the database. If local is set to true, the image will be uploaded to local storage.")
+                   description="Upload image to server. The image will be indexed and stored in the database. If "
+                               "local is set to true, the image will be uploaded to local storage.")
 async def upload_image(image_file: Annotated[UploadFile, File(description="The image to be uploaded.")],
                        model: Annotated[UploadImageModel, Depends()]):
     # generate an ID for the image
