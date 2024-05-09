@@ -35,7 +35,7 @@ class VectorDbContext:
                                                  prefer_grpc=config.qdrant.prefer_grpc)
                 wrap_object(self._client, retry_async((AioRpcError, HTTPError)))
             case QdrantMode.LOCAL:
-                self._client = AsyncQdrantClient(local_file=config.qdrant.local_file)
+                self._client = AsyncQdrantClient(path=config.qdrant.local_path)
             case QdrantMode.MEMORY:
                 logger.warning("Using in-memory Qdrant client. Data will be lost after application restart. "
                                "This should only be used for testing and debugging.")
