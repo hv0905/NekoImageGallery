@@ -34,6 +34,7 @@ async def migrate_v1_v2():
 async def migrate(from_version: int):
     global services
     services = ServiceProvider()
+    await services.onload()
     match from_version:
         case 1:
             await migrate_v1_v2()

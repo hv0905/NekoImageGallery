@@ -44,6 +44,11 @@ class VectorDbContext:
                 raise ValueError("Invalid Qdrant mode.")
         self.collection_name = config.qdrant.coll
 
+    async def onload(self):
+        if not await self.check_collection():
+            logger.warning("Collection not found. Initializing...")
+            await self.initialize_collection()
+
     async def retrieve_by_id(self, image_id: str, with_vectors=False) -> ImageData:
         """
         Retrieve an item from database by id. Will raise PointNotFoundError if the given ID doesn't exist.

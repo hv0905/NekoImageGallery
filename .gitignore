@@ -241,5 +241,6 @@ cython_debug/
 
 static/
 qdrant_data/
+images_metadata/
 local_*/
 .idea

@@ -44,3 +44,6 @@ class ServiceProvider:
 
         if config.admin_api_enable:
             self.upload_service = UploadService(self.storage_service, self.db_context, self.index_service)
+
+    async def onload(self):
+        await self.db_context.onload()
