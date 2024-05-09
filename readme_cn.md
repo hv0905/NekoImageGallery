@@ -29,12 +29,29 @@
 
 ## ✈️部署
 
-### 本地部署
-#### 部署Qdrant数据库
+### 🖥️ 本地部署
+
+#### 选择元数据存储方式
+
+NekoImageGallery支持两种元数据存储方式：Qdrant数据库存储与本地文件存储。您可以根据自己的需求选择其中一种方式。
+
+##### Qdrant数据库 （推荐）
+
+在大多数情况下，我们推荐使用Qdrant数据库存储元数据。Qdrant数据库提供了高效的检索性能，灵活的扩展性以及更好的数据安全性。
 
 请根据[Qdrant文档](https://qdrant.tech/documentation/quick-start/)部署Qdrant数据库，推荐使用docker部署。
 
 如果你不想自己部署Qdrant，可以使用[Qdrant官方提供的在线服务](https://qdrant.tech/documentation/cloud/)。
+
+##### 本地文件存储
+
+本地文件存储直接将图片元数据（包括特征向量等）存在本地的Sqlite数据库中。仅建议在小规模部署或开发部署中使用。
+
+本地文件存储不需要额外的数据库部署流程，但是存在以下缺点：
+
+- 本地存储没有对向量进行索引和优化，所有搜索的时间复杂度为`O(n)`，因此若数据规模较大，搜索与索引的性能会下降。
+- 使用本地文件存储会使得NekoImageGallery变得有状态，因此会丧失横向扩展能力。
+- 当你希望迁移到Qdrant数据库进行存储时，已索引的元数据可能难以直接迁移。
 
 #### 部署NekoImageGallery
 1. 将项目目录clone到你自己的PC或服务器中。
@@ -75,7 +92,7 @@
    你可以通过`--host`指定希望绑定到的ip地址(默认为0.0.0.0)，通过`--port`指定希望绑定到的端口(默认为8000)。
 9. (可选)部署前端应用：[NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)是本项目的一个简易web前端应用，如需部署请参照它的[部署文档](https://github.com/hv0905/NekoImageGallery.App)。
 
-### Docker Compose容器化部署
+### 🐋 Docker 部署
 
 > [!WARNING]  
 > Docker Compose部署方式的支持目前仍处在alpha状态，可能不适用于所有环境(尤其是CUDA加速功能)。  

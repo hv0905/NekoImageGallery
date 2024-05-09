@@ -12,7 +12,7 @@ from app.Models.api_models.search_api_model import SearchModelEnum, SearchBasisE
 from app.Models.img_data import ImageData
 from app.Models.query_params import FilterParams
 from app.Models.search_result import SearchResult
-from app.config import config
+from app.config import config, QdrantMode
 from app.util.retry_deco_async import wrap_object, retry_async
 
 
@@ -28,11 +28,20 @@ class VectorDbContext:
     AVAILABLE_POINT_TYPES = models.Record | models.ScoredPoint | models.PointStruct
 
     def __init__(self):
-        self._client = AsyncQdrantClient(host=config.qdrant.host, port=config.qdrant.port,
-                                         grpc_port=config.qdrant.grpc_port, api_key=config.qdrant.api_key,
-                                         prefer_grpc=config.qdrant.prefer_grpc)
-
-        wrap_object(self._client, retry_async((AioRpcError, HTTPError)))
+        match config.qdrant.mode:
+            case QdrantMode.SERVER:
+                self._client = AsyncQdrantClient(host=config.qdrant.host, port=config.qdrant.port,
+                                                 grpc_port=config.qdrant.grpc_port, api_key=config.qdrant.api_key,
+                                                 prefer_grpc=config.qdrant.prefer_grpc)
+                wrap_object(self._client, retry_async((AioRpcError, HTTPError)))
+            case QdrantMode.LOCAL:
+                self._client = AsyncQdrantClient(local_file=config.qdrant.local_file)
+            case QdrantMode.MEMORY:
+                logger.warning("Using in-memory Qdrant client. Data will be lost after application restart. "
+                               "This should only be used for testing and debugging.")
+                self._client = AsyncQdrantClient(":memory:")
+            case _:
+                raise ValueError("Invalid Qdrant mode.")
         self.collection_name = config.qdrant.coll
 
     async def retrieve_by_id(self, image_id: str, with_vectors=False) -> ImageData:

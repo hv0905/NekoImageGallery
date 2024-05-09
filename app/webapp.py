@@ -21,6 +21,7 @@ from .util.fastapi_log_handler import init_logging
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     provider = ServiceProvider()
+
     search_controller.services = provider
     admin_controller.services = provider
     yield

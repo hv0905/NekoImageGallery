@@ -10,6 +10,7 @@ class TestRetryDeco:
         def __init__(self):
             self.counter = 0
             self.counter2 = 0
+            self.not_func = 'not a function'
 
         async def example_method(self):
             await asyncio.sleep(0)
@@ -37,6 +38,7 @@ class TestRetryDeco:
     async def test_object_wrapper(self):
         obj = self.ExampleClass()
         wrap_object(obj, retry_async(ValueError, tries=2))
+        assert isinstance(obj.not_func, str)
         with pytest.raises(ValueError):
             await obj.example_method()
         assert await obj.example_method() == 3

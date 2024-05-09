@@ -27,7 +27,5 @@ def retry_async(exceptions=Exception, tries=3, delay=0) -> Callable[[Callable], 
 
 def wrap_object(obj: object, deco: Callable[[Callable], Callable]):
     for attr in dir(obj):
-        if not attr.startswith('_'):
-            attr_val = getattr(obj, attr)
-            if callable(attr_val) and asyncio.iscoroutinefunction(attr_val):
-                setattr(obj, attr, deco(getattr(obj, attr)))
+        if not attr.startswith('_') and asyncio.iscoroutinefunction(attr_val := getattr(obj, attr)):
+            setattr(obj, attr, deco(attr_val))
