@@ -51,6 +51,7 @@ async def copy_and_index_batch(file_path_list: list[tuple[Path, str]]):
 async def main(args):
     global services
     services = ServiceProvider()
+    await services.onload()
     root = Path(args.local_index_target_dir)
     # First, check if the database is empty
     item_number = await services.db_context.get_counts(exact=False)

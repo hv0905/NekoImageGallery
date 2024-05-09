@@ -8,13 +8,23 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 DOCKER_SECRETS_DIR = '/run/secrets'
 
 
+class QdrantMode(str, Enum):
+    SERVER = 'server'
+    LOCAL = 'local'
+    MEMORY = 'memory'
+
+
 class QdrantSettings(BaseModel):
+    mode: QdrantMode = QdrantMode.SERVER
+
     host: str = 'localhost'
     port: int = 6333
     grpc_port: int = 6334
     coll: str = 'NekoImg'
     prefer_grpc: bool = True
     api_key: str | None = None
+
+    local_path: str = './images_metadata'
 
 
 class ModelsSettings(BaseModel):
@@ -55,7 +65,7 @@ class StorageMode(str, Enum):
 
 
 class StorageSettings(BaseModel):
-    method: StorageMode = StorageMode.LOCAL  # set designed to be "disabled" for compatibility checking in StaticFileSettings
+    method: StorageMode = StorageMode.LOCAL
     s3: S3StorageSettings = S3StorageSettings()
     local: LocalStorageSettings = LocalStorageSettings()
 
@@ -95,8 +105,6 @@ class Environment(BaseModel):
 def _check_deprecated_settings(_config):
     if _config.static_file.path != '[DEPRECATED]':
         logger.warning("Config StaticFileSettings is deprecated and should not be set.")
-    # if _config.storage.method == '[DISABLED]':
-    #     raise DeprecationWarning("Config StaticFileSettings is deprecated, use StorageSettings instead!")
 
 
 config = Config()

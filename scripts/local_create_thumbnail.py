@@ -9,6 +9,7 @@ from app.Services.provider import ServiceProvider
 
 async def main():
     services = ServiceProvider()
+    await services.onload()
     # Here path maybe either local path or pure path
     count = 0
     async for item in services.storage_service.active_storage.list_files("", '*.*', batch_max_files=1):

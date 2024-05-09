@@ -34,7 +34,12 @@ image search.
 
 ### 🖥️ Local Deployment
 
-#### Deploy Qdrant Database
+#### Choose a metadata storage method
+
+##### Qdrant Database (Recommended)
+
+In most cases, we recommend using the Qdrant database to store metadata. The Qdrant database provides efficient
+retrieval performance, flexible scalability, and better data security.
 
 Please deploy the Qdrant database according to
 the [Qdrant documentation](https://qdrant.tech/documentation/quick-start/). It is recommended to use Docker for
@@ -42,6 +47,18 @@ deployment.
 
 If you don't want to deploy Qdrant yourself, you can use
 the [online service provided by Qdrant](https://qdrant.tech/documentation/cloud/).
+
+##### Local File Storage
+
+Local file storage directly stores image metadata (including feature vectors, etc.) in a local SQLite database. It is
+only recommended for small-scale deployments or development deployments.
+
+Local file storage does not require an additional database deployment process, but has the following disadvantages:
+
+- Local storage does not index and optimize vectors, so the time complexity of all searches is `O(n)`. Therefore, if the
+  data scale is large, the performance of search and indexing will decrease.
+- Using local file storage will make NekoImageGallery stateful, so it will lose horizontal scalability.
+- When you want to migrate to Qdrant database for storage, the indexed metadata may be difficult to migrate directly.
 
 #### Deploy NekoImageGallery
 
