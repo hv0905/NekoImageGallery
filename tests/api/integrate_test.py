@@ -15,6 +15,8 @@ test_images = {'bsn': ['bsn_0.jpg', 'bsn_1.jpg', 'bsn_2.jpg'],
 @pytest.mark.asyncio
 async def test_integrate(test_client):
     credentials = {'x-admin-token': TEST_ADMIN_TOKEN, 'x-access-token': TEST_ACCESS_TOKEN}
+    resp = test_client.get("/", headers=credentials)
+    assert resp.status_code == 200
     img_ids = dict()
     for img_cls in test_images:
         img_ids[img_cls] = []
