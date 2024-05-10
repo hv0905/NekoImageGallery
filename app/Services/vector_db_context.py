@@ -34,12 +34,15 @@ class VectorDbContext:
                                                  grpc_port=config.qdrant.grpc_port, api_key=config.qdrant.api_key,
                                                  prefer_grpc=config.qdrant.prefer_grpc)
                 wrap_object(self._client, retry_async((AioRpcError, HTTPError)))
+                self._local = False
             case QdrantMode.LOCAL:
                 self._client = AsyncQdrantClient(path=config.qdrant.local_path)
+                self._local = True
             case QdrantMode.MEMORY:
                 logger.warning("Using in-memory Qdrant client. Data will be lost after application restart. "
                                "This should only be used for testing and debugging.")
                 self._client = AsyncQdrantClient(":memory:")
+                self._local = True
             case _:
                 raise ValueError("Invalid Qdrant mode.")
         self.collection_name = config.qdrant.coll
@@ -234,24 +237,22 @@ class VectorDbContext:
             vector=cls._get_vector_from_img_data(img_data).vector
         )
 
-    @classmethod
-    def _get_img_data_from_point(cls, point: AVAILABLE_POINT_TYPES) -> ImageData:
+    def _get_img_data_from_point(self, point: AVAILABLE_POINT_TYPES) -> ImageData:
         return (ImageData
                 .from_payload(point.id,
-                              point.payload,
-                              image_vector=numpy.array(point.vector[cls.IMG_VECTOR], dtype=numpy.float32)
-                              if point.vector and cls.IMG_VECTOR in point.vector else None,
-                              text_contain_vector=numpy.array(point.vector[cls.TEXT_VECTOR], dtype=numpy.float32)
-                              if point.vector and cls.TEXT_VECTOR in point.vector else None
+                              # workaround: https://github.com/qdrant/qdrant-client/issues/624
+                              point.payload.copy() if self._local else point.payload,
+                              image_vector=numpy.array(point.vector[self.IMG_VECTOR], dtype=numpy.float32)
+                              if point.vector and self.IMG_VECTOR in point.vector else None,
+                              text_contain_vector=numpy.array(point.vector[self.TEXT_VECTOR], dtype=numpy.float32)
+                              if point.vector and self.TEXT_VECTOR in point.vector else None
                               ))
 
-    @classmethod
-    def _get_img_data_from_points(cls, points: list[AVAILABLE_POINT_TYPES]) -> list[ImageData]:
-        return [cls._get_img_data_from_point(t) for t in points]
+    def _get_img_data_from_points(self, points: list[AVAILABLE_POINT_TYPES]) -> list[ImageData]:
+        return [self._get_img_data_from_point(t) for t in points]
 
-    @classmethod
-    def _get_search_result_from_scored_point(cls, point: models.ScoredPoint) -> SearchResult:
-        return SearchResult(img=cls._get_img_data_from_point(point), score=point.score)
+    def _get_search_result_from_scored_point(self, point: models.ScoredPoint) -> SearchResult:
+        return SearchResult(img=self._get_img_data_from_point(point), score=point.score)
 
     @classmethod
     def getVectorByBasis(cls, basis: SearchBasisEnum) -> str:
