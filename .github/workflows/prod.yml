@@ -11,6 +11,7 @@ on:
 jobs:
   perform-check:
     uses: ./.github/workflows/test_lint.yml
+    secrets: inherit
   docker:
     runs-on: ubuntu-latest
     environment: DockerHub
