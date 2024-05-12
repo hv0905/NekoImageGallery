@@ -114,6 +114,24 @@ Local file storage does not require an additional database deployment process, b
 
 ### 🐋 Docker Deployment
 
+#### About docker images
+
+NekoImageGallery's docker image are built and released on Docker Hub, including serval variants:
+
+| Tags                                                                                                                                        | Description                            | Latest Image Size                                                                                                                                                                                          |
+|---------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `edgeneko/neko-image-gallery:<version>`<br>`edgeneko/neko-image-gallery:<version>-cuda`<br>`edgeneko/neko-image-gallery:<version>-cuda12.1` | Supports GPU inferencing with CUDA12.1 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest?label=Docker%20Image%20(cuda))](https://hub.docker.com/r/edgeneko/neko-image-gallery)              |
+| `edgeneko/neko-image-gallery:<version>-cuda11.8`                                                                                            | Supports GPU inferencing with CUDA11.8 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cuda11.8?label=Docker%20Image%20(cuda11.8))](https://hub.docker.com/r/edgeneko/neko-image-gallery) |
+| `edgeneko/neko-image-gallery:<version>-cpu`                                                                                                 | Only supports CPU inferencing          | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cpu?label=Docker%20Image%20(cpu))](https://hub.docker.com/r/edgeneko/neko-image-gallery)           |
+
+Where `<version>` is the version number or version alias of NekoImageGallery, as follows:
+
+| Version  | Description                                                                                            |
+|----------|--------------------------------------------------------------------------------------------------------|
+| `latest` | The latest stable version of NekoImageGallery                                                          |
+| `v0.1.0` | The specific version number (correspond to Git tags)                                                   |
+| `edge`   | The latest development version of NekoImageGallery, may contain unstable features and breaking changes |
+
 #### Prepare `nvidia-container-runtime` (CUDA users only)
 
 If you want to use CUDA acceleration, you need to install `nvidia-container-runtime` on your system. Please refer to
