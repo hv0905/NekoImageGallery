@@ -67,3 +67,5 @@ jobs:
           tags: ${{ steps.combine-tags.outputs.tags }}
           build-args: ${{ matrix.configurations.args }}
           labels: ${{ steps.docker-meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
