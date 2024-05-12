@@ -56,9 +56,9 @@ jobs:
           SUFFIXES=(${{ matrix.configurations.suffixes }})
           echo 'tags<<EOF' >> $GITHUB_OUTPUT
           for SUFFIX in "${SUFFIXES[@]}"; do
-            echo '${{ steps.docker-meta.outputs.tags }}' | sed 's/$/'"$SUFFIX"'/' >> $GITUB_OUTPUT
+            echo '${{ steps.docker-meta.outputs.tags }}' | sed 's/$/'"$SUFFIX"'/' >> $GITHUB_OUTPUT
           done
-          echo EOF >> $GITUB_OUTPUT
+          echo EOF >> $GITHUB_OUTPUT
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
