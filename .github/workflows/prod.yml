@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - 'master'
+    tags:
+      - '*'
   workflow_dispatch:
 
 jobs:
@@ -18,18 +20,18 @@ jobs:
       matrix:
         configurations:
           - dockerfile: "Dockerfile"
-            tags: |
-              edgeneko/neko-image-gallery:latest
-              edgeneko/neko-image-gallery:latest-cuda
-              edgeneko/neko-image-gallery:latest-cuda12.1
+            suffixes: |
+              ""
+              "-cuda"
+              "-cuda12.1"
             args: |
               CUDA_VERSION=12.1
           - dockerfile: "Dockerfile"
-            tags: edgeneko/neko-image-gallery:latest-cuda11.8
+            suffixes: '"-cuda11.8"'
             args: |
               CUDA_VERSION=11.8
           - dockerfile: "cpu-only.Dockerfile"
-            tags: edgeneko/neko-image-gallery:latest-cpu
+            suffixes: '"-cpu"'
             args: ""
     steps:
       - name: Set up Docker Buildx
@@ -39,10 +41,29 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Docker Meta
+        id: docker-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: edgeneko/neko-image-gallery
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}.{{minor}}
+      - name: Build combined tags
+        id: combine-tags
+        run: |
+          SUFFIXES=(${{ matrix.configurations.suffixes }})
+          echo 'tags<<EOF' >> $GITHUB_OUTPUT
+          for SUFFIX in "${SUFFIXES[@]}"; do
+            echo '${{ steps.docker-meta.outputs.tags }}' | sed 's/$/'"$SUFFIX"'/' >> $GITUB_OUTPUT
+          done
+          echo EOF >> $GITUB_OUTPUT
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           file: ${{ matrix.configurations.dockerfile }}
           push: true
-          tags: ${{ matrix.configurations.tags }}
+          tags: ${{ steps.combine-tags.outputs.tags }}
           build-args: ${{ matrix.configurations.args }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
