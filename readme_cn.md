@@ -94,9 +94,23 @@ NekoImageGallery支持两种元数据存储方式：Qdrant数据库存储与本�
 
 ### 🐋 Docker 部署
 
-> [!WARNING]  
-> Docker Compose部署方式的支持目前仍处在alpha状态，可能不适用于所有环境(尤其是CUDA加速功能)。  
-> 请确保您在继续前熟悉[docker文档](https://docs.docker.com/)。如果您在使用过程中遇到任何问题，请提交issue。
+#### 关于Docker镜像
+
+NekoImageGallery镜像发布在DockerHub上，并包含多个变种，设计于在不同的环境使用。
+
+| Tags                                                                                                                                        | 介绍                     | Latest 镜像尺寸                                                                                                                                                                                                |
+|---------------------------------------------------------------------------------------------------------------------------------------------|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `edgeneko/neko-image-gallery:<version>`<br>`edgeneko/neko-image-gallery:<version>-cuda`<br>`edgeneko/neko-image-gallery:<version>-cuda12.1` | 基于CUDA12.1, 支持GPU推理的镜像 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest?label=Docker%20Image%20(cuda))](https://hub.docker.com/r/edgeneko/neko-image-gallery)              |
+| `edgeneko/neko-image-gallery:<version>-cuda11.8`                                                                                            | 基于CUDA11.8, 支持GPU推理的镜像 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cuda11.8?label=Docker%20Image%20(cuda11.8))](https://hub.docker.com/r/edgeneko/neko-image-gallery) |
+| `edgeneko/neko-image-gallery:<version>-cpu`                                                                                                 | 仅支持CPU推理的镜像            | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cpu?label=Docker%20Image%20(cpu))](https://hub.docker.com/r/edgeneko/neko-image-gallery)           |
+
+其中，`<version>`为NekoImageGallery的版本号或版本代称，具体如下：
+
+| Version           | 介绍                                                   |
+|-------------------|------------------------------------------------------|
+| `latest`          | 最新的稳定版本                                              |
+| `v*.*.*` / `v*.*` | 特定版本号(与GitHub Tag对应)                                 |
+| `edge`            | 最新的开发版本，与master分支同步更新，可能包含未经完善测试的功能和breaking changes |
 
 #### 准备`nvidia-container-runtime`
 
