@@ -47,7 +47,7 @@ jobs:
         with:
           images: edgeneko/neko-image-gallery
           tags: |
-            type=ref,event=branch
+            type=edge,branch=master
             type=semver,pattern=v{{version}}
             type=semver,pattern=v{{major}}.{{minor}}
       - name: Build combined tags
