@@ -2,7 +2,9 @@
 
 [![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/hv0905/NekoImageGallery/prod.yml?logo=github)](https://github.com/hv0905/NekoImageGallery/actions)
 [![codecov](https://codecov.io/gh/hv0905/NekoImageGallery/branch/master/graph/badge.svg?token=JK2KZBDIYP)](https://codecov.io/gh/hv0905/NekoImageGallery)
+[![Maintainability](https://api.codeclimate.com/v1/badges/ac97a1146648996b68ea/maintainability)](https://codeclimate.com/github/hv0905/NekoImageGallery/maintainability)
 ![Man hours](https://img.shields.io/endpoint?url=https%3A%2F%2Fmanhours.aiursoft.cn%2Fr%2Fgithub.com%2Fhv0905%2FNekoImageGallery.json)
+[![Docker Pulls](https://img.shields.io/docker/pulls/edgeneko/neko-image-gallery)](https://hub.docker.com/r/edgeneko/neko-image-gallery)
 
 An online AI image search engine based on the Clip model and Qdrant vector database. Supports keyword search and similar
 image search.
@@ -117,19 +119,28 @@ Local file storage does not require an additional database deployment process, b
 
 NekoImageGallery's docker image are built and released on Docker Hub, including serval variants:
 
-| Tags                                                                                                                                        | Description                            | Latest Image Size                                                                                                                                                                                          |
-|---------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `edgeneko/neko-image-gallery:<version>`<br>`edgeneko/neko-image-gallery:<version>-cuda`<br>`edgeneko/neko-image-gallery:<version>-cuda12.1` | Supports GPU inferencing with CUDA12.1 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest?label=Docker%20Image%20(cuda))](https://hub.docker.com/r/edgeneko/neko-image-gallery)              |
-| `edgeneko/neko-image-gallery:<version>-cuda11.8`                                                                                            | Supports GPU inferencing with CUDA11.8 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cuda11.8?label=Docker%20Image%20(cuda11.8))](https://hub.docker.com/r/edgeneko/neko-image-gallery) |
-| `edgeneko/neko-image-gallery:<version>-cpu`                                                                                                 | Only supports CPU inferencing          | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cpu?label=Docker%20Image%20(cpu))](https://hub.docker.com/r/edgeneko/neko-image-gallery)           |
+| Tags                                                                                                                                        | Description                            | Latest Image Size                                                                                                                                                                                 |
+|---------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `edgeneko/neko-image-gallery:<version>`<br>`edgeneko/neko-image-gallery:<version>-cuda`<br>`edgeneko/neko-image-gallery:<version>-cuda12.1` | Supports GPU inferencing with CUDA12.1 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest?label=Image%20(cuda))](https://hub.docker.com/r/edgeneko/neko-image-gallery)              |
+| `edgeneko/neko-image-gallery:<version>-cuda11.8`                                                                                            | Supports GPU inferencing with CUDA11.8 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cuda11.8?label=Image%20(cuda11.8))](https://hub.docker.com/r/edgeneko/neko-image-gallery) |
+| `edgeneko/neko-image-gallery:<version>-cpu`                                                                                                 | Only supports CPU inferencing          | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cpu?label=Image%20(cpu))](https://hub.docker.com/r/edgeneko/neko-image-gallery)           |
 
 Where `<version>` is the version number or version alias of NekoImageGallery, as follows:
 
-| Version  | Description                                                                                            |
-|----------|--------------------------------------------------------------------------------------------------------|
-| `latest` | The latest stable version of NekoImageGallery                                                          |
-| `v0.1.0` | The specific version number (correspond to Git tags)                                                   |
-| `edge`   | The latest development version of NekoImageGallery, may contain unstable features and breaking changes |
+| Version           | Description                                                                                            |
+|-------------------|--------------------------------------------------------------------------------------------------------|
+| `latest`          | The latest stable version of NekoImageGallery                                                          |
+| `v*.*.*` / `v*.*` | The specific version number (correspond to Git tags)                                                   |
+| `edge`            | The latest development version of NekoImageGallery, may contain unstable features and breaking changes |
+
+In each image, we have bundled the necessary dependencies, `openai/clip-vit-large-patch14` model
+weights, `bert-base-chinese` model weights and `easy-paddle-ocr` models to provide a complete and ready-to-use image.
+
+The images uses `/opt/NekoImageGallery/static` as volume to store image files, mount it to your own volume or directory
+if local storage is required.
+
+For configuration, we suggest using environment variables to override the default configuration. Secrets (like API
+tokens) can be provided by [docker secrets](https://docs.docker.com/engine/swarm/secrets/).
 
 #### Prepare `nvidia-container-runtime` (CUDA users only)
 
@@ -192,4 +203,4 @@ define them more clearly.
 
 Copyright 2023 EdgeNeko
 
-Licensed under GPLv3 license.
+Licensed under AGPLv3 license.
