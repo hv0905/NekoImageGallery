@@ -15,6 +15,6 @@ class StorageService:
             case StorageMode.DISABLED:
                 return
             case _:
-                raise NotImplementedError(f"Storage method {config.storage.method} not implemented. "                       
+                raise NotImplementedError(f"Storage method {config.storage.method} not implemented. "
                                           f"Available methods: local, s3")
         self.active_storage.pre_check()

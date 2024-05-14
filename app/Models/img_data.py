@@ -39,12 +39,12 @@ class ImageData(BaseModel):
         return result
 
     @classmethod
-    def from_payload(cls, id: str, payload: dict,
+    def from_payload(cls, img_id: str, payload: dict,
                      image_vector: Optional[ndarray] = None, text_contain_vector: Optional[ndarray] = None):
         # Convert the datetime string back to datetime object
         index_date = datetime.fromisoformat(payload['index_date'])
         del payload['index_date']
-        return cls(id=UUID(id),
+        return cls(id=UUID(img_id),
                    index_date=index_date,
                    **payload,
                    image_vector=image_vector if image_vector is not None else None,

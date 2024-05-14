@@ -2,7 +2,9 @@
 
 [![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/hv0905/NekoImageGallery/prod.yml?logo=github)](https://github.com/hv0905/NekoImageGallery/actions)
 [![codecov](https://codecov.io/gh/hv0905/NekoImageGallery/branch/master/graph/badge.svg?token=JK2KZBDIYP)](https://codecov.io/gh/hv0905/NekoImageGallery)
+[![Maintainability](https://api.codeclimate.com/v1/badges/ac97a1146648996b68ea/maintainability)](https://codeclimate.com/github/hv0905/NekoImageGallery/maintainability)
 ![Man hours](https://img.shields.io/endpoint?url=https%3A%2F%2Fmanhours.aiursoft.cn%2Fr%2Fgithub.com%2Fhv0905%2FNekoImageGallery.json)
+[![Docker Pulls](https://img.shields.io/docker/pulls/edgeneko/neko-image-gallery)](https://hub.docker.com/r/edgeneko/neko-image-gallery)
 
 基于Clip模型与Qdrant向量数据库的在线AI图片搜索引擎。支持关键字搜索以及相似图片搜索。
 
@@ -24,7 +26,6 @@
 ![Screenshot6](web/screenshots/6.png)
 
 > 以上截图可能包含来自不同画师的版权图片，请不要将其用作其它用途。
-
 
 ## ✈️部署
 
@@ -53,6 +54,7 @@ NekoImageGallery支持两种元数据存储方式：Qdrant数据库存储与本�
 - 当你希望迁移到Qdrant数据库进行存储时，已索引的元数据可能难以直接迁移。
 
 #### 部署NekoImageGallery
+
 1. 将项目目录clone到你自己的PC或服务器中。
 2. 强烈建议在python venv虚拟环境中安装本项目所需依赖， 运行下面命令：
     ```shell
@@ -60,12 +62,14 @@ NekoImageGallery支持两种元数据存储方式：Qdrant数据库存储与本�
     . .venv/bin/activate
     ```
 3. 安装PyTorch. 按照[PyTorch文档](https://pytorch.org/get-started/locally/)使用pip安装适合你的系统的torch版本
-   > 如果您希望使用CUDA加速推理，务必在本步中安装支持Cuda的pytorch版本，安装完成后可以使用`torch.cuda.is_available()`确认CUDA是否可用。
+   > 如果您希望使用CUDA加速推理，务必在本步中安装支持Cuda的pytorch版本，安装完成后可以使用`torch.cuda.is_available()`
+   确认CUDA是否可用。
 4. 安装其它本项目所需依赖：
     ```shell
     pip install -r requirements.txt
     ```
-5. 按需修改位于`config`目录下的配置文件，您可以直接修改`default.env`，但是建议创建一个名为`local.env`的文件，覆盖`default.env`中的配置。
+5. 按需修改位于`config`目录下的配置文件，您可以直接修改`default.env`，但是建议创建一个名为`local.env`
+   的文件，覆盖`default.env`中的配置。
 6. 初始化Qdrant数据库，运行下面命令：
     ```shell
     python main.py --init-database
@@ -75,21 +79,23 @@ NekoImageGallery支持两种元数据存储方式：Qdrant数据库存储与本�
     ```shell
    python main.py --local-index <path-to-your-image-directory>
     ```
-   此操作会将位于`<path-to-your-image-directory>`目录下的所有图片文件复制到`config.STATIC_FILE_PATH`目录下(默认为`./static`)，并将图片信息写入Qdrant数据库。
-   
+   此操作会将位于`<path-to-your-image-directory>`目录下的所有图片文件复制到`config.STATIC_FILE_PATH`目录下(
+   默认为`./static`)，并将图片信息写入Qdrant数据库。
+
    然后运行下面的命令，为所有static目录下的图片生成缩略图：
 
    ```shell
     python main.py --local-create-thumbnail
    ```
-   
+
    如果你希望大规模部署，可以使用类似`MinIO`的OSS存储服务，将图片文件存储在OSS中，然后将图片信息写入Qdrant数据库即可。
 8. 运行本应用：
     ```shell
     python main.py
     ```
    你可以通过`--host`指定希望绑定到的ip地址(默认为0.0.0.0)，通过`--port`指定希望绑定到的端口(默认为8000)。
-9. (可选)部署前端应用：[NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)是本项目的一个简易web前端应用，如需部署请参照它的[部署文档](https://github.com/hv0905/NekoImageGallery.App)。
+9. (可选)部署前端应用：[NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)
+   是本项目的一个简易web前端应用，如需部署请参照它的[部署文档](https://github.com/hv0905/NekoImageGallery.App)。
 
 ### 🐋 Docker 部署
 
@@ -97,11 +103,11 @@ NekoImageGallery支持两种元数据存储方式：Qdrant数据库存储与本�
 
 NekoImageGallery镜像发布在DockerHub上，并包含多个变种，设计于在不同的环境使用。
 
-| Tags                                                                                                                                        | 介绍                     | Latest 镜像尺寸                                                                                                                                                                                                |
-|---------------------------------------------------------------------------------------------------------------------------------------------|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `edgeneko/neko-image-gallery:<version>`<br>`edgeneko/neko-image-gallery:<version>-cuda`<br>`edgeneko/neko-image-gallery:<version>-cuda12.1` | 基于CUDA12.1, 支持GPU推理的镜像 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest?label=Docker%20Image%20(cuda))](https://hub.docker.com/r/edgeneko/neko-image-gallery)              |
-| `edgeneko/neko-image-gallery:<version>-cuda11.8`                                                                                            | 基于CUDA11.8, 支持GPU推理的镜像 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cuda11.8?label=Docker%20Image%20(cuda11.8))](https://hub.docker.com/r/edgeneko/neko-image-gallery) |
-| `edgeneko/neko-image-gallery:<version>-cpu`                                                                                                 | 仅支持CPU推理的镜像            | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cpu?label=Docker%20Image%20(cpu))](https://hub.docker.com/r/edgeneko/neko-image-gallery)           |
+| Tags                                                                                                                                        | 介绍                     | Latest 镜像尺寸                                                                                                                                                                                       |
+|---------------------------------------------------------------------------------------------------------------------------------------------|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `edgeneko/neko-image-gallery:<version>`<br>`edgeneko/neko-image-gallery:<version>-cuda`<br>`edgeneko/neko-image-gallery:<version>-cuda12.1` | 基于CUDA12.1, 支持GPU推理的镜像 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest?label=Image%20(cuda))](https://hub.docker.com/r/edgeneko/neko-image-gallery)              |
+| `edgeneko/neko-image-gallery:<version>-cuda11.8`                                                                                            | 基于CUDA11.8, 支持GPU推理的镜像 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cuda11.8?label=Image%20(cuda11.8))](https://hub.docker.com/r/edgeneko/neko-image-gallery) |
+| `edgeneko/neko-image-gallery:<version>-cpu`                                                                                                 | 仅支持CPU推理的镜像            | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cpu?label=Image%20(cpu))](https://hub.docker.com/r/edgeneko/neko-image-gallery)           |
 
 其中，`<version>`为NekoImageGallery的版本号或版本代称，具体如下：
 
@@ -111,11 +117,20 @@ NekoImageGallery镜像发布在DockerHub上，并包含多个变种，设计于�
 | `v*.*.*` / `v*.*` | 特定版本号(与GitHub Tag对应)                                 |
 | `edge`            | 最新的开发版本，与master分支同步更新，可能包含未经完善测试的功能和breaking changes |
 
+在每个镜像中，我们捆绑了必要的依赖项，包括 `openai/clip-vit-large-patch14` 模型权重、`bert-base-chinese`
+模型权重和 `easy-paddle-ocr` 模型，以提供一个完整且可直接使用的镜像。
+
+镜像使用 `/opt/NekoImageGallery/static` 作为存储图像文件的卷，如果需要本地存储，可以将其挂载到您自己的卷或目录。
+
+对于配置，我们建议使用环境变量来覆盖默认配置。机密信息（如 API
+令牌）可以通过 [docker secrets](https://docs.docker.com/engine/swarm/secrets/) 提供。
+
 #### 准备`nvidia-container-runtime`
 
-如果你希望在推理时支持CUDA加速，请参考[Docker GPU相关文档](https://docs.docker.com/config/containers/resource_constraints/#gpu)准备支持GPU的容器运行时。
+如果你希望在推理时支持CUDA加速，请参考[Docker GPU相关文档](https://docs.docker.com/config/containers/resource_constraints/#gpu)
+准备支持GPU的容器运行时。
 
-> 相关文档：  
+> 相关文档：
 > 1. https://docs.docker.com/config/containers/resource_constraints/#gpu
 > 2. https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker
 > 3. https://nvidia.github.io/nvidia-container-runtime/

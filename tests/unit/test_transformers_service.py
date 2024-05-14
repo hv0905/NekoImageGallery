@@ -8,7 +8,7 @@ from app.util.calculate_vectors_cosine import calculate_vectors_cosine
 
 class TestTransformersService:
 
-    def setup_class(self):
+    def __init__(self):
         self.transformers_service = TransformersService()
         self.assets_root = Path(__file__).parent / '..' / 'assets'
 
