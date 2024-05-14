@@ -1,16 +1,3 @@
-import pytest
-from fastapi.testclient import TestClient
-
-from app.webapp import app
-
-client = TestClient(app)
-
-
-@pytest.fixture
-def anyio_backend():
-    return 'asyncio'
-
-
 class TestHome:
 
     def test_get_home_no_tokens(self, test_client):

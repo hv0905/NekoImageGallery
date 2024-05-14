@@ -57,6 +57,10 @@ async def test_integrate(test_client):
     assert resp.status_code == 200
     assert resp.json()['result'][0]['img']['id'] in img_ids['bsn']
 
+    image_request = test_client.get(resp.json()['result'][0]['img']['url'])
+    assert image_request.status_code == 200
+    assert image_request.headers['Content-Type'] == 'image/jpeg'
+
     resp = test_client.put(f"/admin/update_opt/{img_ids['bsn'][0]}", json={'categories': ['bsn'], 'starred': True},
                            headers=credentials)
     assert resp.status_code == 200
@@ -68,3 +72,10 @@ async def test_integrate(test_client):
     resp = test_client.get("/search/text/cat", params={'starred': True}, headers=credentials)
     assert resp.status_code == 200
     assert resp.json()['result'][0]['img']['id'] in img_ids['bsn']
+
+    resp = test_client.delete(f"/admin/delete/{img_ids['bsn'][0]}", headers=credentials)
+    assert resp.status_code == 200
+
+    resp = test_client.get("/search/text/cat", params={'categories': 'bsn'}, headers=credentials)
+    assert resp.status_code == 200
+    assert len(resp.json()['result']) == 0
