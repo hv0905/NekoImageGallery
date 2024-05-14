@@ -60,6 +60,8 @@ jobs:
             echo '${{ steps.docker-meta.outputs.tags }}' | sed 's/$/'"$SUFFIX"'/' >> $GITHUB_OUTPUT
           done
           echo EOF >> $GITHUB_OUTPUT
+          
+          printf 'cache_tag=%s' "$(echo '${{ steps.docker-meta.outputs.tags }}' | tail -1 | sed 's/$/'"${SUFFIXES[0]}"'/')" >> $GITHUB_OUTPUT
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -68,5 +70,5 @@ jobs:
           tags: ${{ steps.combine-tags.outputs.tags }}
           build-args: ${{ matrix.configurations.args }}
           labels: ${{ steps.docker-meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{steps.combine-tags.outputs.cache_tag}}
+          cache-to: type=inline
