@@ -36,7 +36,8 @@ class EasyPaddleOCRService(OCRService):
                                                 needWarmUp=True,
                                                 devices=self._device,
                                                 warmup_size=(960, 960),
-                                                model_local_dir=config.model.easypaddleocr if config.model.easypaddleocr else None)
+                                                model_local_dir=config.model.easypaddleocr if
+                                                config.model.easypaddleocr else None)
         logger.success("EasyPaddleOCR loaded successfully")
 
     @staticmethod

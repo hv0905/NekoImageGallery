@@ -2,8 +2,6 @@ import abc
 import os
 from typing import TypeVar, Generic, TypeAlias, Optional, AsyncGenerator
 
-from app.Models.img_data import ImageData
-
 FileMetaDataT = TypeVar('FileMetaDataT')
 
 PathLikeType: TypeAlias = str | os.PathLike

@@ -13,7 +13,6 @@ from opendal import AsyncOperator
 from opendal.exceptions import NotFound, PermissionDenied, AlreadyExists
 from wcmatch import glob
 
-from app.Models.img_data import ImageData
 from app.Services.storage.base import BaseStorage, FileMetaDataT, RemoteFilePathType, LocalFilePathType, \
     LocalFileMetaDataType, RemoteFileMetaDataType
 from app.Services.storage.exception import LocalFileNotFoundError, RemoteFileNotFoundError, RemoteFilePermissionError, \

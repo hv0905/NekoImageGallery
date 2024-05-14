@@ -41,15 +41,13 @@ class UploadService:
         logger.info('Start indexing image {}. Local: {}. Size: {}', img_data.id, img_data.local, len(img_bytes))
         file_name = f"{img_data.id}.{img_data.format}"
         thumb_path = f"thumbnails/{img_data.id}.webp"
-        img_thumb = None
         if img_data.local:
             img_data.url = await self._storage_service.active_storage.url(file_name)
             if len(img_bytes) > 1024 * 500:
                 img_data.thumbnail_url = await self._storage_service.active_storage.url(
                     f"thumbnails/{img_data.id}.webp")
 
-        await self._index_service.index_image(img, img_data, skip_ocr=skip_ocr,
-                                              background=True)  # The img might be modified after calling this
+        await self._index_service.index_image(img, img_data, skip_ocr=skip_ocr, background=True)
         logger.success("Image {} indexed.", img_data.id)
 
         if img_data.local:
