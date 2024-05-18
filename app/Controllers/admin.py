@@ -23,6 +23,7 @@ admin_router = APIRouter(dependencies=[Depends(force_admin_token_verify)], tags=
 
 services: ServiceProvider | None = None
 
+
 @admin_router.delete("/delete/{image_id}",
                      description="Delete image with the given id from database. "
                                  "If the image is a local image, it will be moved to `/static/_deleted` folder.")
@@ -125,4 +126,5 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
 @admin_router.get("/server_info", description="Get server information")
 async def server_info():
     return ServerInfoResponse(message="Successfully get server information!",
-                              image_count=await services.db_context.get_counts(exact=True))
+                              image_count=await services.db_context.get_counts(exact=True),
+                              index_queue_length=services.upload_service.get_queue_size())

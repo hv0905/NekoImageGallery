@@ -18,7 +18,7 @@ from app.config import config
 from app.util.calculate_vectors_cosine import calculate_vectors_cosine
 
 search_router = APIRouter(dependencies=([Depends(force_access_token_verify)] if config.access_protected else None),
-                         tags=["Search"])
+                          tags=["Search"])
 
 services: ServiceProvider | None = None  # The service provider will be injected in the webapp initialize
 
@@ -100,8 +100,8 @@ async def imageSearch(
 
 
 @search_router.get("/similar/{image_id}",
-                  description="Search images similar to the image with given id. "
-                              "Won't include the given image itself in the result.")
+                   description="Search images similar to the image with given id. "
+                               "Won't include the given image itself in the result.")
 async def similarWith(
         image_id: Annotated[UUID, Path(description="The id of the image you want to search.")],
         basis: Annotated[SearchBasisParams, Depends(SearchBasisParams)],

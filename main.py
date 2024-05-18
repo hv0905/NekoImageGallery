@@ -15,7 +15,7 @@ def parse_args():
     actions.add_argument('--show-config', action='store_true', help="Print the current configuration and exit.")
     actions.add_argument('--init-database', action='store_true',
                          help="Initialize qdrant database using connection settings in "
-                              "config.py. When this flag is set, will not"
+                              "configuration. When this flag is set, will not"
                               "start the server.")
     actions.add_argument('--migrate-db', dest="migrate_from_version", type=int,
                          help="Migrate qdrant database using connection settings in config from version specified."
