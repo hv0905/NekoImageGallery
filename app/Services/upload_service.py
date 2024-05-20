@@ -9,6 +9,7 @@ from app.Models.img_data import ImageData
 from app.Services.index_service import IndexService
 from app.Services.storage import StorageService
 from app.Services.vector_db_context import VectorDbContext
+from app.config import config
 
 
 class UploadService:
@@ -17,7 +18,7 @@ class UploadService:
         self._db_context = db_context
         self._index_service = index_service
 
-        self._queue = asyncio.Queue(200)
+        self._queue = asyncio.Queue(config.admin_index_queue_max_length)
         self._upload_worker_task = asyncio.create_task(self._upload_worker())
 
         self._processed_count = 0

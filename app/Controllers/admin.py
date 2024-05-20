@@ -108,7 +108,7 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
     try:
         image = Image.open(BytesIO(img_bytes))
     except UnidentifiedImageError as ex:
-        raise HTTPException(400, "Cannot open the image file.") from ex
+        raise HTTPException(422, "Cannot open the image file.") from ex
 
     image_data = ImageData(id=img_id,
                            url=model.url,

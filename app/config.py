@@ -87,6 +87,7 @@ class Config(BaseSettings):
     cors_origins: set[str] = {'*'}
     admin_api_enable: bool = False
     admin_token: str = ''
+    admin_index_queue_max_length: int = 200
 
     access_protected: bool = False
     access_token: str = ''

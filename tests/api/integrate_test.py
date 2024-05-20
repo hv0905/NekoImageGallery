@@ -38,6 +38,7 @@ async def test_integrate(test_client):
             break
         await asyncio.sleep(1)
 
+    assert resp.json()['index_queue_length'] == 0
     resp = test_client.get('/search/text/hatsune+miku',
                            headers=credentials)
     assert resp.status_code == 200

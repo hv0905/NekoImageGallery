@@ -63,7 +63,7 @@ Local file storage does not require an additional database deployment process, b
 
 #### Deploy NekoImageGallery
 
-1. Clone the project directory to your own PC or server.
+1. Clone the project directory to your own PC or server, then checkout to a specific version tag (like `v1.0.0`).
 2. It is highly recommended to install the dependencies required for this project in a Python venv virtual environment.
    Run the following command:
     ```shell
@@ -80,7 +80,9 @@ Local file storage does not require an additional database deployment process, b
     ```
 5. Modify the project configuration file inside `config/`, you can edit `default.env` directly, but it's recommended to
    create a new file named `local.env` and override the configuration in `default.env`.
-6. Initialize the Qdrant database by running the following command:
+6. ~~Initialize the Qdrant database by running the following command:~~
+   Since NekoImageGallery will now automatically create the collection if not present, this steps is no longer required.
+   However, if you want to explicitly create the collection, you can still run the following command:
     ```shell
     python main.py --init-database
     ```
