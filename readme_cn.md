@@ -55,7 +55,7 @@ NekoImageGallery支持两种元数据存储方式：Qdrant数据库存储与本�
 
 #### 部署NekoImageGallery
 
-1. 将项目目录clone到你自己的PC或服务器中。
+1. 将项目目录clone到你自己的PC或服务器中，然后按需checkout到特定版本tag（如`v1.0.0`）。
 2. 强烈建议在python venv虚拟环境中安装本项目所需依赖， 运行下面命令：
     ```shell
     python -m venv .venv
@@ -70,7 +70,7 @@ NekoImageGallery支持两种元数据存储方式：Qdrant数据库存储与本�
     ```
 5. 按需修改位于`config`目录下的配置文件，您可以直接修改`default.env`，但是建议创建一个名为`local.env`
    的文件，覆盖`default.env`中的配置。
-6. 初始化Qdrant数据库，运行下面命令：
+6. ~~初始化Qdrant数据库，运行下面命令：~~ 由于NekoImageGallery会自动在第一次运行时初始化Qdrant数据库，因此此步骤可省略。但您仍可通过以下命令显式初始化Qdrant数据库：
     ```shell
     python main.py --init-database
     ```
