@@ -66,7 +66,7 @@ class UploadService:
 
     async def upload_image(self, img: Image.Image, img_data: ImageData, img_bytes: bytes, skip_ocr: bool):
         await self._queue.put((img, img_data, img_bytes, skip_ocr))
-        logger.info("Image {} added to upload queue. Queue Length: {} [+1]", img_data.id, self._queue.qsize())
+        logger.success("Image {} added to upload queue. Queue Length: {} [+1]", img_data.id, self._queue.qsize())
 
     def get_queue_size(self):
         return self._queue.qsize()

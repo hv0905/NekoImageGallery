@@ -12,7 +12,6 @@ def test_upload_bad_img_file(test_client):
                             files={'image_file': bad_img_file},
                             headers={'x-admin-token': TEST_ADMIN_TOKEN},
                             params={'local': True})
-    print(resp.content)
     assert resp.status_code == 422
 
 
