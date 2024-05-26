@@ -1,4 +1,4 @@
-ARG TORCH_VERSION=2.1.2
+ARG TORCH_VERSION=2.3.0
 ARG CUDA_VERSION=12.1
 FROM pytorch/pytorch:${TORCH_VERSION}-cuda${CUDA_VERSION}-cudnn8-runtime
 
@@ -6,9 +6,10 @@ WORKDIR /opt/NekoImageGallery
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir -p /opt/models && \
+    export PYTHONDONTWRITEBYTECODE=1 && \
     huggingface-cli download openai/clip-vit-large-patch14 'model.safetensors' '*.txt' '*.json' --local-dir /opt/models/clip && \
     huggingface-cli download google-bert/bert-base-chinese 'model.safetensors' '*.txt' '*.json' --local-dir /opt/models/bert && \
     huggingface-cli download pk5ls20/PaddleModel 'PaddleOCR2Pytorch/ch_ptocr_v4_det_infer.pth' 'PaddleOCR2Pytorch/ch_ptocr_v4_rec_infer.pth' \
