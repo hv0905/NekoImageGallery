@@ -119,7 +119,7 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
                            format=img_type,
                            index_date=datetime.now())
 
-    await services.upload_service.upload_image(image, image_data, img_bytes, model.skip_ocr)
+    await services.upload_service.upload_image(image, image_data, img_bytes, model.skip_ocr, model.local_thumbnail)
     return ImageUploadResponse(message="OK. Image added to upload queue.", image_id=img_id)
 
 

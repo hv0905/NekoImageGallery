@@ -43,15 +43,17 @@ class SearchCombinedParams:
 
 
 async def result_postprocessing(resp: SearchApiResponse) -> SearchApiResponse:
+    if not config.storage.method.enabled:
+        return resp
     for item in resp.result:
-        if item.img.local and config.storage.method.enabled:
+        if item.img.local:
             img_extension = item.img.format or item.img.url.split('.')[-1]
             img_remote_filename = f"{item.img.id}.{img_extension}"
             item.img.url = await services.storage_service.active_storage.presign_url(img_remote_filename)
-            if item.img.thumbnail_url is not None:
-                thumbnail_remote_filename = f"thumbnails/{item.img.id}.webp"
-                item.img.thumbnail_url = await services.storage_service.active_storage.presign_url(
-                    thumbnail_remote_filename)
+        if item.img.thumbnail_url is not None and (item.img.local or item.img.local_thumbnail):
+            thumbnail_remote_filename = f"thumbnails/{item.img.id}.webp"
+            item.img.thumbnail_url = await services.storage_service.active_storage.presign_url(
+                thumbnail_remote_filename)
     return resp
 
 
