@@ -1,4 +1,3 @@
-import asyncio
 from pathlib import Path
 
 import pytest
@@ -13,7 +12,7 @@ test_images = {'bsn': ['bsn_0.jpg', 'bsn_1.jpg', 'bsn_2.jpg'],
 
 
 @pytest.mark.asyncio
-async def test_integrate(test_client):
+async def test_integrate(test_client, check_local_dir_empty, wait_for_background_task):
     credentials = {'x-admin-token': TEST_ADMIN_TOKEN, 'x-access-token': TEST_ACCESS_TOKEN}
     resp = test_client.get("/", headers=credentials)
     assert resp.status_code == 200
@@ -32,13 +31,8 @@ async def test_integrate(test_client):
 
     print('Waiting for images to be processed...')
 
-    while True:
-        resp = test_client.get('/admin/server_info', headers=credentials)
-        if resp.json()['image_count'] >= 7:
-            break
-        await asyncio.sleep(1)
+    await wait_for_background_task(sum(len(v) for v in test_images.values()))
 
-    assert resp.json()['index_queue_length'] == 0
     resp = test_client.get('/search/text/hatsune+miku',
                            headers=credentials)
     assert resp.status_code == 200
@@ -80,3 +74,9 @@ async def test_integrate(test_client):
     resp = test_client.get("/search/text/cat", params={'categories': 'bsn'}, headers=credentials)
     assert resp.status_code == 200
     assert len(resp.json()['result']) == 0
+
+    # cleanup
+    for img_cls in test_images.keys():
+        for img_id in img_ids[img_cls]:
+            resp = test_client.delete(f"/admin/delete/{img_id}", headers=credentials)
+            assert resp.status_code == (404 if img_id == img_ids['bsn'][0] else 200)

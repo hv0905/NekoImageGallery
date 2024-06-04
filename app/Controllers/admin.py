@@ -36,16 +36,17 @@ async def delete_image(
     await services.db_context.deleteItems([str(point.id)])
     logger.success("Image {} deleted from database.", point.id)
 
-    if point.local and config.storage.method.enabled:  # local image
-        image_files = [itm[0] async for itm in services.storage_service.active_storage.list_files("", f"{point.id}.*")]
-        assert len(image_files) <= 1
-
-        if not image_files:
-            logger.warning("Image {} is a local image but not found in static folder.", point.id)
-        else:
-            await services.storage_service.active_storage.move(image_files[0], f"_deleted/{image_files[0].name}")
-            logger.success("Image {} removed.", image_files[0].name)
-        if point.thumbnail_url is not None:
+    if config.storage.method.enabled:  # local image
+        if point.local:
+            image_files = [itm[0] async for itm in
+                           services.storage_service.active_storage.list_files("", f"{point.id}.*")]
+            assert len(image_files) <= 1
+            if not image_files:
+                logger.warning("Image {} is a local image but not found in static folder.", point.id)
+            else:
+                await services.storage_service.active_storage.move(image_files[0], f"_deleted/{image_files[0].name}")
+                logger.success("Image {} removed.", image_files[0].name)
+        if point.thumbnail_url is not None and (point.local or point.local_thumbnail):
             thumbnail_file = PurePath(f"thumbnails/{point.id}.webp")
             if await services.storage_service.active_storage.is_exist(thumbnail_file):
                 await services.storage_service.active_storage.delete(thumbnail_file)
@@ -119,7 +120,7 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
                            format=img_type,
                            index_date=datetime.now())
 
-    await services.upload_service.upload_image(image, image_data, img_bytes, model.skip_ocr)
+    await services.upload_service.upload_image(image, image_data, img_bytes, model.skip_ocr, model.local_thumbnail)
     return ImageUploadResponse(message="OK. Image added to upload queue.", image_id=img_id)
 
 
