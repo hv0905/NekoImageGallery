@@ -1,4 +1,6 @@
+import asyncio
 import importlib
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -23,6 +25,32 @@ def test_client(tmp_path_factory) -> TestClient:
 
     with TestClient(importlib.import_module('app.webapp').app) as client:
         yield client
+
+
+@pytest.fixture()
+def check_local_dir_empty():
+    yield
+    dir = Path(config.config.storage.local.path)
+    files = [f for f in dir.glob('*.*') if f.is_file()]
+    assert len(files) == 0
+
+    thumbnail_dir = dir / 'thumbnails'
+    if thumbnail_dir.exists():
+        thumbnail_files = [f for f in thumbnail_dir.glob('*.*') if f.is_file()]
+        assert len(thumbnail_files) == 0
+
+
+@pytest.fixture()
+def wait_for_background_task(test_client):
+    async def func(expected_image_count):
+        while True:
+            resp = test_client.get('/admin/server_info', headers={'x-admin-token': TEST_ADMIN_TOKEN})
+            if resp.json()['image_count'] >= expected_image_count:
+                break
+            await asyncio.sleep(0.2)
+        assert resp.json()['index_queue_length'] == 0
+
+    return func
 
 
 @pytest.fixture
