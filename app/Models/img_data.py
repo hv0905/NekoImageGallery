@@ -3,11 +3,11 @@ from typing import Optional
 from uuid import UUID
 
 from numpy import ndarray
-from pydantic import BaseModel, Field, computed_field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class ImageData(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra='ignore')
 
     id: UUID
     url: Optional[str] = None
@@ -25,7 +25,6 @@ class ImageData(BaseModel):
     local_thumbnail: Optional[bool] = False
     format: Optional[str] = None  # required for s3 local storage
 
-    @computed_field()
     @property
     def ocr_text_lower(self) -> str | None:
         if self.ocr_text is None:
@@ -37,6 +36,8 @@ class ImageData(BaseModel):
         result = self.model_dump(exclude={'id', 'index_date'})
         # Qdrant database cannot accept datetime object, so we have to convert it to string
         result['index_date'] = self.index_date.isoformat()
+        # Qdrant doesn't support case-insensitive search, so we need to store a lowercase version of the text
+        result['ocr_text_lower'] = self.ocr_text_lower
         return result
 
     @classmethod
