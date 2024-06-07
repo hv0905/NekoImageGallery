@@ -32,3 +32,7 @@ class TestTransformersService:
         assert vector1.shape == (768,)
         assert vector2.shape == (768,)
         assert calculate_vectors_cosine(vector1, vector2) > 0.8
+
+    def test_get_bert_vector_long_text(self):
+        vector = self.transformers_service.get_bert_vector('我可以吞下玻璃而不伤身体' * 100)
+        assert vector.shape == (768,)
