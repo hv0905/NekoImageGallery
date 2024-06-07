@@ -12,7 +12,7 @@ test_images = {'bsn': ['bsn_0.jpg', 'bsn_1.jpg', 'bsn_2.jpg'],
 
 
 @pytest.mark.asyncio
-async def test_integrate(test_client, check_local_dir_empty, wait_for_background_task):
+async def test_search(test_client, check_local_dir_empty, wait_for_background_task):
     credentials = {'x-admin-token': TEST_ADMIN_TOKEN, 'x-access-token': TEST_ACCESS_TOKEN}
     resp = test_client.get("/", headers=credentials)
     assert resp.status_code == 200

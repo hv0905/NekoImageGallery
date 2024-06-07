@@ -67,6 +67,14 @@ async def update_image(image_id: Annotated[UUID, params.Path(description="The id
     except PointNotFoundError as ex:
         raise HTTPException(404, "Cannot find the image with the given ID.") from ex
 
+    if model.thumbnail_url is not None:
+        if point.local or point.local_thumbnail:
+            raise HTTPException(422, "Cannot change the thumbnail URL of a local image.")
+        point.thumbnail_url = model.thumbnail_url
+    if model.url is not None:
+        if point.local:
+            raise HTTPException(422, "Cannot change the URL of a local image.")
+        point.url = model.url
     if model.starred is not None:
         point.starred = model.starred
     if model.categories is not None:
