@@ -36,7 +36,7 @@ def parse_args():
                                 help="Root path of the server if your server is deployed behind a reverse proxy. "
                                      "See https://fastapi.tiangolo.com/advanced/behind-a-proxy/ for detail.")
 
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
+    parser.add_argument('--version', action='version', version='%(prog)s v1.1.0')
     return parser.parse_args()
 
 
