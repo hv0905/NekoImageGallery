@@ -3,7 +3,9 @@ import random
 
 import pytest
 
-from .conftest import TEST_ADMIN_TOKEN, TEST_ACCESS_TOKEN
+from .conftest import TEST_ADMIN_TOKEN, TEST_ACCESS_TOKEN, assets_path
+
+test_file_path = assets_path / 'test_images' / 'bsn_0.jpg'
 
 
 def get_single_img_info(test_client, image_id):
@@ -36,6 +38,29 @@ def test_upload_unsupported_types(test_client):
     assert resp.status_code == 415
 
 
+@pytest.mark.asyncio
+async def test_upload_duplicate(test_client, check_local_dir_empty, wait_for_background_task):
+    def upload(file):
+        return test_client.post('/admin/upload',
+                                files={'image_file': file},
+                                headers={'x-admin-token': TEST_ADMIN_TOKEN},
+                                params={'local': True})
+
+    with open(test_file_path, 'rb') as f:
+        resp = upload(f)
+        assert resp.status_code == 200
+        image_id = resp.json()['image_id']
+        resp = upload(f)  # The previous image is still in queue
+        assert resp.status_code == 409
+        await wait_for_background_task(1)
+        resp = upload(f)  # The previous image is indexed now
+        assert resp.status_code == 409
+
+    # cleanup
+    resp = test_client.delete(f'/admin/delete/{image_id}', headers={'x-admin-token': TEST_ADMIN_TOKEN})
+    assert resp.status_code == 200
+
+
 TEST_FAKE_URL = 'fake-url'
 TEST_FAKE_THUMBNAIL_URL = 'fake-thumbnail-url'
 
@@ -55,10 +80,10 @@ TEST_UPLOAD_THUMBNAILS_PARAMS = [
 @pytest.mark.asyncio
 async def test_upload_thumbnails(test_client, check_local_dir_empty, wait_for_background_task,  # Fixtures
                                  add_trailing_bytes, params, expect_local_url, expect_thumbnail_mode):  # Parameters
-    with open('tests/assets/test_images/bsn_0.jpg', 'rb') as f:
-        img_bytes = f.read()
+    with open(test_file_path, 'rb') as f:
         # append 500KB to the image, to make it large enough to generate a thumbnail
         if add_trailing_bytes:
+            img_bytes = f.read()
             img_bytes += bytearray(random.getrandbits(8) for _ in range(1024 * 500))
             f_patched = io.BytesIO(img_bytes)
             f_patched.name = 'bsn_0.jpg'
@@ -118,8 +143,7 @@ TEST_UPDATE_OPT_PARAMS = [
 @pytest.mark.asyncio
 async def test_update_opt(test_client, check_local_dir_empty, wait_for_background_task,  # Fixtures
                           initial_param, update_param, expected_param, resp_code):  # Parameters
-    with open('tests/assets/test_images/bsn_0.jpg', 'rb') as f:
-        img_bytes = f.read()
+    with open(test_file_path, 'rb') as f:
         resp = test_client.post('/admin/upload',
                                 files={'image_file': f},
                                 headers={'x-admin-token': TEST_ADMIN_TOKEN},

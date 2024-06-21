@@ -108,15 +108,22 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
         if extension in {'.jpg', '.png', '.jpeg', '.jfif', '.webp', '.gif'}:
             img_type = extension[1:]
     if not img_type:
+        logger.warning("Failed to infer image format of the uploaded image. Content Type: {}, Filename: {}",
+                       image_file.content_type, image_file.filename)
         raise HTTPException(415, "Unsupported image format.")
     img_bytes = await image_file.read()
     img_id = generate_uuid(img_bytes)
-    if len(await services.db_context.validate_ids([str(img_id)])) != 0:  # check for duplicate points
+    if img_id in services.upload_service.uploading_ids or len(
+            await services.db_context.validate_ids([str(img_id)])) != 0:  # check for duplicate points
+        logger.warning("Duplicate upload request for image id: {}", img_id)
         raise HTTPException(409, f"The uploaded point is already contained in the database! entity id: {img_id}")
 
     try:
         image = Image.open(BytesIO(img_bytes))
+        image.verify()
+        image.close()
     except UnidentifiedImageError as ex:
+        logger.warning("Invalid image file from upload request. id: {}", img_id)
         raise HTTPException(422, "Cannot open the image file.") from ex
 
     image_data = ImageData(id=img_id,
@@ -128,7 +135,7 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
                            format=img_type,
                            index_date=datetime.now())
 
-    await services.upload_service.upload_image(image, image_data, img_bytes, model.skip_ocr, model.local_thumbnail)
+    await services.upload_service.upload_image(image_data, img_bytes, model.skip_ocr, model.local_thumbnail)
     return ImageUploadResponse(message="OK. Image added to upload queue.", image_id=img_id)
 
 
