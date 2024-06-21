@@ -22,25 +22,28 @@ class UploadService:
         self._queue = asyncio.Queue(config.admin_index_queue_max_length)
         self._upload_worker_task = asyncio.create_task(self._upload_worker())
 
+        self.uploading_ids = set()
         self._processed_count = 0
 
     async def _upload_worker(self):
         while True:
-            img, img_data, *args = await self._queue.get()
+            img_data, *args = await self._queue.get()
             try:
-                await self._upload_task(img, img_data, *args)
+                await self._upload_task(img_data, *args)
                 logger.success("Image {} uploaded and indexed. Queue Length: {} [-1]", img_data.id, self._queue.qsize())
             except Exception as ex:
                 logger.error("Error occurred while uploading image {}", img_data.id)
                 logger.exception(ex)
             finally:
                 self._queue.task_done()
+                self.uploading_ids.remove(img_data.id)
                 self._processed_count += 1
                 if self._processed_count % 50 == 0:
                     gc.collect()
 
-    async def _upload_task(self, img: Image.Image, img_data: ImageData, img_bytes: bytes, skip_ocr: bool,
+    async def _upload_task(self, img_data: ImageData, img_bytes: bytes, skip_ocr: bool,
                            thumbnail_mode: UploadImageThumbnailMode):
+        img = Image.open(BytesIO(img_bytes))
         logger.info('Start indexing image {}. Local: {}. Size: {}', img_data.id, img_data.local, len(img_bytes))
         file_name = f"{img_data.id}.{img_data.format}"
         thumb_path = f"thumbnails/{img_data.id}.webp"
@@ -71,9 +74,10 @@ class UploadService:
 
         img.close()
 
-    async def upload_image(self, img: Image.Image, img_data: ImageData, img_bytes: bytes, skip_ocr: bool,
+    async def upload_image(self, img_data: ImageData, img_bytes: bytes, skip_ocr: bool,
                            thumbnail_mode: UploadImageThumbnailMode):
-        await self._queue.put((img, img_data, img_bytes, skip_ocr, thumbnail_mode))
+        self.uploading_ids.add(img_data.id)
+        await self._queue.put((img_data, img_bytes, skip_ocr, thumbnail_mode))
         logger.success("Image {} added to upload queue. Queue Length: {} [+1]", img_data.id, self._queue.qsize())
 
     def get_queue_size(self):

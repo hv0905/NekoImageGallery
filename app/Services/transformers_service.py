@@ -63,7 +63,7 @@ class TransformersService:
         return vector.cpu().numpy()
 
     @staticmethod
-    def get_random_vector() -> ndarray:
-        vec = np.random.rand(768)
-        vec -= vec.mean()
+    def get_random_vector(seed: int | None = None) -> ndarray:
+        generator = np.random.default_rng(seed)
+        vec = generator.uniform(-1, 1, 768)
         return vec

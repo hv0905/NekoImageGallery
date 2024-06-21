@@ -154,10 +154,14 @@ async def combinedSearch(
 @search_router.get("/random", description="Get random images")
 async def randomPick(
         filter_param: Annotated[FilterParams, Depends(FilterParams)],
-        paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
+        paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)],
+        seed: Annotated[int | None, Query(
+            description="The seed for random pick. This is helpful for generating a reproducible random pick.")] = None,
+) -> SearchApiResponse:
     logger.info("Random pick request received")
-    random_vector = services.transformers_service.get_random_vector()
-    result = await services.db_context.querySearch(random_vector, top_k=paging.count, filter_param=filter_param)
+    random_vector = services.transformers_service.get_random_vector(seed)
+    result = await services.db_context.querySearch(random_vector, top_k=paging.count, skip=paging.skip,
+                                                   filter_param=filter_param)
     return await result_postprocessing(
         SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4()))
 

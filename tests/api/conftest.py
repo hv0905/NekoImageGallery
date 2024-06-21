@@ -10,6 +10,8 @@ from app import config
 TEST_ACCESS_TOKEN = 'test_token'
 TEST_ADMIN_TOKEN = 'test_admin_token'
 
+assets_path = Path(__file__).parent / '..' / 'assets'
+
 
 @pytest.fixture(scope="session")
 def test_client(tmp_path_factory) -> TestClient:
