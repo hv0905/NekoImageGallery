@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a question about the project. 询问有关本项目的问题。
+    url: https://github.com/hv0905/NekoImageGallery/discussions/new?category=q-a
+    about: Ask a question if you encounter a problem when using NekoImageGallery. Please use this option instead of Bug Report unless you are sure your problem is caused by a bug. 询问在您使用NekoImageGallery过程中遇到的问题。请优先使用此选项（而不是Bug Report），除非您认为您的问题是由NekoImageGallery的BUG造成。
