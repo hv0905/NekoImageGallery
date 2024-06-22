@@ -43,7 +43,7 @@ async def main():
         # generate thumbnail max size 256*256
         img.thumbnail((256, 256))
         img_byte_arr = io.BytesIO()
-        img.save(img_byte_arr, 'WebP')
+        img.save(img_byte_arr, 'WebP', save_all=True)
         await services.storage_service.active_storage.upload(img_byte_arr.getvalue(),
                                                              f'thumbnails/{str(image_id)}.webp')
         logger.success("Thumbnail for {} generated!", image_id)
