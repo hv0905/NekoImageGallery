@@ -68,7 +68,7 @@ class UploadService:
             logger.info("Start generate and upload thumbnail for {}.", img_data.id)
             img.thumbnail((256, 256), resample=Image.Resampling.LANCZOS)
             img_byte_arr = BytesIO()
-            img.save(img_byte_arr, 'WebP')
+            img.save(img_byte_arr, 'WebP', save_all=True)
             await self._storage_service.active_storage.upload(img_byte_arr.getvalue(), thumb_path)
             logger.success("Thumbnail for {} generated and uploaded!", img_data.id)
 
