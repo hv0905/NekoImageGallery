@@ -19,4 +19,8 @@ def generate_uuid(file_input: pathlib.Path | io.BytesIO | bytes) -> UUID:
     else:
         raise ValueError("Unsupported file type. Must be pathlib.Path or io.BytesIO.")
     file_hash = hashlib.sha1(file_content).hexdigest()
-    return uuid5(namespace_uuid, file_hash)
+    return generate_uuid_from_sha1(file_hash)
+
+
+def generate_uuid_from_sha1(sha1_hash: str) -> UUID:
+    return uuid5(namespace_uuid, sha1_hash.lower())

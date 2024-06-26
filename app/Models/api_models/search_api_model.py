@@ -19,8 +19,13 @@ class SearchCombinedBasisEnum(str, Enum):
 
 
 class AdvancedSearchModel(BaseModel):
-    criteria: list[str] = Field([], description="The positive criteria you want to search with", max_length=16)
-    negative_criteria: list[str] = Field([], description="The negative criteria you want to search with", max_length=16)
+    criteria: list[str] = Field([],
+                                description="The positive criteria you want to search with",
+                                max_length=16,
+                                min_length=1)
+    negative_criteria: list[str] = Field([],
+                                         description="The negative criteria you want to search with",
+                                         max_length=16)
     mode: SearchModelEnum = Field(SearchModelEnum.average,
                                   description="The mode you want to use to combine the criteria.")
 

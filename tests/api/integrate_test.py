@@ -1,6 +1,7 @@
 import pytest
 
-from .conftest import TEST_ADMIN_TOKEN, TEST_ACCESS_TOKEN, assets_path
+from .conftest import TEST_ADMIN_TOKEN, TEST_ACCESS_TOKEN
+from ..assets import assets_path
 
 test_images = {'bsn': ['bsn_0.jpg', 'bsn_1.jpg', 'bsn_2.jpg'],
                'cat': ['cat_0.jpg', 'cat_1.jpg'],

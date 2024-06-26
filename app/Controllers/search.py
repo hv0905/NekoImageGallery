@@ -127,8 +127,6 @@ async def advancedSearch(
         basis: Annotated[SearchBasisParams, Depends(SearchBasisParams)],
         filter_param: Annotated[FilterParams, Depends(FilterParams)],
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
-    if len(model.criteria) + len(model.negative_criteria) == 0:
-        raise HTTPException(status_code=422, detail="At least one criteria should be provided.")
     logger.info("Advanced search request received: {}", model)
     result = await process_advanced_and_combined_search_query(model, basis, filter_param, paging)
     return await result_postprocessing(
@@ -141,8 +139,6 @@ async def combinedSearch(
         basis: Annotated[SearchCombinedParams, Depends(SearchCombinedParams)],
         filter_param: Annotated[FilterParams, Depends(FilterParams)],
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
-    if len(model.criteria) + len(model.negative_criteria) == 0:
-        raise HTTPException(status_code=422, detail="At least one criteria should be provided.")
     logger.info("Combined search request received: {}", model)
     result = await process_advanced_and_combined_search_query(model, basis, filter_param, paging)
     calculate_and_sort_by_combined_scores(model, basis, result)
@@ -166,10 +162,9 @@ async def randomPick(
         SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4()))
 
 
-@search_router.get("/recall/{query_id}", description="Recall the query with given queryId")
-async def recallQuery(query_id: str):
-    raise NotImplementedError()
-
+# @search_router.get("/recall/{query_id}", description="Recall the query with given queryId")
+# async def recallQuery(query_id: str):
+#     raise NotImplementedError()
 
 async def process_advanced_and_combined_search_query(model: Union[AdvancedSearchModel, CombinedSearchModel],
                                                      basis: Union[SearchBasisParams, SearchCombinedParams],
