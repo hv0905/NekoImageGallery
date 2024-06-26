@@ -8,16 +8,17 @@ from PIL import Image, UnidentifiedImageError
 from fastapi import APIRouter, Depends, HTTPException, params, UploadFile, File
 from loguru import logger
 
-from app.Models.api_models.admin_api_model import ImageOptUpdateModel
+from app.Models.api_models.admin_api_model import ImageOptUpdateModel, DuplicateValidationModel
 from app.Models.api_models.admin_query_params import UploadImageModel
-from app.Models.api_response.admin_api_response import ServerInfoResponse, ImageUploadResponse
+from app.Models.api_response.admin_api_response import ServerInfoResponse, ImageUploadResponse, \
+    DuplicateValidationResponse
 from app.Models.api_response.base import NekoProtocol
 from app.Models.img_data import ImageData
 from app.Services.authentication import force_admin_token_verify
 from app.Services.provider import ServiceProvider
 from app.Services.vector_db_context import PointNotFoundError
 from app.config import config
-from app.util.generate_uuid import generate_uuid
+from app.util.generate_uuid import generate_uuid, generate_uuid_from_sha1
 
 admin_router = APIRouter(dependencies=[Depends(force_admin_token_verify)], tags=["Admin"])
 
@@ -98,7 +99,7 @@ IMAGE_MIMES = {
                    description="Upload image to server. The image will be indexed and stored in the database. If "
                                "local is set to true, the image will be uploaded to local storage.")
 async def upload_image(image_file: Annotated[UploadFile, File(description="The image to be uploaded.")],
-                       model: Annotated[UploadImageModel, Depends()]):
+                       model: Annotated[UploadImageModel, Depends()]) -> ImageUploadResponse:
     # generate an ID for the image
     img_type = None
     if image_file.content_type.lower() in IMAGE_MIMES:
@@ -140,7 +141,22 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
 
 
 @admin_router.get("/server_info", description="Get server information")
-async def server_info():
+async def server_info() -> ServerInfoResponse:
     return ServerInfoResponse(message="Successfully get server information!",
                               image_count=await services.db_context.get_counts(exact=True),
                               index_queue_length=services.upload_service.get_queue_size())
+
+
+@admin_router.post("/duplication_validate",
+                   description="Check if an image exists in the server by its SHA1 hash. If the image exists, "
+                               "the image ID will be returned.\n"
+                               "This is helpful for checking if an image is already in the server without "
+                               "uploading the image.")
+async def duplication_validate(model: DuplicateValidationModel) -> DuplicateValidationResponse:
+    ids = [generate_uuid_from_sha1(t) for t in model.hashes]
+    valid_ids = await services.db_context.validate_ids([str(t) for t in ids])
+    exists_matrix = [str(t) in valid_ids or t in services.upload_service.uploading_ids for t in ids]
+    return DuplicateValidationResponse(
+        exists=exists_matrix,
+        entity_ids=[(str(t) if exists else None) for (t, exists) in zip(ids, exists_matrix)],
+        message="Validation completed.")

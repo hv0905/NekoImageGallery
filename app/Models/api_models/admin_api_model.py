@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Optional, Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
 
 class ImageOptUpdateModel(BaseModel):
@@ -21,3 +21,11 @@ class ImageOptUpdateModel(BaseModel):
 
     def empty(self) -> bool:
         return all([item is None for item in self.model_dump().values()])
+
+
+Sha1HashString = Annotated[
+    str, StringConstraints(min_length=40, max_length=40, pattern=r"[0-9a-f]+", to_lower=True, strip_whitespace=True)]
+
+
+class DuplicateValidationModel(BaseModel):
+    hashes: list[Sha1HashString] = Field(description="The SHA1 hash of the image.", min_length=1)

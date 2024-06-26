@@ -3,9 +3,13 @@ import random
 
 import pytest
 
-from .conftest import TEST_ADMIN_TOKEN, TEST_ACCESS_TOKEN, assets_path
+from .conftest import TEST_ADMIN_TOKEN, TEST_ACCESS_TOKEN
+from ..assets import assets_path
 
 test_file_path = assets_path / 'test_images' / 'bsn_0.jpg'
+test_file_2_path = assets_path / 'test_images' / 'bsn_1.jpg'
+
+test_file_hashes = ['648351F7CBD472D0CA23EADCCF3B9E619EC9ADDA', 'C5DE90DAC2F75FBDBE48023DF4DE7585A86B2392']
 
 
 def get_single_img_info(test_client, image_id):
@@ -46,15 +50,37 @@ async def test_upload_duplicate(test_client, check_local_dir_empty, wait_for_bac
                                 headers={'x-admin-token': TEST_ADMIN_TOKEN},
                                 params={'local': True})
 
+    def validate(hashes):
+        return test_client.post('/admin/duplication_validate',
+                                json={'hashes': hashes},
+                                headers={'x-admin-token': TEST_ADMIN_TOKEN})
+
     with open(test_file_path, 'rb') as f:
+        # Validate 1#
+        val_resp = validate(test_file_hashes)
+        assert val_resp.status_code == 200
+        assert val_resp.json()['exists'] == [False, False]
+        assert val_resp.json()['entity_ids'] == [None, None]
+
+        # Upload
         resp = upload(f)
         assert resp.status_code == 200
         image_id = resp.json()['image_id']
-        resp = upload(f)  # The previous image is still in queue
-        assert resp.status_code == 409
-        await wait_for_background_task(1)
-        resp = upload(f)  # The previous image is indexed now
-        assert resp.status_code == 409
+
+        for i in range(0, 2):
+            # Re-upload
+            resp = upload(f)
+            assert resp.status_code == 409, i
+
+            # Validate
+            val_resp = validate(test_file_hashes)
+            assert val_resp.status_code == 200, i
+            assert val_resp.json()['exists'] == [True, False], i
+            assert val_resp.json()['entity_ids'] == [str(image_id), None], i
+
+            # Wait for the image to be indexed
+            if i == 0:
+                await wait_for_background_task(1)
 
     # cleanup
     resp = test_client.delete(f'/admin/delete/{image_id}', headers={'x-admin-token': TEST_ADMIN_TOKEN})
