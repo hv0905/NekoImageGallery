@@ -14,7 +14,7 @@ class ServiceProvider:
         self.db_context = VectorDbContext()
         self.ocr_service = None
 
-        if environment.local_indexing or config.admin_api_enable:
+        if config.ocr_search.enable and (environment.local_indexing or config.admin_api_enable):
             match config.ocr_search.ocr_module:
                 case "easyocr":
                     from .ocr_services import EasyOCRService

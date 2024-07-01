@@ -26,7 +26,7 @@ class TransformersService:
             self._bert_tokenizer = BertTokenizer.from_pretrained(config.model.bert)
             logger.success("BERT Model loaded successfully")
         else:
-            logger.info("OCR search is disabled. Skipping OCR and BERT model loading.")
+            logger.info("OCR search is disabled. Skipping BERT model loading.")
 
     @no_grad()
     def get_image_vector(self, image: Image.Image) -> ndarray:
