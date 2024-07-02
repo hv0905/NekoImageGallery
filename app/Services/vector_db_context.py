@@ -34,15 +34,12 @@ class VectorDbContext:
                                                  grpc_port=config.qdrant.grpc_port, api_key=config.qdrant.api_key,
                                                  prefer_grpc=config.qdrant.prefer_grpc)
                 wrap_object(self._client, retry_async((AioRpcError, HTTPError)))
-                self._local = False
             case QdrantMode.LOCAL:
                 self._client = AsyncQdrantClient(path=config.qdrant.local_path)
-                self._local = True
             case QdrantMode.MEMORY:
                 logger.warning("Using in-memory Qdrant client. Data will be lost after application restart. "
                                "This should only be used for testing and debugging.")
                 self._client = AsyncQdrantClient(":memory:")
-                self._local = True
             case _:
                 raise ValueError("Invalid Qdrant mode.")
         self.collection_name = config.qdrant.coll
@@ -240,8 +237,7 @@ class VectorDbContext:
     def _get_img_data_from_point(self, point: AVAILABLE_POINT_TYPES) -> ImageData:
         return (ImageData
                 .from_payload(point.id,
-                              # workaround: https://github.com/qdrant/qdrant-client/issues/624
-                              point.payload.copy() if self._local else point.payload,
+                              point.payload,
                               image_vector=numpy.array(point.vector[self.IMG_VECTOR], dtype=numpy.float32)
                               if point.vector and self.IMG_VECTOR in point.vector else None,
                               text_contain_vector=numpy.array(point.vector[self.TEXT_VECTOR], dtype=numpy.float32)

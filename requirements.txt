@@ -7,7 +7,7 @@ pydantic-settings
 
 
 # AI - Manually install cuda-capable pytorch
-torch
+torch>=2.1.0
 torchvision
 transformers>4.35.2
 pillow>9.3.0
@@ -19,7 +19,7 @@ easypaddleocr>=0.2.1
 # paddleocr
 
 # Vector Database
-qdrant-client
+qdrant-client>=1.9.2
 
 # Storage
 opendal
