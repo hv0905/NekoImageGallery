@@ -13,11 +13,6 @@ class SearchModelEnum(str, Enum):
     best = "best"
 
 
-class SearchCombinedBasisEnum(str, Enum):
-    vision = "vision"
-    ocr = "ocr"
-
-
 class AdvancedSearchModel(BaseModel):
     criteria: list[str] = Field([],
                                 description="The positive criteria you want to search with",

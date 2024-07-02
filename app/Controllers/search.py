@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import Annotated, List, Union
+from typing import Annotated, List
 from uuid import uuid4, UUID
 
 from PIL import Image
@@ -7,8 +7,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.params import File, Query, Path, Depends
 from loguru import logger
 
-from app.Models.api_models.search_api_model import AdvancedSearchModel, CombinedSearchModel, SearchBasisEnum, \
-    SearchCombinedBasisEnum
+from app.Models.api_models.search_api_model import AdvancedSearchModel, CombinedSearchModel, SearchBasisEnum
 from app.Models.api_response.search_api_response import SearchApiResponse
 from app.Models.query_params import SearchPagingParams, FilterParams
 from app.Models.search_result import SearchResult
@@ -29,16 +28,6 @@ class SearchBasisParams:
                      description="The basis used to search the image.")] = SearchBasisEnum.vision):
         if basis == SearchBasisEnum.ocr and not config.ocr_search.enable:
             raise HTTPException(400, "OCR search is not enabled.")
-        self.basis = basis
-
-
-class SearchCombinedParams:
-    def __init__(self,
-                 basis: Annotated[SearchCombinedBasisEnum, Query(
-                     description="The primary basis used for searching the image.")] = SearchCombinedBasisEnum.vision):
-        if not config.ocr_search.enable:
-            raise HTTPException(400, "You used combined search, but it needs OCR search which is not "
-                                     "enabled.")
         self.basis = basis
 
 
@@ -74,7 +63,8 @@ async def textSearch(
     if basis.basis == SearchBasisEnum.ocr and exact:
         filter_param.ocr_text = prompt
     results = await services.db_context.querySearch(text_vector,
-                                                    query_vector_name=services.db_context.getVectorByBasis(basis.basis),
+                                                    query_vector_name=services.db_context.vector_name_for_basis(
+                                                        basis.basis),
                                                     filter_param=filter_param,
                                                     top_k=paging.count,
                                                     skip=paging.skip)
@@ -115,7 +105,7 @@ async def similarWith(
                                                      top_k=paging.count,
                                                      skip=paging.skip,
                                                      filter_param=filter_param,
-                                                     query_vector_name=services.db_context.getVectorByBasis(
+                                                     query_vector_name=services.db_context.vector_name_for_basis(
                                                          basis.basis))
     return await result_postprocessing(
         SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4()))
@@ -136,11 +126,14 @@ async def advancedSearch(
 @search_router.post("/combined", description="Search with combined criteria")
 async def combinedSearch(
         model: CombinedSearchModel,
-        basis: Annotated[SearchCombinedParams, Depends(SearchCombinedParams)],
+        basis: Annotated[SearchBasisParams, Depends(SearchBasisParams)],
         filter_param: Annotated[FilterParams, Depends(FilterParams)],
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
+    if not config.ocr_search.enable:
+        raise HTTPException(400, "You used combined search, but it needs OCR search which is not "
+                                 "enabled.")
     logger.info("Combined search request received: {}", model)
-    result = await process_advanced_and_combined_search_query(model, basis, filter_param, paging)
+    result = await process_advanced_and_combined_search_query(model, basis, filter_param, paging, True)
     calculate_and_sort_by_combined_scores(model, basis, result)
     result = result[:paging.count] if len(result) > paging.count else result
     return await result_postprocessing(
@@ -166,41 +159,56 @@ async def randomPick(
 # async def recallQuery(query_id: str):
 #     raise NotImplementedError()
 
-async def process_advanced_and_combined_search_query(model: Union[AdvancedSearchModel, CombinedSearchModel],
-                                                     basis: Union[SearchBasisParams, SearchCombinedParams],
+async def process_advanced_and_combined_search_query(model: AdvancedSearchModel,
+                                                     basis: SearchBasisParams,
                                                      filter_param: FilterParams,
-                                                     paging: SearchPagingParams) -> List[SearchResult]:
-    if basis.basis == SearchBasisEnum.ocr:
-        positive_vectors = [services.transformers_service.get_bert_vector(t) for t in model.criteria]
-        negative_vectors = [services.transformers_service.get_bert_vector(t) for t in model.negative_criteria]
-    else:
-        positive_vectors = [services.transformers_service.get_text_vector(t) for t in model.criteria]
-        negative_vectors = [services.transformers_service.get_text_vector(t) for t in model.negative_criteria]
+                                                     paging: SearchPagingParams,
+                                                     is_combined_search=False) -> List[SearchResult]:
+    match basis.basis:
+        case SearchBasisEnum.ocr:
+            positive_vectors = [services.transformers_service.get_bert_vector(t) for t in model.criteria]
+            negative_vectors = [services.transformers_service.get_bert_vector(t) for t in model.negative_criteria]
+        case SearchBasisEnum.vision:
+            positive_vectors = [services.transformers_service.get_text_vector(t) for t in model.criteria]
+            negative_vectors = [services.transformers_service.get_text_vector(t) for t in model.negative_criteria]
+        case _:  # pragma: no cover
+            raise NotImplementedError()
     # In order to ensure the query effect of the combined query, modify the actual top_k
-    _query_top_k = min(max(30, paging.count * 3), 100) if isinstance(model, CombinedSearchModel) else paging.count
-    result = await services.db_context.querySimilar(query_vector_name=services.db_context.getVectorByBasis(basis.basis),
-                                                    positive_vectors=positive_vectors,
-                                                    negative_vectors=negative_vectors,
-                                                    mode=model.mode,
-                                                    filter_param=filter_param,
-                                                    with_vectors=True if isinstance(basis,
-                                                                                    SearchCombinedParams) else False,
-                                                    top_k=_query_top_k,
-                                                    skip=paging.skip)
+    _query_top_k = min(max(30, paging.count * 3), 100) if is_combined_search else paging.count
+    result = await services.db_context.querySimilar(
+        query_vector_name=services.db_context.vector_name_for_basis(basis.basis),
+        positive_vectors=positive_vectors,
+        negative_vectors=negative_vectors,
+        mode=model.mode,
+        filter_param=filter_param,
+        with_vectors=is_combined_search,
+        top_k=_query_top_k,
+        skip=paging.skip)
     return result
 
 
 def calculate_and_sort_by_combined_scores(model: CombinedSearchModel,
-                                          basis: SearchCombinedParams,
+                                          basis: SearchBasisParams,
                                           result: List[SearchResult]) -> None:
-    # First, calculate the extra prompt vector
-    extra_prompt_vector = services.transformers_service.get_text_vector(model.extra_prompt) \
-        if basis.basis == SearchCombinedBasisEnum.ocr \
-        else services.transformers_service.get_bert_vector(model.extra_prompt)
-    # Then, calculate combined_similar_score (original score * similar_score) and write to SearchResult.score
+    # Use a different method to calculate the extra prompt vector based on the basis
+    match basis.basis:
+        case SearchBasisEnum.ocr:
+            extra_prompt_vector = services.transformers_service.get_text_vector(model.extra_prompt)
+        case SearchBasisEnum.vision:
+            extra_prompt_vector = services.transformers_service.get_bert_vector(model.extra_prompt)
+        case _:  # pragma: no cover
+            raise NotImplementedError()
+    # Calculate combined_similar_score (original score * similar_score) and write to SearchResult.score
     for itm in result:
-        extra_vector = itm.img.image_vector if itm.img.image_vector is not None else itm.img.text_contain_vector
-        similar_score = calculate_vectors_cosine(extra_vector, extra_prompt_vector)
-        itm.score = similar_score * itm.score
+        match basis.basis:
+            case SearchBasisEnum.ocr:
+                extra_vector = itm.img.image_vector
+            case SearchBasisEnum.vision:
+                extra_vector = itm.img.text_contain_vector
+            case _:  # pragma: no cover
+                raise NotImplementedError()
+        if extra_vector is not None:
+            similar_score = calculate_vectors_cosine(extra_vector, extra_prompt_vector)
+            itm.score = (1 + similar_score) * itm.score
     # Finally, sort the result by combined_similar_score
     result.sort(key=lambda i: i.score, reverse=True)

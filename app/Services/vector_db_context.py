@@ -127,7 +127,7 @@ class VectorDbContext:
                                                mode == SearchModelEnum.average else RecommendStrategy.BEST_SCORE)
         # since only combined_search need return vectors, We can define _combined_search_need_vectors like below
         _combined_search_need_vectors = [
-            self.IMG_VECTOR if query_vector_name == self.TEXT_VECTOR else self.IMG_VECTOR] if with_vectors else None
+            self.IMG_VECTOR if query_vector_name == self.TEXT_VECTOR else self.TEXT_VECTOR] if with_vectors else None
         logger.info("Querying Qdrant... top_k = {}", top_k)
         result = await self._client.recommend(collection_name=self.collection_name,
                                               using=query_vector_name,
@@ -251,7 +251,7 @@ class VectorDbContext:
         return SearchResult(img=self._get_img_data_from_point(point), score=point.score)
 
     @classmethod
-    def getVectorByBasis(cls, basis: SearchBasisEnum) -> str:
+    def vector_name_for_basis(cls, basis: SearchBasisEnum) -> str:
         match basis:
             case SearchBasisEnum.vision:
                 return cls.IMG_VECTOR
