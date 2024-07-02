@@ -3,7 +3,6 @@ import random
 
 import pytest
 
-from .conftest import TEST_ADMIN_TOKEN, TEST_ACCESS_TOKEN
 from ..assets import assets_path
 
 test_file_path = assets_path / 'test_images' / 'bsn_0.jpg'
@@ -13,7 +12,7 @@ test_file_hashes = ['648351F7CBD472D0CA23EADCCF3B9E619EC9ADDA', 'C5DE90DAC2F75FB
 
 
 def get_single_img_info(test_client, image_id):
-    query = test_client.get('/search/random', headers={'x-access-token': TEST_ACCESS_TOKEN})
+    query = test_client.get('/search/random')
     assert query.status_code == 200
     assert query.json()['result'][0]['img']['id'] == image_id
 
@@ -26,7 +25,6 @@ def test_upload_bad_img_file(test_client):
 
     resp = test_client.post('/admin/upload',
                             files={'image_file': bad_img_file},
-                            headers={'x-admin-token': TEST_ADMIN_TOKEN},
                             params={'local': True})
     assert resp.status_code == 422
 
@@ -37,23 +35,20 @@ def test_upload_unsupported_types(test_client):
 
     resp = test_client.post('/admin/upload',
                             files={'image_file': ('bad_img.tga', bad_img_file, 'image/tga')},
-                            headers={'x-admin-token': TEST_ADMIN_TOKEN},
                             params={'local': True})
     assert resp.status_code == 415
 
 
 @pytest.mark.asyncio
-async def test_upload_duplicate(test_client, check_local_dir_empty, wait_for_background_task):
+async def test_upload_duplicate(test_client, ensure_local_dir_empty, wait_for_background_task):
     def upload(file):
         return test_client.post('/admin/upload',
                                 files={'image_file': file},
-                                headers={'x-admin-token': TEST_ADMIN_TOKEN},
                                 params={'local': True})
 
     def validate(hashes):
         return test_client.post('/admin/duplication_validate',
-                                json={'hashes': hashes},
-                                headers={'x-admin-token': TEST_ADMIN_TOKEN})
+                                json={'hashes': hashes})
 
     with open(test_file_path, 'rb') as f:
         # Validate 1#
@@ -83,7 +78,7 @@ async def test_upload_duplicate(test_client, check_local_dir_empty, wait_for_bac
                 await wait_for_background_task(1)
 
     # cleanup
-    resp = test_client.delete(f'/admin/delete/{image_id}', headers={'x-admin-token': TEST_ADMIN_TOKEN})
+    resp = test_client.delete(f'/admin/delete/{image_id}')
     assert resp.status_code == 200
 
 
@@ -104,7 +99,7 @@ TEST_UPLOAD_THUMBNAILS_PARAMS = [
 @pytest.mark.parametrize('add_trailing_bytes,params,expect_local_url,expect_thumbnail_mode',
                          TEST_UPLOAD_THUMBNAILS_PARAMS)
 @pytest.mark.asyncio
-async def test_upload_thumbnails(test_client, check_local_dir_empty, wait_for_background_task,  # Fixtures
+async def test_upload_thumbnails(test_client, ensure_local_dir_empty, wait_for_background_task,  # Fixtures
                                  add_trailing_bytes, params, expect_local_url, expect_thumbnail_mode):  # Parameters
     with open(test_file_path, 'rb') as f:
         # append 500KB to the image, to make it large enough to generate a thumbnail
@@ -117,7 +112,6 @@ async def test_upload_thumbnails(test_client, check_local_dir_empty, wait_for_ba
             f_patched = f
         resp = test_client.post('/admin/upload',
                                 files={'image_file': f_patched},
-                                headers={'x-admin-token': TEST_ADMIN_TOKEN},
                                 params=params)
     assert resp.status_code == 200
     image_id = resp.json()['image_id']
@@ -146,7 +140,7 @@ async def test_upload_thumbnails(test_client, check_local_dir_empty, wait_for_ba
             assert query['thumbnail_url'] is None
 
     # cleanup
-    resp = test_client.delete(f'/admin/delete/{image_id}', headers={'x-admin-token': TEST_ADMIN_TOKEN})
+    resp = test_client.delete(f'/admin/delete/{image_id}')
     assert resp.status_code == 200
 
 
@@ -167,12 +161,11 @@ TEST_UPDATE_OPT_PARAMS = [
 
 @pytest.mark.parametrize('initial_param,update_param,expected_param,resp_code', TEST_UPDATE_OPT_PARAMS)
 @pytest.mark.asyncio
-async def test_update_opt(test_client, check_local_dir_empty, wait_for_background_task,  # Fixtures
+async def test_update_opt(test_client, ensure_local_dir_empty, wait_for_background_task,  # Fixtures
                           initial_param, update_param, expected_param, resp_code):  # Parameters
     with open(test_file_path, 'rb') as f:
         resp = test_client.post('/admin/upload',
                                 files={'image_file': f},
-                                headers={'x-admin-token': TEST_ADMIN_TOKEN},
                                 params=initial_param)
     assert resp.status_code == 200
     image_id = resp.json()['image_id']
@@ -180,8 +173,7 @@ async def test_update_opt(test_client, check_local_dir_empty, wait_for_backgroun
 
     old_info = get_single_img_info(test_client, image_id)
 
-    resp = test_client.put(f'/admin/update_opt/{image_id}', json=update_param,
-                           headers={'x-admin-token': TEST_ADMIN_TOKEN})
+    resp = test_client.put(f'/admin/update_opt/{image_id}', json=update_param)
     assert resp.status_code == resp_code
 
     new_info = get_single_img_info(test_client, image_id)
@@ -195,5 +187,32 @@ async def test_update_opt(test_client, check_local_dir_empty, wait_for_backgroun
         assert old_info[key] == value
 
     # cleanup
-    resp = test_client.delete(f'/admin/delete/{image_id}', headers={'x-admin-token': TEST_ADMIN_TOKEN})
+    resp = test_client.delete(f'/admin/delete/{image_id}')
     assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_delete(test_client, ensure_local_dir_empty, wait_for_background_task):
+    with open(test_file_path, 'rb') as f:
+        resp = test_client.post('/admin/upload',
+                                files={'image_file': f},
+                                params={'local': True})
+    assert resp.status_code == 200
+    image_id = resp.json()['image_id']
+    await wait_for_background_task(1)
+
+    img_query = test_client.get(f'/static/{image_id}.jpeg')
+    assert img_query.status_code == 200
+
+    resp = test_client.delete(f'/admin/delete/{image_id}')
+    assert resp.status_code == 200
+
+    img_query = test_client.get(f'/static/{image_id}.jpeg')
+    assert img_query.status_code == 404
+
+    query = test_client.get('/search/random')
+    assert query.status_code == 200
+    assert not query.json()['result']
+
+    resp = test_client.delete(f'/admin/delete/{image_id}')
+    assert resp.status_code == 404

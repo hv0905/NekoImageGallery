@@ -3,7 +3,7 @@ import logging
 from loguru import logger
 
 
-class InterceptHandler(logging.Handler):
+class InterceptHandler(logging.Handler):  # pragma: no cover  Hard to test in test environments
 
     def emit(self, record: logging.LogRecord):
         # Get corresponding Loguru level if it exists

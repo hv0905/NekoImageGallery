@@ -12,7 +12,7 @@ TEST_ADMIN_TOKEN = 'test_admin_token'
 
 
 @pytest.fixture(scope="session")
-def test_client(tmp_path_factory) -> TestClient:
+def unauthorized_test_client(tmp_path_factory) -> TestClient:
     # Modify the configuration for testing
     config.config.qdrant.mode = "memory"
     config.config.admin_api_enable = True
@@ -27,9 +27,14 @@ def test_client(tmp_path_factory) -> TestClient:
         yield client
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
+def test_client(unauthorized_test_client):
+    unauthorized_test_client.headers = {'x-access-token': TEST_ACCESS_TOKEN, 'x-admin-token': TEST_ADMIN_TOKEN}
+    yield unauthorized_test_client
+    unauthorized_test_client.headers = {}
+
+
 def check_local_dir_empty():
-    yield
     dir = Path(config.config.storage.local.path)
     files = [f for f in dir.glob('*.*') if f.is_file()]
     assert len(files) == 0
@@ -41,10 +46,16 @@ def check_local_dir_empty():
 
 
 @pytest.fixture()
+def ensure_local_dir_empty():
+    yield
+    check_local_dir_empty()
+
+
+@pytest.fixture(scope="module")
 def wait_for_background_task(test_client):
     async def func(expected_image_count):
         while True:
-            resp = test_client.get('/admin/server_info', headers={'x-admin-token': TEST_ADMIN_TOKEN})
+            resp = test_client.get('/admin/server_info')
             if resp.json()['image_count'] >= expected_image_count:
                 break
             await asyncio.sleep(0.2)
