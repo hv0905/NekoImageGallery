@@ -251,7 +251,7 @@ class VectorDbContext:
         return SearchResult(img=self._get_img_data_from_point(point), score=point.score)
 
     @classmethod
-    def getVectorByBasis(cls, basis: SearchBasisEnum) -> str:
+    def vector_name_for_basis(cls, basis: SearchBasisEnum) -> str:
         match basis:
             case SearchBasisEnum.vision:
                 return cls.IMG_VECTOR
