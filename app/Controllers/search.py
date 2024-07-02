@@ -204,7 +204,7 @@ def calculate_and_sort_by_combined_scores(model: CombinedSearchModel,
             case SearchBasisEnum.ocr:
                 extra_vector = itm.img.image_vector
             case SearchBasisEnum.vision:
-                extra_vector = itm.img.text_contain_vector if itm.img.text_contain_vector else None
+                extra_vector = itm.img.text_contain_vector
             case _:  # pragma: no cover
                 raise NotImplementedError()
         if extra_vector is not None:
