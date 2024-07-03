@@ -5,7 +5,7 @@ from app.Services.storage.base import RemoteFilePathType, LocalFileMetaDataType,
     LocalFilePathType
 
 
-class DisabledStorage(BaseStorage):
+class DisabledStorage(BaseStorage):  # pragma: no cover
     async def size(self, remote_file: RemoteFilePathType) -> int:
         raise NotImplementedError
 
