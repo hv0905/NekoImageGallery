@@ -1,6 +1,8 @@
+import asyncio
 from loguru import logger
 
 from .index_service import IndexService
+from .lifespan_service import LifespanService
 from .storage import StorageService
 from .transformers_service import TransformersService
 from .upload_service import UploadService
@@ -40,10 +42,15 @@ class ServiceProvider:
         self.storage_service = StorageService()
         logger.info(f"Storage service '{type(self.storage_service.active_storage).__name__}' initialized.")
 
-        self.upload_service = None
-
-        if config.admin_api_enable:
-            self.upload_service = UploadService(self.storage_service, self.db_context, self.index_service)
+        self.upload_service = UploadService(self.storage_service, self.db_context, self.index_service)
+        logger.info(f"Upload service '{type(self.upload_service).__name__}' initialized")
 
     async def onload(self):
-        await self.db_context.onload()
+        tasks = [service.on_load() for service_name in dir(self)
+                 if isinstance((service := getattr(self, service_name)), LifespanService)]
+        await asyncio.gather(*tasks)
+
+    async def onexit(self):
+        tasks = [service.on_exit() for service_name in dir(self)
+                 if isinstance((service := getattr(self, service_name)), LifespanService)]
+        await asyncio.gather(*tasks)

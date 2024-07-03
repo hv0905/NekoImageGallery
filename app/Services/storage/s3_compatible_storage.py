@@ -64,9 +64,6 @@ class S3Storage(BaseStorage[FileMetaDataT: None]):
     def _file_path_str_wrap(p: RemoteFilePathType):
         return str(PurePosixPath(p))
 
-    def pre_check(self):
-        pass
-
     async def is_exist(self,
                        remote_file: "RemoteFilePathType") -> bool:
         try:

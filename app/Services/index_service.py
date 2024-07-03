@@ -2,6 +2,7 @@ from PIL import Image
 from fastapi.concurrency import run_in_threadpool
 
 from app.Models.img_data import ImageData
+from app.Services.lifespan_service import LifespanService
 from app.Services.ocr_services import OCRService
 from app.Services.transformers_service import TransformersService
 from app.Services.vector_db_context import VectorDbContext
@@ -12,7 +13,7 @@ class PointDuplicateError(ValueError):
     pass
 
 
-class IndexService:
+class IndexService(LifespanService):
     def __init__(self, ocr_service: OCRService, transformers_service: TransformersService, db_context: VectorDbContext):
         self._ocr_service = ocr_service
         self._transformers_service = transformers_service

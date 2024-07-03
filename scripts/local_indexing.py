@@ -8,6 +8,7 @@ from loguru import logger
 
 from app.Models.img_data import ImageData
 from app.Services.provider import ServiceProvider
+from app.config import config, StorageMode
 from app.util.generate_uuid import generate_uuid
 from .local_utility import fetch_path_uuid_list
 
@@ -50,6 +51,7 @@ async def copy_and_index_batch(file_path_list: list[tuple[Path, str]]):
 @logger.catch()
 async def main(args):
     global services
+    config.storage.method = StorageMode.LOCAL  # ensure to use LocalStorage
     services = ServiceProvider()
     await services.onload()
     root = Path(args.local_index_target_dir)
@@ -58,12 +60,12 @@ async def main(args):
     if item_number == 0:
         # database is empty, do as usual
         logger.warning("The database is empty, Will not check for duplicate points.")
-        async for item in services.storage_service.local_storage.list_files(root, batch_max_files=1):
+        async for item in services.storage_service.active_storage.list_files(root, batch_max_files=1):
             await copy_and_index(item[0])
     else:
         # database is not empty, check for duplicate points
         logger.warning("The database is not empty, Will check for duplicate points.")
-        async for itm in services.storage_service.local_storage.list_files(root, batch_max_files=5000):
+        async for itm in services.storage_service.active_storage.list_files(root, batch_max_files=5000):
             local_file_path_with_uuid_list = fetch_path_uuid_list(itm)
             local_file_uuid_list = [itm[1] for itm in local_file_path_with_uuid_list]
             duplicate_uuid_list = await services.db_context.validate_ids(local_file_uuid_list)

@@ -12,6 +12,7 @@ from app.Models.api_models.search_api_model import SearchModelEnum, SearchBasisE
 from app.Models.img_data import ImageData
 from app.Models.query_params import FilterParams
 from app.Models.search_result import SearchResult
+from app.Services.lifespan_service import LifespanService
 from app.config import config, QdrantMode
 from app.util.retry_deco_async import wrap_object, retry_async
 
@@ -22,7 +23,7 @@ class PointNotFoundError(ValueError):
         super().__init__(f"Point {point_id} not found.")
 
 
-class VectorDbContext:
+class VectorDbContext(LifespanService):
     IMG_VECTOR = "image_vector"
     TEXT_VECTOR = "text_contain_vector"
     AVAILABLE_POINT_TYPES = models.Record | models.ScoredPoint | models.PointStruct
@@ -44,7 +45,7 @@ class VectorDbContext:
                 raise ValueError("Invalid Qdrant mode.")
         self.collection_name = config.qdrant.coll
 
-    async def onload(self):
+    async def on_load(self):
         if not await self.check_collection():
             logger.warning("Collection not found. Initializing...")
             await self.initialize_collection()
