@@ -27,6 +27,8 @@ async def lifespan(_: FastAPI):
     admin_controller.services = provider
     yield
 
+    await provider.onexit()
+
 
 app = FastAPI(lifespan=lifespan)
 init_logging()

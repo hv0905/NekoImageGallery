@@ -2,6 +2,8 @@ import abc
 import os
 from typing import TypeVar, Generic, TypeAlias, Optional, AsyncGenerator
 
+from app.Services.lifespan_service import LifespanService
+
 FileMetaDataT = TypeVar('FileMetaDataT')
 
 PathLikeType: TypeAlias = str | os.PathLike
@@ -11,16 +13,12 @@ LocalFileMetaDataType: TypeAlias = FileMetaDataT
 RemoteFileMetaDataType: TypeAlias = FileMetaDataT
 
 
-class BaseStorage(abc.ABC, Generic[FileMetaDataT]):
+class BaseStorage(LifespanService, abc.ABC, Generic[FileMetaDataT]):
     def __init__(self):
         self.static_dir: os.PathLike
         self.thumbnails_dir: os.PathLike
         self.deleted_dir: os.PathLike
         self.file_metadata: FileMetaDataT
-
-    @abc.abstractmethod
-    def pre_check(self):
-        raise NotImplementedError
 
     @abc.abstractmethod
     async def is_exist(self,

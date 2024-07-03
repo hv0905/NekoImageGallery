@@ -5,10 +5,11 @@ import torch
 from PIL import Image
 from loguru import logger
 
+from app.Services.lifespan_service import LifespanService
 from app.config import config
 
 
-class OCRService:
+class OCRService(LifespanService):
     def __init__(self):
         self._device = config.device
         if self._device == "auto":

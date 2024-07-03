@@ -8,10 +8,11 @@ from numpy import ndarray
 from torch import FloatTensor, no_grad
 from transformers import CLIPProcessor, CLIPModel, BertTokenizer, BertModel
 
+from app.Services.lifespan_service import LifespanService
 from app.config import config
 
 
-class TransformersService:
+class TransformersService(LifespanService):
     def __init__(self):
         self.device = config.device
         if self.device == "auto":

@@ -47,7 +47,7 @@ class LocalStorage(BaseStorage[FileMetaDataT: None]):
     def file_path_wrap(self, path: RemoteFilePathType) -> syncPath:
         return self.static_dir / syncPath(path)
 
-    def pre_check(self):
+    async def on_load(self):
         if not self.static_dir.is_dir():
             self.static_dir.mkdir(parents=True)
             logger.warning(f"static_dir {self.static_dir} not found, created.")

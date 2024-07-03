@@ -7,13 +7,14 @@ from loguru import logger
 
 from app.Models.api_models.admin_query_params import UploadImageThumbnailMode
 from app.Models.img_data import ImageData
+from app.Services.lifespan_service import LifespanService
 from app.Services.index_service import IndexService
 from app.Services.storage import StorageService
 from app.Services.vector_db_context import VectorDbContext
 from app.config import config
 
 
-class UploadService:
+class UploadService(LifespanService):
     def __init__(self, storage_service: StorageService, db_context: VectorDbContext, index_service: IndexService):
         self._storage_service = storage_service
         self._db_context = db_context
