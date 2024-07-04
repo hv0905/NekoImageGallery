@@ -18,6 +18,7 @@ from app.Services.storage.base import BaseStorage, FileMetaDataT, RemoteFilePath
 from app.Services.storage.exception import LocalFileNotFoundError, RemoteFileNotFoundError, RemoteFilePermissionError, \
     RemoteFileExistsError
 from app.config import config
+from app.util.local_file_utility import VALID_IMAGE_EXTENSIONS
 
 
 def transform_exception(func):
@@ -138,7 +139,7 @@ class S3Storage(BaseStorage[FileMetaDataT: None]):
                          valid_extensions: Optional[set[str]] = None) \
             -> AsyncGenerator[list[RemoteFilePathType], None]:
         if valid_extensions is None:
-            valid_extensions = {'.jpg', '.png', '.jpeg', '.jfif', '.webp', '.gif'}
+            valid_extensions = VALID_IMAGE_EXTENSIONS
         files = []
         # In opendal, current path should be "" instead of "."
         _path = "" if self._file_path_str_warp(path) == "." else self._file_path_str_warp(path)

@@ -5,13 +5,13 @@ from shutil import copy2, move
 from typing import Optional, AsyncGenerator
 
 import aiofiles
-from aiopath import Path as asyncPath
 from loguru import logger
 
 from app.Services.storage.base import BaseStorage, FileMetaDataT, RemoteFilePathType, LocalFilePathType
 from app.Services.storage.exception import RemoteFileNotFoundError, LocalFileNotFoundError, RemoteFilePermissionError, \
     LocalFilePermissionError, LocalFileExistsError, RemoteFileExistsError
 from app.config import config
+from app.util.local_file_utility import glob_local_files
 
 
 def transform_exception(param: str):
@@ -129,16 +129,13 @@ class LocalStorage(BaseStorage[FileMetaDataT: None]):
                          batch_max_files: Optional[int] = None,
                          valid_extensions: Optional[set[str]] = None) \
             -> AsyncGenerator[list[RemoteFilePathType], None]:
-        _path = asyncPath(self.file_path_warp(path))
+        local_path = self.file_path_warp(path)
         files = []
-        if valid_extensions is None:
-            valid_extensions = {'.jpg', '.png', '.jpeg', '.jfif', '.webp', '.gif'}
-        async for file in _path.glob(pattern):
-            if file.suffix.lower() in valid_extensions:
-                files.append(syncPath(file))
-                if batch_max_files is not None and len(files) == batch_max_files:
-                    yield files
-                    files = []
+        for file in glob_local_files(local_path, pattern, valid_extensions):
+            files.append(file)
+            if batch_max_files is not None and len(files) == batch_max_files:
+                yield files
+                files = []
         if files:
             yield files
 

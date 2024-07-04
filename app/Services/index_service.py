@@ -1,16 +1,13 @@
 from PIL import Image
 from fastapi.concurrency import run_in_threadpool
 
+from app.Models.errors import PointDuplicateError
 from app.Models.img_data import ImageData
 from app.Services.lifespan_service import LifespanService
 from app.Services.ocr_services import OCRService
 from app.Services.transformers_service import TransformersService
 from app.Services.vector_db_context import VectorDbContext
 from app.config import config
-
-
-class PointDuplicateError(ValueError):
-    pass
 
 
 class IndexService(LifespanService):
@@ -45,7 +42,7 @@ class IndexService(LifespanService):
     async def index_image(self, image: Image.Image, image_data: ImageData, skip_ocr=False, skip_duplicate_check=False,
                           background=False):
         if not skip_duplicate_check and (await self._is_point_duplicate([image_data])):
-            raise PointDuplicateError("The uploaded points are contained in the database!")
+            raise PointDuplicateError("The uploaded points are contained in the database!", image_data.id)
 
         if background:
             await run_in_threadpool(self._prepare_image, image, image_data, skip_ocr)

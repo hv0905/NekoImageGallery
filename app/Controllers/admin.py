@@ -13,12 +13,14 @@ from app.Models.api_models.admin_query_params import UploadImageModel
 from app.Models.api_response.admin_api_response import ServerInfoResponse, ImageUploadResponse, \
     DuplicateValidationResponse
 from app.Models.api_response.base import NekoProtocol
+from app.Models.errors import PointDuplicateError
 from app.Models.img_data import ImageData
 from app.Services.authentication import force_admin_token_verify
 from app.Services.provider import ServiceProvider
 from app.Services.vector_db_context import PointNotFoundError
 from app.config import config
-from app.util.generate_uuid import generate_uuid, generate_uuid_from_sha1
+from app.util.generate_uuid import generate_uuid_from_sha1
+from app.util.local_file_utility import VALID_IMAGE_EXTENSIONS
 
 admin_router = APIRouter(dependencies=[Depends(force_admin_token_verify)], tags=["Admin"])
 
@@ -106,19 +108,19 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
         img_type = IMAGE_MIMES[image_file.content_type.lower()]
     elif image_file.filename:
         extension = PurePath(image_file.filename).suffix.lower()
-        if extension in {'.jpg', '.png', '.jpeg', '.jfif', '.webp', '.gif'}:
+        if extension in VALID_IMAGE_EXTENSIONS:
             img_type = extension[1:]
     if not img_type:
         logger.warning("Failed to infer image format of the uploaded image. Content Type: {}, Filename: {}",
                        image_file.content_type, image_file.filename)
         raise HTTPException(415, "Unsupported image format.")
     img_bytes = await image_file.read()
-    img_id = generate_uuid(img_bytes)
-    if img_id in services.upload_service.uploading_ids or len(
-            await services.db_context.validate_ids([str(img_id)])) != 0:  # check for duplicate points
-        logger.warning("Duplicate upload request for image id: {}", img_id)
-        raise HTTPException(409, f"The uploaded point is already contained in the database! entity id: {img_id}")
-
+    try:
+        img_id = await services.upload_service.assign_image_id(img_bytes)
+    except PointDuplicateError as ex:
+        raise HTTPException(409,
+                            f"The uploaded point is already contained in the database! entity id: {ex.entity_id}") \
+            from ex
     try:
         image = Image.open(BytesIO(img_bytes))
         image.verify()
@@ -136,7 +138,7 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
                            format=img_type,
                            index_date=datetime.now())
 
-    await services.upload_service.upload_image(image_data, img_bytes, model.skip_ocr, model.local_thumbnail)
+    await services.upload_service.queue_upload_image(image_data, img_bytes, model.skip_ocr, model.local_thumbnail)
     return ImageUploadResponse(message="OK. Image added to upload queue.", image_id=img_id)
 
 

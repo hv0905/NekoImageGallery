@@ -88,30 +88,13 @@ Local file storage does not require an additional database deployment process, b
     ```
    This operation will create a collection in the Qdrant database with the same name as `config.QDRANT_COLL` to store
    image vectors.
-7. (Optional) In development deployment and small-scale deployment, you can use the built-in static file indexing and
-   service functions of this application. Use the following command to index your local image directory:
-    ```shell
-   python main.py --local-index <path-to-your-image-directory>
-    ```
-   This operation will copy all image files in the `<path-to-your-image-directory>` directory to
-   the `config.STATIC_FILE_PATH` directory (default is `./static`) and write the image information to the Qdrant
-   database.
-
-   Then run the following command to generate thumbnails for all images in the static directory:
-
-   ```shell
-     python main.py --local-create-thumbnail
-   ```
-
-   If you want to deploy on a large scale, you can use OSS storage services like `MinIO` to store image files in OSS and
-   then write the image information to the Qdrant database.
-8. Run this application:
+7. Run this application:
     ```shell
     python main.py
     ```
    You can use `--host` to specify the IP address you want to bind to (default is 0.0.0.0) and `--port` to specify the
    port you want to bind to (default is 8000).
-9. (Optional) Deploy the front-end application: [NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)
+8. (Optional) Deploy the front-end application: [NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)
    is a simple web front-end application for this project. If you want to deploy it, please refer to
    its [deployment documentation](https://github.com/hv0905/NekoImageGallery.App).
 
@@ -171,6 +154,25 @@ the [official documentation](https://docs.docker.com/config/containers/resource_
     # start in background(detached mode)
     docker compose up -d
     ```
+
+### Upload images to NekoImageGallery
+
+There are serval ways to upload images to NekoImageGallery
+
+- Through the web interface: You can use the web interface to upload images to the server. The web interface is provided
+  by [NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App). Make sure you have enabled the **Admin API
+  ** and set your **Admin Token** in the configuration file.
+- Through local indexing: This is suitable for local deployment or when the images you want to upload are already on the
+  server.
+  Use the following command to index your local image directory:
+  ```shell
+   python main.py --local-index <path-to-your-image-directory>
+  ```
+  The above command will recursively upload all images in the specified directory and its subdirectories to the server.
+- Through the API: You can use the upload API provided by NekoImageGallery to upload images.
+  Make sure you have enabled the **Admin API** and set your **Admin Token** in the configuration file.
+  This method is suitable for automated image uploading. Checkout [API documentation](#-api-documentation) for more
+  information.
 
 ## 📚 API Documentation
 

@@ -1,17 +1,21 @@
 import asyncio
 import gc
+import io
+import pathlib
 from io import BytesIO
 
 from PIL import Image
 from loguru import logger
 
 from app.Models.api_models.admin_query_params import UploadImageThumbnailMode
+from app.Models.errors import PointDuplicateError
 from app.Models.img_data import ImageData
-from app.Services.lifespan_service import LifespanService
 from app.Services.index_service import IndexService
+from app.Services.lifespan_service import LifespanService
 from app.Services.storage import StorageService
 from app.Services.vector_db_context import VectorDbContext
 from app.config import config
+from app.util.generate_uuid import generate_uuid
 
 
 class UploadService(LifespanService):
@@ -75,11 +79,24 @@ class UploadService(LifespanService):
 
         img.close()
 
-    async def upload_image(self, img_data: ImageData, img_bytes: bytes, skip_ocr: bool,
-                           thumbnail_mode: UploadImageThumbnailMode):
+    async def queue_upload_image(self, img_data: ImageData, img_bytes: bytes, skip_ocr: bool,
+                                 thumbnail_mode: UploadImageThumbnailMode):
         self.uploading_ids.add(img_data.id)
         await self._queue.put((img_data, img_bytes, skip_ocr, thumbnail_mode))
         logger.success("Image {} added to upload queue. Queue Length: {} [+1]", img_data.id, self._queue.qsize())
+
+    async def assign_image_id(self, img_file: pathlib.Path | io.BytesIO | bytes):
+        img_id = generate_uuid(img_file)
+        # check for duplicate points
+        if img_id in self.uploading_ids or len(await self._db_context.validate_ids([str(img_id)])) != 0:
+            logger.warning("Duplicate upload request for image id: {}", img_id)
+            raise PointDuplicateError(f"The uploaded point is already contained in the database! entity id: {img_id}",
+                                      img_id)
+        return img_id
+
+    async def sync_upload_image(self, img_data: ImageData, img_bytes: bytes, skip_ocr: bool,
+                                thumbnail_mode: UploadImageThumbnailMode):
+        await self._upload_task(img_data, img_bytes, skip_ocr, thumbnail_mode)
 
     def get_queue_size(self):
         return self._queue.qsize()

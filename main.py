@@ -62,7 +62,7 @@ if __name__ == '__main__':
         environment.local_indexing = True
         from scripts import local_indexing
 
-        asyncio.run(local_indexing.main(args))
+        asyncio.run(local_indexing.main(args.local_index_target_dir))
     elif args.local_create_thumbnail:
         from scripts import local_create_thumbnail
 
