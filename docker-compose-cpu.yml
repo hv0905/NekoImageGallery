@@ -13,7 +13,7 @@ services:
     #      dockerfile: cpu-only.Dockerfile
     image: edgeneko/neko-image-gallery:latest-cpu
     ports:
-      - "127.0.0.1:8000:8000"
+      - "8000:8000"
     volumes:
       - "./static:/opt/NekoImageGallery/static"
     environment:
