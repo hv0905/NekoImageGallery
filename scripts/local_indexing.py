@@ -13,13 +13,13 @@ from app.util.local_file_utility import glob_local_files
 services: ServiceProvider | None = None
 
 
-async def index_task(file_path: Path):
+async def index_task(file_path: Path, categories: list[str], starred: bool):
     try:
         img_id = await services.upload_service.assign_image_id(file_path)
         image_data = ImageData(id=img_id,
                                local=True,
-                               categories=[],
-                               starred=False,
+                               categories=categories,
+                               starred=starred,
                                format=file_path.suffix[1:],  # remove the dot
                                index_date=datetime.now())
         await services.upload_service.sync_upload_image(image_data, file_path.read_bytes(), skip_ocr=False,
@@ -31,7 +31,7 @@ async def index_task(file_path: Path):
 
 
 @logger.catch()
-async def main(root_directory):
+async def main(root_directory: Path, categories: list[str], starred: bool):
     global services
     services = ServiceProvider()
     await services.onload()
@@ -39,6 +39,6 @@ async def main(root_directory):
 
     for idx, item in enumerate(glob_local_files(root, '**/*')):
         logger.info("[{}] Indexing {}", idx, str(item))
-        await index_task(item)
+        await index_task(item, categories, starred)
 
     logger.success("Indexing completed!")

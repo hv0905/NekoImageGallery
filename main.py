@@ -1,71 +1,95 @@
-import argparse
 import asyncio
+from pathlib import Path
+from typing import Annotated, Optional
 
+import rich
+import typer
 import uvicorn
 
+__version__ = '1.2.0'
 
-def parse_args():
-    parser = argparse.ArgumentParser(prog="NekoImageGallery Server",
-                                     description='Ciallo~ Welcome to NekoImageGallery Server.',
-                                     epilog="Build with ♥ By EdgeNeko. Github: "
-                                            "https://github.com/hv0905/NekoImageGallery")
+parser = typer.Typer(name='NekoImageGallery Server',
+                     help='Ciallo~ Welcome to NekoImageGallery Server.\n\nBy default, running without command will '
+                          'start the server. You can perform other actions by using the commands below.',
+                     epilog="Build with ♥ By EdgeNeko. Github: "
+                            "https://github.com/hv0905/NekoImageGallery"
+                     )
 
-    actions = parser.add_argument_group('Actions').add_mutually_exclusive_group()
 
-    actions.add_argument('--show-config', action='store_true', help="Print the current configuration and exit.")
-    actions.add_argument('--init-database', action='store_true',
-                         help="Initialize qdrant database using connection settings in "
-                              "configuration. When this flag is set, will not"
-                              "start the server.")
-    actions.add_argument('--migrate-db', dest="migrate_from_version", type=int,
-                         help="Migrate qdrant database using connection settings in config from version specified."
-                              "When this flag is set, will not start the server.")
-    actions.add_argument('--local-index', dest="local_index_target_dir", type=str,
-                         help="Index all the images in this directory and copy them to "
-                              "static folder set in config.py. When this flag is set, "
-                              "will not start the server.")
-    actions.add_argument('--local-create-thumbnail', action='store_true',
-                         help='Create thumbnail for all local images in static folder set in config.py. When this flag '
-                              'is set, will not start the server.')
+def version_callback(value: bool):
+    if value:
+        print(f"NekoImageGallery v{__version__}")
+        raise typer.Exit()
 
-    server_options = parser.add_argument_group("Server Options")
 
-    server_options.add_argument('--port', type=int, default=8000, help="Port to listen on, default is 8000")
-    server_options.add_argument('--host', type=str, default="0.0.0.0", help="Host to bind on, default is 0.0.0.0")
-    server_options.add_argument('--root-path', type=str, default="",
-                                help="Root path of the server if your server is deployed behind a reverse proxy. "
-                                     "See https://fastapi.tiangolo.com/advanced/behind-a-proxy/ for detail.")
+@parser.callback(invoke_without_command=True)
+def server(ctx: typer.Context,
+           host: Annotated[str, typer.Option(help='The host to bind on.')] = '0.0.0.0',
+           port: Annotated[int, typer.Option(help='The port to listen on.')] = 8000,
+           root_path: Annotated[str, typer.Option(
+               help='Root path of the server if your server is deployed behind a reverse proxy. See '
+                    'https://fastapi.tiangolo.com/advanced/behind-a-proxy/ for detail.')] = '',
+           _: Annotated[
+               Optional[bool], typer.Option("--version", callback=version_callback, is_eager=True,
+                                            help="Show version and exit.")
+           ] = None
+           ):
+    """
+    Start the server with the specified host, port and root path.
+    """
+    if ctx.invoked_subcommand is not None:
+        return
+    uvicorn.run("app.webapp:app", host=host, port=port, root_path=root_path)
 
-    parser.add_argument('--version', action='version', version='%(prog)s v1.1.0')
-    return parser.parse_args()
+
+@parser.command('show-config')
+def show_config():
+    """
+    Print the current configuration and exit.
+    """
+    from app.config import config
+    rich.print_json(config.model_dump_json())
+
+
+@parser.command('init-database')
+def init_database():
+    """
+    Initialize qdrant database using connection settings in configuration.
+    Note. The server will automatically initialize the database if it's not initialized. So you don't need to run this
+    command unless you want to explicitly initialize the database.
+    """
+    from scripts import qdrant_create_collection
+    asyncio.run(qdrant_create_collection.main())
+
+
+@parser.command("local-index")
+def local_index(
+        target_dir: Annotated[
+            Path, typer.Argument(dir_okay=True, file_okay=False, exists=True, resolve_path=True, readable=True,
+                                 help="The directory to index.")],
+        categories: Annotated[Optional[list[str]], typer.Option(help="Categories for the indexed images.")] = None,
+        starred: Annotated[bool, typer.Option(help="Whether the indexed images are starred.")] = False,
+):
+    """
+    Index all the images in the specified directory.
+    The images will be copied to the local storage directory set in configuration.
+    """
+    from scripts import local_indexing
+    if categories is None:
+        categories = []
+    asyncio.run(local_indexing.main(target_dir, categories, starred))
+
+
+@parser.command('local-create-thumbnail', deprecated=True)
+def local_create_thumbnail():
+    """
+    Create thumbnail for all local images in static folder, this won't affect non-local images.
+    This is generally not required since the server will automatically create thumbnails for new images by default.
+    This option will be refactored in the future.
+    """
+    from scripts import local_create_thumbnail
+    asyncio.run(local_create_thumbnail.main())
 
 
 if __name__ == '__main__':
-    args = parse_args()
-    if args.show_config:
-        from app.config import config
-
-        print(config.model_dump_json(indent=2))
-    elif args.init_database:
-        from scripts import qdrant_create_collection
-        from app.config import config
-
-        asyncio.run(qdrant_create_collection.main())
-
-    elif args.migrate_from_version is not None:
-        from scripts import db_migrations
-
-        asyncio.run(db_migrations.migrate(args.migrate_from_version))
-    elif args.local_index_target_dir is not None:
-        from app.config import environment
-
-        environment.local_indexing = True
-        from scripts import local_indexing
-
-        asyncio.run(local_indexing.main(args.local_index_target_dir))
-    elif args.local_create_thumbnail:
-        from scripts import local_create_thumbnail
-
-        asyncio.run(local_create_thumbnail.main())
-    else:
-        uvicorn.run("app.webapp:app", host=args.host, port=args.port, root_path=args.root_path)
+    parser()
