@@ -4,7 +4,7 @@ python-multipart>=0.0.9
 uvicorn[standard]
 pydantic
 pydantic-settings
-
+typer
 
 # AI - Manually install cuda-capable pytorch
 torch>=2.1.0
@@ -31,3 +31,5 @@ wcmatch
 pyyaml
 loguru
 httpx
+pytest
+rich

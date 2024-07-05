@@ -1,86 +1,52 @@
-import uuid
+import sys
 from datetime import datetime
 from pathlib import Path
 
 import PIL
-from PIL import Image
 from loguru import logger
+from rich.progress import Progress
 
+from app.Models.api_models.admin_query_params import UploadImageThumbnailMode
+from app.Models.errors import PointDuplicateError
 from app.Models.img_data import ImageData
 from app.Services.provider import ServiceProvider
-from app.config import config, StorageMode
-from app.util.generate_uuid import generate_uuid
-from .local_utility import fetch_path_uuid_list
-
-overall_count = 0
+from app.util.local_file_utility import glob_local_files
 
 services: ServiceProvider | None = None
 
 
-async def copy_and_index(file_path: Path, uuid_str: str = None):
-    global overall_count
-    overall_count += 1
-    logger.info("[{}] Indexing {}", str(overall_count), str(file_path))
+async def index_task(file_path: Path, categories: list[str], starred: bool):
     try:
-        img = Image.open(file_path)
+        img_id = await services.upload_service.assign_image_id(file_path)
+        image_data = ImageData(id=img_id,
+                               local=True,
+                               categories=categories,
+                               starred=starred,
+                               format=file_path.suffix[1:],  # remove the dot
+                               index_date=datetime.now())
+        await services.upload_service.sync_upload_image(image_data, file_path.read_bytes(), skip_ocr=False,
+                                                        thumbnail_mode=UploadImageThumbnailMode.IF_NECESSARY)
+    except PointDuplicateError as ex:
+        logger.warning("Image {} already exists in the database", file_path)
     except PIL.UnidentifiedImageError as e:
-        logger.error("Error when opening image {}: {}", file_path, e)
-        return
-    image_id = uuid.UUID(uuid_str) if uuid_str else generate_uuid(file_path)
-    img_ext = file_path.suffix
-    imgdata = ImageData(id=image_id,
-                        url=await services.storage_service.active_storage.url(f'{image_id}{img_ext}'),
-                        index_date=datetime.now(),
-                        format=img_ext[1:],
-                        local=True)
-    try:
-        # This has already been checked for duplicated, so there's no need to double-check.
-        await services.index_service.index_image(img, imgdata, skip_duplicate_check=True)
-    except Exception as e:
         logger.error("Error when processing image {}: {}", file_path, e)
-        return
-    # copy to static
-    await services.storage_service.active_storage.upload(file_path, f'{image_id}{img_ext}')
-
-
-async def copy_and_index_batch(file_path_list: list[tuple[Path, str]]):
-    for file_path_uuid_tuple in file_path_list:
-        await copy_and_index(file_path_uuid_tuple[0], uuid_str=file_path_uuid_tuple[1])
 
 
 @logger.catch()
-async def main(args):
+async def main(root_directory: list[Path], categories: list[str], starred: bool):
     global services
-    config.storage.method = StorageMode.LOCAL  # ensure to use LocalStorage
     services = ServiceProvider()
     await services.onload()
-    root = Path(args.local_index_target_dir)
-    # First, check if the database is empty
-    item_number = await services.db_context.get_counts(exact=False)
-    if item_number == 0:
-        # database is empty, do as usual
-        logger.warning("The database is empty, Will not check for duplicate points.")
-        async for item in services.storage_service.active_storage.list_files(root, batch_max_files=1):
-            await copy_and_index(item[0])
-    else:
-        # database is not empty, check for duplicate points
-        logger.warning("The database is not empty, Will check for duplicate points.")
-        async for itm in services.storage_service.active_storage.list_files(root, batch_max_files=5000):
-            local_file_path_with_uuid_list = fetch_path_uuid_list(itm)
-            local_file_uuid_list = [itm[1] for itm in local_file_path_with_uuid_list]
-            duplicate_uuid_list = await services.db_context.validate_ids(local_file_uuid_list)
-            if len(duplicate_uuid_list) > 0:
-                duplicate_uuid_list = set(duplicate_uuid_list)
-                local_file_path_with_uuid_list = [item for item in local_file_path_with_uuid_list
-                                                  if item[1] not in duplicate_uuid_list]
-                logger.info("Found {} duplicate points, of which {} are duplicates in the database. "
-                            "The remaining {} points will be indexed.",
-                            len(itm) - len(local_file_path_with_uuid_list), len(duplicate_uuid_list),
-                            len(local_file_path_with_uuid_list))
-            else:
-                logger.info("Found {} duplicate points, of which {} are duplicates in the database."
-                            " The remaining {} points will be indexed.",
-                            0, 0, len(local_file_path_with_uuid_list))
-            await copy_and_index_batch(local_file_path_with_uuid_list)
+    files = []
+    for root in root_directory:
+        files.extend(list(glob_local_files(root, '**/*')))
+    with Progress() as progress:
+        # A workaround for the loguru logger to work with rich progressbar
+        logger.remove()
+        logger.add(sys.stderr, colorize=True)
+        for idx, item in enumerate(progress.track(files, description="Indexing...")):
+            logger.info("[{} / {}] Indexing {}", idx + 1, len(files), str(item))
 
-    logger.success("Indexing completed! {} images indexed", overall_count)
+            await index_task(item, categories, starred)
+
+    logger.success("Indexing completed!")

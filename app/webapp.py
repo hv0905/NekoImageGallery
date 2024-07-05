@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.params import Depends
 from fastapi.staticfiles import StaticFiles
 
+import app
 import app.Controllers.admin as admin_controller
 import app.Controllers.search as search_controller
 from app.Services.authentication import permissive_access_token_verify, permissive_admin_token_verify
@@ -30,9 +31,10 @@ async def lifespan(_: FastAPI):
     await provider.onexit()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, title=app.__title__, description=app.__description__, version=app.__version__)
 init_logging()
 
+# noinspection PyTypeChecker
 app.add_middleware(
     CORSMiddleware,
     allow_origins=config.cors_origins,
