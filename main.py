@@ -6,19 +6,18 @@ import rich
 import typer
 import uvicorn
 
-__version__ = '1.2.0'
+import app
 
-parser = typer.Typer(name='NekoImageGallery Server',
-                     help='Ciallo~ Welcome to NekoImageGallery Server.\n\nBy default, running without command will '
-                          'start the server. You can perform other actions by using the commands below.',
+parser = typer.Typer(name=app.__title__,
                      epilog="Build with ♥ By EdgeNeko. Github: "
-                            "https://github.com/hv0905/NekoImageGallery"
+                            "https://github.com/hv0905/NekoImageGallery",
+                     rich_markup_mode='markdown'
                      )
 
 
 def version_callback(value: bool):
     if value:
-        print(f"NekoImageGallery v{__version__}")
+        print(f"{app.__title__} v{app.__version__}")
         raise typer.Exit()
 
 
@@ -35,7 +34,16 @@ def server(ctx: typer.Context,
            ] = None
            ):
     """
-    Start the server with the specified host, port and root path.
+    Ciallo~ Welcome to NekoImageGallery Server.
+
+    - Website: https://image-insight.edgneko.com
+
+    - Repository & Issue tracker: https://github.com/hv0905/NekoImageGallery
+
+
+
+    By default, running without command will start the server.
+    You can perform other actions by using the commands below.
     """
     if ctx.invoked_subcommand is not None:
         return

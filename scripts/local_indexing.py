@@ -1,8 +1,10 @@
+import sys
 from datetime import datetime
 from pathlib import Path
 
 import PIL
 from loguru import logger
+from rich.progress import Progress
 
 from app.Models.api_models.admin_query_params import UploadImageThumbnailMode
 from app.Models.errors import PointDuplicateError
@@ -36,9 +38,14 @@ async def main(root_directory: Path, categories: list[str], starred: bool):
     services = ServiceProvider()
     await services.onload()
     root = Path(root_directory)
+    files = list(glob_local_files(root, '**/*'))
+    with Progress() as progress:
+        # A workaround for the loguru logger to work with rich progressbar
+        logger.remove()
+        logger.add(sys.stderr, colorize=True)
+        for idx, item in enumerate(progress.track(files, description="Indexing...")):
+            logger.info("[{} / {}] Indexing {}", idx + 1, len(files), str(item))
 
-    for idx, item in enumerate(glob_local_files(root, '**/*')):
-        logger.info("[{}] Indexing {}", idx, str(item))
-        await index_task(item, categories, starred)
+            await index_task(item, categories, starred)
 
     logger.success("Indexing completed!")
