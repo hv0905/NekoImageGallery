@@ -73,8 +73,8 @@ def init_database():
 @parser.command("local-index")
 def local_index(
         target_dir: Annotated[
-            Path, typer.Argument(dir_okay=True, file_okay=False, exists=True, resolve_path=True, readable=True,
-                                 help="The directory to index.")],
+            list[Path], typer.Argument(dir_okay=True, file_okay=False, exists=True, resolve_path=True, readable=True,
+                                       help="Directories you want to index.")],
         categories: Annotated[Optional[list[str]], typer.Option(help="Categories for the indexed images.")] = None,
         starred: Annotated[bool, typer.Option(help="Whether the indexed images are starred.")] = False,
 ):

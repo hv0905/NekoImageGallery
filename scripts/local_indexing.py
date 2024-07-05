@@ -33,12 +33,13 @@ async def index_task(file_path: Path, categories: list[str], starred: bool):
 
 
 @logger.catch()
-async def main(root_directory: Path, categories: list[str], starred: bool):
+async def main(root_directory: list[Path], categories: list[str], starred: bool):
     global services
     services = ServiceProvider()
     await services.onload()
-    root = Path(root_directory)
-    files = list(glob_local_files(root, '**/*'))
+    files = []
+    for root in root_directory:
+        files.extend(list(glob_local_files(root, '**/*')))
     with Progress() as progress:
         # A workaround for the loguru logger to work with rich progressbar
         logger.remove()
