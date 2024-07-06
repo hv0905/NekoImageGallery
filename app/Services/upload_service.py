@@ -100,3 +100,9 @@ class UploadService(LifespanService):
 
     def get_queue_size(self):
         return self._queue.qsize()
+
+    async def on_exit(self):  # pragma: no cover  Hard to test in UT.
+        if self.get_queue_size() != 0:
+            logger.warning("There are still {} images in the upload queue. Waiting for upload process to be completed.",
+                           self.get_queue_size())
+        await self._queue.join()
