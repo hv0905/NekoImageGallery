@@ -139,9 +139,8 @@ NekoImageGallery镜像发布在DockerHub上，并包含多个变种，设计于�
 
 有几种方法可以将图片上传至NekoImageGallery：
 
--
-通过网页界面：您可以使用网页界面将图片上传到服务器。网页界面由 [NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)
-提供。请确保您已启用 **Admin API** 并在配置文件中设置了您的 **Admin Token**。
+- 通过网页界面：您可以使用网页界面将图片上传到服务器。网页界面由 [NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)
+  提供。请确保您已启用 **Admin API** 并在配置文件中设置了您的 **Admin Token**。
 - 通过本地索引：这适用于本地部署或当您想上传的图片已经在服务器上时。
   使用以下命令来索引您的本地图片目录：
   ```shell
@@ -149,10 +148,9 @@ NekoImageGallery镜像发布在DockerHub上，并包含多个变种，设计于�
   ```
   上述命令将递归地将指定目录及其子目录中的所有图片上传到服务器。
   你可以通过附加选项指定上传的图片的类别和星标状态，具体参考`python main.py local-index --help`。
--
-通过API：您可以使用NekoImageGallery提供的上传API来上传图片。通过此方法，可允许服务器本地不保存图片文件而仅仅存储其URL以及元数据。  
-请确保您已启用 **Admin API** 并在配置文件中设置了您的 **Admin Token**。  
-此方法适用于自动化图片上传或将NekoImageGallery与外部系统进行同步。更多信息请查看 [API文档](#-api文档)。
+- 通过API：您可以使用NekoImageGallery提供的上传API来上传图片。通过此方法，可允许服务器本地不保存图片文件而仅仅存储其URL以及元数据。  
+  请确保您已启用 **Admin API** 并在配置文件中设置了您的 **Admin Token**。  
+  此方法适用于自动化图片上传或将NekoImageGallery与外部系统进行同步。更多信息请查看 [API文档](#-api文档)。
 
 ## 📚 API文档
 
