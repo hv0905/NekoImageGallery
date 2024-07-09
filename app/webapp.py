@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 import app
 import app.Controllers.admin as admin_controller
+import app.Controllers.images as images_controller
 import app.Controllers.search as search_controller
 from app.Services.authentication import permissive_access_token_verify, permissive_admin_token_verify
 from app.Services.provider import ServiceProvider
@@ -26,6 +27,7 @@ async def lifespan(_: FastAPI):
 
     search_controller.services = provider
     admin_controller.services = provider
+    images_controller.services = provider
     yield
 
     await provider.onexit()
@@ -44,6 +46,7 @@ app.add_middleware(
 )
 
 app.include_router(search_controller.search_router, prefix="/search")
+app.include_router(images_controller.images_router, prefix="/images")
 if config.admin_api_enable:
     app.include_router(admin_controller.admin_router, prefix="/admin")
 

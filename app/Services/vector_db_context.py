@@ -184,11 +184,14 @@ class VectorDbContext(LifespanService):
     async def scroll_points(self,
                             from_id: str | None = None,
                             count=50,
-                            with_vectors=False) -> tuple[list[ImageData], str]:
+                            with_vectors=False,
+                            filter_param: FilterParams | None = None,
+                            ) -> tuple[list[ImageData], str]:
         resp, next_id = await self._client.scroll(collection_name=self.collection_name,
                                                   limit=count,
                                                   offset=from_id,
-                                                  with_vectors=with_vectors
+                                                  with_vectors=with_vectors,
+                                                  scroll_filter=self._get_filters_by_filter_param(filter_param)
                                                   )
 
         return [self._get_img_data_from_point(t) for t in resp], next_id
