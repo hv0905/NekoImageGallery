@@ -37,7 +37,7 @@ def server(ctx: typer.Context,
     """
     Ciallo~ Welcome to NekoImageGallery Server.
 
-    - Website: https://image-insights.edgneko.com
+    - Website: https://image-insights.edgeneko.com
 
     - Repository & Issue tracker: https://github.com/hv0905/NekoImageGallery
 
