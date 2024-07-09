@@ -67,6 +67,11 @@ async def test_upload_duplicate(test_client, ensure_local_dir_empty, wait_for_ba
             resp = upload(f)
             assert resp.status_code == 409, i
 
+            # Query by ID
+            query = test_client.get(f'/images/id/{image_id}')
+            assert query.status_code == 200
+            assert query.json()['img_status'] == 'mapped' if i == 1 else 'in_queue'
+
             # Validate
             val_resp = validate(test_file_hashes)
             assert val_resp.status_code == 200, i

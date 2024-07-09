@@ -26,7 +26,9 @@ async def query_image_by_id(image_id: Annotated[UUID, Path(description="The id o
                                     message="Success query the image with the given ID.")
     except PointNotFoundError as ex:
         if services.upload_service and image_id in services.upload_service.uploading_ids:
-            return QueryByIdApiResponse(img_status=ImageStatus.IN_QUEUE, message="The image is in the indexing queue.")
+            return QueryByIdApiResponse(img=None,
+                                        img_status=ImageStatus.IN_QUEUE,
+                                        message="The image is in the indexing queue.")
         raise HTTPException(404, "Cannot find the image with the given ID.") from ex
 
 
