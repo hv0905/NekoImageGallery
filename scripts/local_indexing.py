@@ -15,7 +15,7 @@ from app.util.local_file_utility import glob_local_files
 services: ServiceProvider | None = None
 
 
-async def index_task(file_path: Path, categories: list[str], starred: bool):
+async def index_task(file_path: Path, categories: list[str], starred: bool, thumbnail_mode: UploadImageThumbnailMode):
     try:
         img_id = await services.upload_service.assign_image_id(file_path)
         image_data = ImageData(id=img_id,
@@ -25,7 +25,7 @@ async def index_task(file_path: Path, categories: list[str], starred: bool):
                                format=file_path.suffix[1:],  # remove the dot
                                index_date=datetime.now())
         await services.upload_service.sync_upload_image(image_data, file_path.read_bytes(), skip_ocr=False,
-                                                        thumbnail_mode=UploadImageThumbnailMode.IF_NECESSARY)
+                                                        thumbnail_mode=thumbnail_mode)
     except PointDuplicateError as ex:
         logger.warning("Image {} already exists in the database", file_path)
     except PIL.UnidentifiedImageError as e:
@@ -33,7 +33,8 @@ async def index_task(file_path: Path, categories: list[str], starred: bool):
 
 
 @logger.catch()
-async def main(root_directory: list[Path], categories: list[str], starred: bool):
+async def main(root_directory: list[Path], categories: list[str], starred: bool,
+               thumbnail_mode: UploadImageThumbnailMode):
     global services
     services = ServiceProvider()
     await services.onload()
@@ -47,6 +48,6 @@ async def main(root_directory: list[Path], categories: list[str], starred: bool)
         for idx, item in enumerate(progress.track(files, description="Indexing...")):
             logger.info("[{} / {}] Indexing {}", idx + 1, len(files), str(item))
 
-            await index_task(item, categories, starred)
+            await index_task(item, categories, starred, thumbnail_mode)
 
     logger.success("Indexing completed!")

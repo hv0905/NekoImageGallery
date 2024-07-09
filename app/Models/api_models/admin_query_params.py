@@ -5,7 +5,6 @@ from fastapi import Query, HTTPException
 
 
 class UploadImageThumbnailMode(str, Enum):
-    DEFAULT = "default"
     IF_NECESSARY = "if_necessary"
     ALWAYS = "always"
     NEVER = "never"
@@ -30,7 +29,7 @@ class UploadImageModel:
                                      description="When set to true, the image will be uploaded to local storage. "
                                                  "Otherwise, it will only be indexed in the database."),
                  local_thumbnail: UploadImageThumbnailMode =
-                 Query(default=UploadImageThumbnailMode.DEFAULT,
+                 Query(default=None,
                        description="Whether to generate thumbnail locally. Possible values:\n"
                                    "- `if_necessary`: Only generate thumbnail if the image is larger than 500KB. "
                                    "This is the default value if `local=True`\n"
@@ -43,7 +42,7 @@ class UploadImageModel:
         self.starred = starred
         self.local = local
         self.skip_ocr = skip_ocr
-        self.local_thumbnail = local_thumbnail if local_thumbnail is not UploadImageThumbnailMode.DEFAULT else (
+        self.local_thumbnail = local_thumbnail if (local_thumbnail is not None) else (
             UploadImageThumbnailMode.IF_NECESSARY if local else UploadImageThumbnailMode.NEVER)
         if not self.url and not self.local:
             raise HTTPException(422, "A correspond url must be provided for a non-local image.")
