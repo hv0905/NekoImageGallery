@@ -7,6 +7,7 @@ import typer
 import uvicorn
 
 import app
+from app.Models.api_models.admin_query_params import UploadImageThumbnailMode
 
 parser = typer.Typer(name=app.__title__,
                      epilog="Build with ♥ By EdgeNeko. Github: "
@@ -36,7 +37,7 @@ def server(ctx: typer.Context,
     """
     Ciallo~ Welcome to NekoImageGallery Server.
 
-    - Website: https://image-insights.edgneko.com
+    - Website: https://image-insights.edgeneko.com
 
     - Repository & Issue tracker: https://github.com/hv0905/NekoImageGallery
 
@@ -77,6 +78,12 @@ def local_index(
                                        help="Directories you want to index.")],
         categories: Annotated[Optional[list[str]], typer.Option(help="Categories for the indexed images.")] = None,
         starred: Annotated[bool, typer.Option(help="Whether the indexed images are starred.")] = False,
+        thumbnail_mode: Annotated[
+            UploadImageThumbnailMode, typer.Option(
+                help="Whether to generate thumbnail for images. Possible values:\n"
+                     "- `if_necessary`:(Recommended) Only generate thumbnail if the image is larger than 500KB.\n"
+                     "- `always`: Always generate thumbnail.\n"
+                     "- `never`: Never generate thumbnail.")] = UploadImageThumbnailMode.IF_NECESSARY
 ):
     """
     Index all the images in the specified directory.
@@ -85,7 +92,7 @@ def local_index(
     from scripts import local_indexing
     if categories is None:
         categories = []
-    asyncio.run(local_indexing.main(target_dir, categories, starred))
+    asyncio.run(local_indexing.main(target_dir, categories, starred, thumbnail_mode))
 
 
 @parser.command('local-create-thumbnail', deprecated=True)
