@@ -1,3 +1,6 @@
+import itertools
+import uuid
+
 import pytest_asyncio
 
 from .conftest import check_local_dir_empty
@@ -92,3 +95,22 @@ def test_search_filters(test_client, img_ids):
     resp = test_client.get("/search/text/cat", params={'starred': True})
     assert resp.status_code == 200
     assert resp.json()['result'][0]['img']['id'] == img_ids['bsn'][0]
+
+
+def test_images_query_by_id(test_client, img_ids):
+    resp = test_client.get(f"/images/id/{img_ids['bsn'][0]}")
+    assert resp.status_code == 200
+    assert resp.json()['img']['id'] == img_ids['bsn'][0]
+
+
+def test_images_query_not_exist(test_client, img_ids):
+    resp = test_client.get(f"/images/id/{uuid.uuid4()}")
+    assert resp.status_code == 404
+
+
+def test_images_query_scroll(test_client, img_ids):
+    resp = test_client.get("/images/", params={'count': 50})
+    assert resp.status_code == 200
+    all_images_id = list(itertools.chain(*img_ids.values()))
+    for item in resp.json()['images']:
+        assert item['id'] in all_images_id

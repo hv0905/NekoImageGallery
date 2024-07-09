@@ -21,4 +21,5 @@ class QueryByIdApiResponse(NekoProtocol):
 
 class QueryImagesApiResponse(NekoProtocol):
     images: list[ImageData] = Field(description="The list of images.")
-    next_page_offset: str = Field(description="The offset ID for the next page query.")
+    next_page_offset: str | None = Field(description="The offset ID for the next page query. "
+                                                     "If there are no more images, this field will be null.")

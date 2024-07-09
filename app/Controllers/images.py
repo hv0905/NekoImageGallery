@@ -30,10 +30,10 @@ async def query_image_by_id(image_id: Annotated[UUID, Path(description="The id o
         raise HTTPException(404, "Cannot find the image with the given ID.") from ex
 
 
-@images_router.get("/", description="Query images in order.")
-async def query_images(filter_param: Annotated[FilterParams, Depends()],
-                       prev_offset_id: Annotated[UUID, Query(description="The previous offset image ID.")] = None,
-                       count: Annotated[int, Query(description="The number of images to query.")] = 15):
+@images_router.get("/", description="Query images in order of ID.")
+async def scroll_images(filter_param: Annotated[FilterParams, Depends()],
+                        prev_offset_id: Annotated[UUID, Query(description="The previous offset image ID.")] = None,
+                        count: Annotated[int, Query(ge=1, le=100, description="The number of images to query.")] = 15):
     # validate the offset ID
     if prev_offset_id is not None and len(await services.db_context.validate_ids([str(prev_offset_id)])) == 0:
         raise HTTPException(404, "The previous offset ID is invalid.")
