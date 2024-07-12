@@ -14,7 +14,7 @@ from app.Models.api_response.admin_api_response import ServerInfoResponse, Image
     DuplicateValidationResponse
 from app.Models.api_response.base import NekoProtocol
 from app.Models.errors import PointDuplicateError
-from app.Models.img_data import ImageData
+from app.Models.mapped_image import MappedImage
 from app.Services.authentication import force_admin_token_verify
 from app.Services.provider import ServiceProvider
 from app.Services.vector_db_context import PointNotFoundError
@@ -131,17 +131,17 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
         logger.warning("Invalid image file from upload request. id: {}", img_id)
         raise HTTPException(422, "Cannot open the image file.") from ex
 
-    image_data = ImageData(id=img_id,
-                           url=model.url,
-                           thumbnail_url=model.thumbnail_url,
-                           local=model.local,
-                           categories=model.categories,
-                           starred=model.starred,
-                           comments=model.comments,
-                           format=img_type,
-                           index_date=datetime.now())
+    mapped_image = MappedImage(id=img_id,
+                               url=model.url,
+                               thumbnail_url=model.thumbnail_url,
+                               local=model.local,
+                               categories=model.categories,
+                               starred=model.starred,
+                               comments=model.comments,
+                               format=img_type,
+                               index_date=datetime.now())
 
-    await services.upload_service.queue_upload_image(image_data, img_bytes, model.skip_ocr, model.local_thumbnail)
+    await services.upload_service.queue_upload_image(mapped_image, img_bytes, model.skip_ocr, model.local_thumbnail)
     return ImageUploadResponse(message="OK. Image added to upload queue.", image_id=img_id)
 
 

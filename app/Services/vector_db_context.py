@@ -9,7 +9,7 @@ from qdrant_client.http import models
 from qdrant_client.models import RecommendStrategy
 
 from app.Models.api_models.search_api_model import SearchModelEnum, SearchBasisEnum
-from app.Models.img_data import ImageData
+from app.Models.mapped_image import MappedImage
 from app.Models.query_params import FilterParams
 from app.Models.search_result import SearchResult
 from app.Services.lifespan_service import LifespanService
@@ -50,7 +50,7 @@ class VectorDbContext(LifespanService):
             logger.warning("Collection not found. Initializing...")
             await self.initialize_collection()
 
-    async def retrieve_by_id(self, image_id: str, with_vectors=False) -> ImageData:
+    async def retrieve_by_id(self, image_id: str, with_vectors=False) -> MappedImage:
         """
         Retrieve an item from database by id. Will raise PointNotFoundError if the given ID doesn't exist.
         :param image_id: The ID to retrieve.
@@ -65,9 +65,9 @@ class VectorDbContext(LifespanService):
         if len(result) != 1:
             logger.error("Point not exist.")
             raise PointNotFoundError(image_id)
-        return self._get_img_data_from_point(result[0])
+        return self._get_mapped_image_from_point(result[0])
 
-    async def retrieve_by_ids(self, image_id: list[str], with_vectors=False) -> list[ImageData]:
+    async def retrieve_by_ids(self, image_id: list[str], with_vectors=False) -> list[MappedImage]:
         """
         Retrieve items from the database by IDs.
         An exception is thrown if there are items in the IDs that do not exist in the database.
@@ -85,7 +85,7 @@ class VectorDbContext(LifespanService):
         if len(missing_point_ids) > 0:
             logger.error("{} points not exist.", len(missing_point_ids))
             raise PointNotFoundError(str(missing_point_ids))
-        return self._get_img_data_from_points(result)
+        return self._get_mapped_image_from_point_batch(result)
 
     async def validate_ids(self, image_id: list[str]) -> list[str]:
         """
@@ -144,10 +144,10 @@ class VectorDbContext(LifespanService):
 
         return [self._get_search_result_from_scored_point(t) for t in result]
 
-    async def insertItems(self, items: list[ImageData]):
+    async def insertItems(self, items: list[MappedImage]):
         logger.info("Inserting {} items into Qdrant...", len(items))
 
-        points = [self._get_point_from_img_data(t) for t in items]
+        points = [self._get_point_from_mapped_image(t) for t in items]
 
         response = await self._client.upsert(collection_name=self.collection_name,
                                              wait=True,
@@ -163,7 +163,7 @@ class VectorDbContext(LifespanService):
                                              )
         logger.success("Delete completed! Status: {}", response.status)
 
-    async def updatePayload(self, new_data: ImageData):
+    async def updatePayload(self, new_data: MappedImage):
         """
         Update the payload of an existing item in the database.
         Warning: This method will not update the vector of the item.
@@ -175,7 +175,7 @@ class VectorDbContext(LifespanService):
                                                   wait=True)
         logger.success("Update completed! Status: {}", response.status)
 
-    async def updateVectors(self, new_points: list[ImageData]):
+    async def updateVectors(self, new_points: list[MappedImage]):
         resp = await self._client.update_vectors(collection_name=self.collection_name,
                                                  points=[self._get_vector_from_img_data(t) for t in new_points],
                                                  )
@@ -186,7 +186,7 @@ class VectorDbContext(LifespanService):
                             count=50,
                             with_vectors=False,
                             filter_param: FilterParams | None = None,
-                            ) -> tuple[list[ImageData], str]:
+                            ) -> tuple[list[MappedImage], str]:
         resp, next_id = await self._client.scroll(collection_name=self.collection_name,
                                                   limit=count,
                                                   offset=from_id,
@@ -194,7 +194,7 @@ class VectorDbContext(LifespanService):
                                                   scroll_filter=self._get_filters_by_filter_param(filter_param)
                                                   )
 
-        return [self._get_img_data_from_point(t) for t in resp], next_id
+        return [self._get_mapped_image_from_point(t) for t in resp], next_id
 
     async def get_counts(self, exact: bool) -> int:
         resp = await self._client.count(collection_name=self.collection_name, exact=exact)
@@ -219,7 +219,7 @@ class VectorDbContext(LifespanService):
         logger.success("Collection created!")
 
     @classmethod
-    def _get_vector_from_img_data(cls, img_data: ImageData) -> models.PointVectors:
+    def _get_vector_from_img_data(cls, img_data: MappedImage) -> models.PointVectors:
         vector = {}
         if img_data.image_vector is not None:
             vector[cls.IMG_VECTOR] = img_data.image_vector.tolist()
@@ -231,15 +231,15 @@ class VectorDbContext(LifespanService):
         )
 
     @classmethod
-    def _get_point_from_img_data(cls, img_data: ImageData) -> models.PointStruct:
+    def _get_point_from_mapped_image(cls, img_data: MappedImage) -> models.PointStruct:
         return models.PointStruct(
             id=str(img_data.id),
             payload=img_data.payload,
             vector=cls._get_vector_from_img_data(img_data).vector
         )
 
-    def _get_img_data_from_point(self, point: AVAILABLE_POINT_TYPES) -> ImageData:
-        return (ImageData
+    def _get_mapped_image_from_point(self, point: AVAILABLE_POINT_TYPES) -> MappedImage:
+        return (MappedImage
                 .from_payload(point.id,
                               point.payload,
                               image_vector=numpy.array(point.vector[self.IMG_VECTOR], dtype=numpy.float32)
@@ -248,11 +248,11 @@ class VectorDbContext(LifespanService):
                               if point.vector and self.TEXT_VECTOR in point.vector else None
                               ))
 
-    def _get_img_data_from_points(self, points: list[AVAILABLE_POINT_TYPES]) -> list[ImageData]:
-        return [self._get_img_data_from_point(t) for t in points]
+    def _get_mapped_image_from_point_batch(self, points: list[AVAILABLE_POINT_TYPES]) -> list[MappedImage]:
+        return [self._get_mapped_image_from_point(t) for t in points]
 
     def _get_search_result_from_scored_point(self, point: models.ScoredPoint) -> SearchResult:
-        return SearchResult(img=self._get_img_data_from_point(point), score=point.score)
+        return SearchResult(img=self._get_mapped_image_from_point(point), score=point.score)
 
     @classmethod
     def vector_name_for_basis(cls, basis: SearchBasisEnum) -> str:

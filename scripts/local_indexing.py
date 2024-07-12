@@ -8,7 +8,7 @@ from rich.progress import Progress
 
 from app.Models.api_models.admin_query_params import UploadImageThumbnailMode
 from app.Models.errors import PointDuplicateError
-from app.Models.img_data import ImageData
+from app.Models.mapped_image import MappedImage
 from app.Services.provider import ServiceProvider
 from app.util.local_file_utility import glob_local_files
 
@@ -18,13 +18,13 @@ services: ServiceProvider | None = None
 async def index_task(file_path: Path, categories: list[str], starred: bool, thumbnail_mode: UploadImageThumbnailMode):
     try:
         img_id = await services.upload_service.assign_image_id(file_path)
-        image_data = ImageData(id=img_id,
-                               local=True,
-                               categories=categories,
-                               starred=starred,
-                               format=file_path.suffix[1:],  # remove the dot
-                               index_date=datetime.now())
-        await services.upload_service.sync_upload_image(image_data, file_path.read_bytes(), skip_ocr=False,
+        mapped_image = MappedImage(id=img_id,
+                                   local=True,
+                                   categories=categories,
+                                   starred=starred,
+                                   format=file_path.suffix[1:],  # remove the dot
+                                   index_date=datetime.now())
+        await services.upload_service.sync_upload_image(mapped_image, file_path.read_bytes(), skip_ocr=False,
                                                         thumbnail_mode=thumbnail_mode)
     except PointDuplicateError as ex:
         logger.warning("Image {} already exists in the database", file_path)

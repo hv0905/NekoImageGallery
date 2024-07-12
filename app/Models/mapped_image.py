@@ -6,7 +6,7 @@ from numpy import ndarray
 from pydantic import BaseModel, Field, ConfigDict
 
 
-class ImageData(BaseModel):
+class MappedImage(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, extra='ignore')
 
     id: UUID = Field(description="The unique ID of the image. The ID is generated from the digest of the image.")

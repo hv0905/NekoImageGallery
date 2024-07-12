@@ -1,7 +1,8 @@
 from pydantic import BaseModel
-from .img_data import ImageData
+
+from .mapped_image import MappedImage
 
 
 class SearchResult(BaseModel):
-    img: ImageData
+    img: MappedImage
     score: float
