@@ -82,6 +82,8 @@ async def update_image(image_id: Annotated[UUID, params.Path(description="The id
         point.starred = model.starred
     if model.categories is not None:
         point.categories = model.categories
+    if model.comments is not None:
+        point.comments = model.comments
 
     await services.db_context.updatePayload(point)
     logger.success("Image {} updated.", point.id)
@@ -135,6 +137,7 @@ async def upload_image(image_file: Annotated[UploadFile, File(description="The i
                            local=model.local,
                            categories=model.categories,
                            starred=model.starred,
+                           comments=model.comments,
                            format=img_type,
                            index_date=datetime.now())
 

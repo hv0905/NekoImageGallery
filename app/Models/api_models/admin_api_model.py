@@ -18,6 +18,8 @@ class ImageOptUpdateModel(BaseModel):
                                          description="The url of the thumbnail. Leave empty to keep the value "
                                                      "unchanged. Changing the thumbnail_url of an image with a local "
                                                      "thumbnail is not allowed.")
+    comments: Optional[str] = Field(None,
+                                    description="The comments of the image. Leave empty to keep the value unchanged.")
 
     def empty(self) -> bool:
         return all([item is None for item in self.model_dump().values()])
