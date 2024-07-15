@@ -95,11 +95,11 @@ def local_index(
     asyncio.run(local_indexing.main(target_dir, categories, starred, thumbnail_mode))
 
 
-@parser.command('local-create-thumbnail', deprecated=True)
-def local_create_thumbnail():
+@parser.command('local-generate-thumbnails', deprecated=True)
+def generate_local_thumbnails():
     """
-    Create thumbnail for all local images in static folder, this won't affect non-local images.
-    This is generally not required since the server will automatically create thumbnails for new images by default.
+    Generate thumbnail for all local images in static folder, this won't affect non-local images.
+    This is generally not required since the server will automatically generate thumbnails for new images by default.
     This option will be refactored in the future.
     """
     from scripts import local_create_thumbnail
