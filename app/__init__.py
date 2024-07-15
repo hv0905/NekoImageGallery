@@ -1,6 +1,6 @@
 __title__ = 'NekoImageGallery'
 __description__ = 'An AI-powered natural language & reverse Image Search Engine powered by CLIP & qdrant.'
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 __author__ = 'EdgeNeko; pk5ls20'
 __author_email__ = 'service@edgeneko.com'
 __url__ = 'https://github.com/hv0905/NekoImageGallery'
