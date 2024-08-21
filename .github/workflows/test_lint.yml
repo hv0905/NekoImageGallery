@@ -37,14 +37,20 @@ jobs:
           pip install -r requirements.dev.txt
       - name: Test the code with pytest
         run: |
-          pytest --cov=app .
+          pytest --cov=app --junitxml=junit.xml .
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: "python-${{ matrix.python-version }}"
       - name: Upload coverage reports to Codecov with GitHub Action
         uses: codecov/codecov-action@v4.2.0
-        if: ${{ matrix.python-version == '3.11' }} # Only upload coverage reports for the latest Python version
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        #        if: ${{ matrix.python-version == '3.11' }} # Only upload coverage reports for the latest Python version
+        with:
+          flags: "python-${{ matrix.python-version }}"
+          token: ${{ secrets.CODECOV_TOKEN }}
       - name: Analysing the code with pylint
         run: |
           pylint --rc-file pylintrc.toml -j 0 app scripts tests && lint_result=$? || lint_result=$?
           exit $(( $lint_result & 35 ))
-        
