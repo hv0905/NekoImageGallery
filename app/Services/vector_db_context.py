@@ -6,7 +6,7 @@ from httpx import HTTPError
 from loguru import logger
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
-from qdrant_client.models import RecommendStrategy
+from qdrant_client.models import RecommendStrategy, RecommendInput, RecommendQuery
 
 from app.Models.api_models.search_api_model import SearchModelEnum, SearchBasisEnum
 from app.Models.mapped_image import MappedImage
@@ -100,28 +100,29 @@ class VectorDbContext(LifespanService):
                                              with_vectors=False)
         return [t.id for t in result]
 
-    async def querySearch(self, query_vector, query_vector_name: str = IMG_VECTOR,
-                          top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[SearchResult]:
+    async def query_search(self, query_vector, query_vector_name: str = IMG_VECTOR,
+                           top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[SearchResult]:
         logger.info("Querying Qdrant... top_k = {}", top_k)
-        result = await self._client.search(collection_name=self.collection_name,
-                                           query_vector=(query_vector_name, query_vector),
-                                           query_filter=self._get_filters_by_filter_param(filter_param),
-                                           limit=top_k,
-                                           offset=skip,
-                                           with_payload=True)
+        result = await self._client.query_points(collection_name=self.collection_name,
+                                                 query=query_vector,
+                                                 using=query_vector_name,
+                                                 query_filter=self._get_filters_by_filter_param(filter_param),
+                                                 limit=top_k,
+                                                 offset=skip,
+                                                 with_payload=True)
         logger.success("Query completed!")
-        return [self._get_search_result_from_scored_point(t) for t in result]
+        return [self._get_search_result_from_scored_point(t) for t in result.points]
 
-    async def querySimilar(self,
-                           query_vector_name: str = IMG_VECTOR,
-                           search_id: Optional[str] = None,
-                           positive_vectors: Optional[list[numpy.ndarray]] = None,
-                           negative_vectors: Optional[list[numpy.ndarray]] = None,
-                           mode: Optional[SearchModelEnum] = None,
-                           with_vectors: bool = False,
-                           filter_param: FilterParams | None = None,
-                           top_k: int = 10,
-                           skip: int = 0) -> list[SearchResult]:
+    async def query_similar(self,
+                            query_vector_name: str = IMG_VECTOR,
+                            search_id: Optional[str] = None,
+                            positive_vectors: Optional[list[numpy.ndarray]] = None,
+                            negative_vectors: Optional[list[numpy.ndarray]] = None,
+                            mode: Optional[SearchModelEnum] = None,
+                            with_vectors: bool = False,
+                            filter_param: FilterParams | None = None,
+                            top_k: int = 10,
+                            skip: int = 0) -> list[SearchResult]:
         _positive_vectors = [t.tolist() for t in positive_vectors] if positive_vectors is not None else [search_id]
         _negative_vectors = [t.tolist() for t in negative_vectors] if negative_vectors is not None else None
         _strategy = None if mode is None else (RecommendStrategy.AVERAGE_VECTOR if
@@ -130,21 +131,25 @@ class VectorDbContext(LifespanService):
         _combined_search_need_vectors = [
             self.IMG_VECTOR if query_vector_name == self.TEXT_VECTOR else self.TEXT_VECTOR] if with_vectors else None
         logger.info("Querying Qdrant... top_k = {}", top_k)
-        result = await self._client.recommend(collection_name=self.collection_name,
-                                              using=query_vector_name,
-                                              positive=_positive_vectors,
-                                              negative=_negative_vectors,
-                                              strategy=_strategy,
-                                              with_vectors=_combined_search_need_vectors,
-                                              query_filter=self._get_filters_by_filter_param(filter_param),
-                                              limit=top_k,
-                                              offset=skip,
-                                              with_payload=True)
+        result = await self._client.query_points(collection_name=self.collection_name,
+                                                 using=query_vector_name,
+                                                 query=RecommendQuery(
+                                                     recommend=RecommendInput(
+                                                         positive=_positive_vectors,
+                                                         negative=_negative_vectors,
+                                                         strategy=_strategy,
+                                                     ),
+                                                 ),
+                                                 with_vectors=_combined_search_need_vectors,
+                                                 query_filter=self._get_filters_by_filter_param(filter_param),
+                                                 limit=top_k,
+                                                 offset=skip,
+                                                 with_payload=True)
         logger.success("Query completed!")
 
-        return [self._get_search_result_from_scored_point(t) for t in result]
+        return [self._get_search_result_from_scored_point(t) for t in result.points]
 
-    async def insertItems(self, items: list[MappedImage]):
+    async def insert_items(self, items: list[MappedImage]):
         logger.info("Inserting {} items into Qdrant...", len(items))
 
         points = [self._get_point_from_mapped_image(t) for t in items]
@@ -154,7 +159,7 @@ class VectorDbContext(LifespanService):
                                              points=points)
         logger.success("Insert completed! Status: {}", response.status)
 
-    async def deleteItems(self, ids: list[str]):
+    async def delete_items(self, ids: list[str]):
         logger.info("Deleting {} items from Qdrant...", len(ids))
         response = await self._client.delete(collection_name=self.collection_name,
                                              points_selector=models.PointIdsList(
@@ -163,7 +168,7 @@ class VectorDbContext(LifespanService):
                                              )
         logger.success("Delete completed! Status: {}", response.status)
 
-    async def updatePayload(self, new_data: MappedImage):
+    async def update_payload(self, new_data: MappedImage):
         """
         Update the payload of an existing item in the database.
         Warning: This method will not update the vector of the item.
@@ -175,7 +180,7 @@ class VectorDbContext(LifespanService):
                                                   wait=True)
         logger.success("Update completed! Status: {}", response.status)
 
-    async def updateVectors(self, new_points: list[MappedImage]):
+    async def update_vectors(self, new_points: list[MappedImage]):
         resp = await self._client.update_vectors(collection_name=self.collection_name,
                                                  points=[self._get_vector_from_img_data(t) for t in new_points],
                                                  )

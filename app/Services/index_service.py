@@ -49,7 +49,7 @@ class IndexService(LifespanService):
         else:
             self._prepare_image(image, image_data, skip_ocr)
 
-        await self._db_context.insertItems([image_data])
+        await self._db_context.insert_items([image_data])
 
     async def index_image_batch(self, image: list[Image.Image], image_data: list[MappedImage],
                                 skip_ocr=False, allow_overwrite=False):
@@ -57,4 +57,4 @@ class IndexService(LifespanService):
             raise PointDuplicateError("The uploaded points are contained in the database!")
         for img, img_data in zip(image, image_data):
             self._prepare_image(img, img_data, skip_ocr)
-        await self._db_context.insertItems(image_data)
+        await self._db_context.insert_items(image_data)

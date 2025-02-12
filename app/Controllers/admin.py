@@ -36,7 +36,7 @@ async def delete_image(
         point = await services.db_context.retrieve_by_id(str(image_id))
     except PointNotFoundError as ex:
         raise HTTPException(404, "Cannot find the image with the given ID.") from ex
-    await services.db_context.deleteItems([str(point.id)])
+    await services.db_context.delete_items([str(point.id)])
     logger.success("Image {} deleted from database.", point.id)
 
     if config.storage.method.enabled:  # local image
@@ -85,7 +85,7 @@ async def update_image(image_id: Annotated[UUID, params.Path(description="The id
     if model.comments is not None:
         point.comments = model.comments
 
-    await services.db_context.updatePayload(point)
+    await services.db_context.update_payload(point)
     logger.success("Image {} updated.", point.id)
 
     return NekoProtocol(message="Image updated.")

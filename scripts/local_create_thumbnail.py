@@ -51,7 +51,7 @@ async def main():
         # update payload
         imgdata.thumbnail_url = await services.storage_service.active_storage.url(f'thumbnails/{str(image_id)}.webp')
         imgdata.local_thumbnail = True
-        await services.db_context.updatePayload(imgdata)
+        await services.db_context.update_payload(imgdata)
         logger.success("Payload for {} updated!", image_id)
 
     logger.success("OK. Updated {} items.", count)
