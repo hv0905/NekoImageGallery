@@ -209,6 +209,6 @@ def calculate_and_sort_by_combined_scores(model: CombinedSearchModel,
                 raise NotImplementedError()
         if extra_vector is not None:
             similar_score = calculate_vectors_cosine(extra_vector, extra_prompt_vector)
-            itm.score = (1 + similar_score) * itm.score
+            itm.score = float((1 + similar_score) * itm.score)
     # Finally, sort the result by combined_similar_score
     result.sort(key=lambda i: i.score, reverse=True)
