@@ -34,7 +34,7 @@ class EasyPaddleOCRService(OCRService):
         super().__init__()
         from easypaddleocr import EasyPaddleOCR
         self._paddle_ocr_module = EasyPaddleOCR(use_angle_cls=True,
-                                                needWarmUp=True,
+                                                needWarmUp=False,
                                                 devices=self._device,
                                                 warmup_size=(960, 960),
                                                 model_local_dir=config.model.easypaddleocr if
