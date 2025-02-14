@@ -17,9 +17,9 @@ RUN mkdir -p /opt/models && \
      'PaddleOCR2Pytorch/configs/rec/PP-OCRv4/ch_PP-OCRv4_rec.yml' 'ppocr_keys_v1.txt' --local-dir /opt/models/ocr && \
     rm -rf /root/.cache/huggingface
 
-ENV APP_MODEL__CLIP=/opt/models/clip
-ENV APP_MODEL__BERT=/opt/models/bert
-ENV APP_MODEL__EASYPADDLEOCR=/opt/models/ocr
+ENV APP_MODEL__CLIP="/opt/models/clip" \
+    APP_MODEL__BERT="/opt/models/bert" \
+    APP_MODEL__EASYPADDLEOCR="/opt/models/ocr"
 
 COPY . .
 
