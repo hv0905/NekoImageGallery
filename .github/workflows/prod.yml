@@ -21,6 +21,7 @@ jobs:
       matrix:
         configurations:
           - dockerfile: "Dockerfile"
+            platforms: "linux/amd64"
             suffixes: |
               ""
               "-cuda"
@@ -28,10 +29,12 @@ jobs:
             args: |
               CUDA_VERSION=12.1
           - dockerfile: "Dockerfile"
+            platforms: "linux/amd64"
             suffixes: '"-cuda11.8"'
             args: |
               CUDA_VERSION=11.8
           - dockerfile: "cpu-only.Dockerfile"
+            platforms: "linux/amd64,linux/arm64"
             suffixes: '"-cpu"'
             args: ""
     steps:
@@ -66,6 +69,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           file: ${{ matrix.configurations.dockerfile }}
+          platforms: ${{matrix.configurations.platforms}}
           push: true
           tags: ${{ steps.combine-tags.outputs.tags }}
           build-args: ${{ matrix.configurations.args }}
