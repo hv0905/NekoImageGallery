@@ -43,7 +43,7 @@ jobs:
           - dockerfile: "cpu-only.Dockerfile"
             host: "ubuntu-24.04-arm"
             platforms: "linux/arm64"
-            suffixes: '"-cpu"'
+            suffixes: '"-cpu-arm"'
             args: ""
     steps:
       - name: Set up Docker Buildx
