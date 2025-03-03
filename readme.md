@@ -33,6 +33,24 @@ image search.
 
 ## ✈️ Deployment
 
+### 📦 Prerequisites
+
+#### Hardware requirements
+
+| HardWare | Minimum                                       | Recommended                                              |
+|----------|-----------------------------------------------|----------------------------------------------------------|
+| CPU      | X86_64 or ARM64 CPU, 2 cores or more          | 4 cores or more                                          |
+| RAM      | 4GB or more                                   | 8GB or more                                              |
+| Storage  | 10GB or more for libraries, models, and datas | 50GB or more, SSD is recommended                         |
+| GPU      | Not required                                  | CUDA supported GPU for acceleration, 4GB of VRAM or more |
+
+#### Software requirements
+
+- For local deployment: Python 3.10 ~ Python 3.12 (With virtual environment support like `venv`, `conda`, etc.)
+- For Docker deployment: Docker and Docker Compose (For CUDA users, `nvidia-container-runtime` is required) or
+  equivalent
+  container runtime.
+
 ### 🖥️ Local Deployment
 
 #### Choose a metadata storage method
