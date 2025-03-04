@@ -1,6 +1,6 @@
 ARG TORCH_VERSION=2.6.0
 ARG CUDA_VERSION=12.4
-FROM pytorch/pytorch:${TORCH_VERSION}-cuda${CUDA_VERSION}-cudnn8-runtime
+FROM pytorch/pytorch:${TORCH_VERSION}-cuda${CUDA_VERSION}-cudnn9-runtime
 
 WORKDIR /opt/NekoImageGallery
 
@@ -10,7 +10,7 @@ RUN --mount=from=ghcr.io/astral-sh/uv,source=/uv,target=/bin/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     export PYTHONDONTWRITEBYTECODE=1 && \
     export UV_PROJECT_ENVIRONMENT=$(python -c "import sysconfig; print(sysconfig.get_config_var('prefix'))") && \
-    uv sync --frozen --extra cu$(python -c "import torch; print(torch.version.cuda.replace('.', '').strip())") --no-dev --inexact
+    uv sync --frozen --extra cu$(python -c "import torch; print(torch.version.cuda.replace('.', '').strip())") --no-dev --inexact --link-mode=copy
 
 RUN mkdir -p /opt/models && \
     export PYTHONDONTWRITEBYTECODE=1 && \
