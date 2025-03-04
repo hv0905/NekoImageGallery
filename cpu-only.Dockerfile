@@ -1,12 +1,14 @@
-FROM python:3.11-slim-bookworm
-
-RUN PYTHONDONTWRITEBYTECODE=1 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu --no-cache-dir
+FROM python:3.12-slim-bookworm
 
 WORKDIR /opt/NekoImageGallery
 
-COPY requirements.txt .
-
-RUN PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir -r requirements.txt
+RUN --mount=from=ghcr.io/astral-sh/uv,source=/uv,target=/bin/uv \
+    --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    export PYTHONDONTWRITEBYTECODE=1 && \
+    export UV_PROJECT_ENVIRONMENT=$(python -c "import sysconfig; print(sysconfig.get_config_var('prefix'))") && \
+    uv sync --frozen --extra cpu --no-dev
 
 RUN mkdir -p /opt/models && \
     export PYTHONDONTWRITEBYTECODE=1 && \
