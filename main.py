@@ -46,6 +46,15 @@ def server(ctx: typer.Context,
     By default, running without command will start the server.
     You can perform other actions by using the commands below.
     """
+
+    try:
+        import torch
+    except ImportError:
+        rich.get_console().print(
+            "PyTorch is not installed. Please install PyTorch and its related dependencies by syncing with extra: \n\n"
+            "uv sync --extra cuda124|cuda118|cpu\n\n"
+            "For more information, checkout the get started guide.", style="red")
+        raise typer.Abort()
     if ctx.invoked_subcommand is not None:
         return
     uvicorn.run("app.webapp:app", host=host, port=port, root_path=root_path)
