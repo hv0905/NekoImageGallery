@@ -42,7 +42,7 @@
 
 #### 软件要求
 
-- **本地部署**：Python 3.10 ~ Python 3.12（需要支持虚拟环境，如 `venv`、`conda` 等）
+- **本地部署**：Python 3.10 ~ Python 3.12, 并且安装[uv包管理器](https://docs.astral.sh/uv/getting-started/installation/)。
 - **Docker 部署**：Docker 和 Docker Compose（对于 CUDA 用户，需安装 `nvidia-container-runtime`）或等效的容器运行时
 
 ### 🖥️ 本地部署
@@ -109,7 +109,7 @@ NekoImageGallery镜像发布在DockerHub上，并包含多个变种，设计于�
 
 | Tags                                                                                                                                        | 介绍                               | Latest 镜像尺寸                                                                                                                                                                                       |
 |---------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `edgeneko/neko-image-gallery:<version>`<br>`edgeneko/neko-image-gallery:<version>-cuda`<br>`edgeneko/neko-image-gallery:<version>-cuda12.1` | 基于CUDA12.1, 支持GPU推理的镜像           | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest?label=Image%20(cuda))](https://hub.docker.com/r/edgeneko/neko-image-gallery)              |
+| `edgeneko/neko-image-gallery:<version>`<br>`edgeneko/neko-image-gallery:<version>-cuda`<br>`edgeneko/neko-image-gallery:<version>-cuda12.4` | 基于CUDA12.4, 支持GPU推理的镜像           | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest?label=Image%20(cuda))](https://hub.docker.com/r/edgeneko/neko-image-gallery)              |
 | `edgeneko/neko-image-gallery:<version>-cuda11.8`                                                                                            | 基于CUDA11.8, 支持GPU推理的镜像           | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cuda11.8?label=Image%20(cuda11.8))](https://hub.docker.com/r/edgeneko/neko-image-gallery) |
 | `edgeneko/neko-image-gallery:<version>-cpu`                                                                                                 | 仅支持CPU推理的镜像                      | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cpu?label=Image%20(cpu))](https://hub.docker.com/r/edgeneko/neko-image-gallery)           |
 | `edgeneko/neko-image-gallery:<version>-cpu-arm`                                                                                             | (Alpha) 支持ARM64(AArch64)平台的CPU推理 | [![Docker Image Size (tag)](https://img.shields.io/docker/image-size/edgeneko/neko-image-gallery/latest-cpu-arm?label=Image%20(cpu-arm))](https://hub.docker.com/r/edgeneko/neko-image-gallery)   |
@@ -206,6 +206,6 @@ API文档由FastAPI内置的Swagger UI提供。您可以通过访问服务器的
 
 ## Copyright
 
-Copyright 2023 EdgeNeko
+Copyright 2025 EdgeNeko
 
 Licensed under GPLv3 license.

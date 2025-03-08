@@ -46,7 +46,8 @@ image search.
 
 #### Software requirements
 
-- For local deployment: Python 3.10 ~ Python 3.12 (With virtual environment support like `venv`, `conda`, etc.)
+- For local deployment: Python 3.10 ~ Python 3.12,
+  with [uv package manager](https://docs.astral.sh/uv/getting-started/installation/) installed.
 - For Docker deployment: Docker and Docker Compose (For CUDA users, `nvidia-container-runtime` is required) or
   equivalent
   container runtime.
@@ -228,6 +229,6 @@ define them more clearly.
 
 ## Copyright
 
-Copyright 2023 EdgeNeko
+Copyright 2025 EdgeNeko
 
 Licensed under AGPLv3 license.
