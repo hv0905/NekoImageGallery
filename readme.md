@@ -95,12 +95,14 @@ Local file storage does not require an additional database deployment process, b
     uv sync --no-dev --extra cu118 # For CUDA v11.8 deployment
     ```
    > [!NOTE]
-   > - It's required to specify the `--extra` option to install the correct dependencies. If you don't specify the
+   > It's required to specify the `--extra` option to install the correct dependencies. If you don't specify the
        `--extra` option, PyTorch and its related dependencies will not be installed.
-   > - If you want to use CUDA acceleration for inference, be sure to choose a CUDA-supported extra variant in this
+   >
+   > If you want to use CUDA acceleration for inference, be sure to choose a CUDA-supported extra variant in this
        step (We suggest using `cu124` unless your platform doesn't support cuda12+). After installation, you can use
        `torch.cuda.is_available()` to confirm whether CUDA is available.
-   > - If you are developing or testing, you can sync without `--no-dev` switch to install dependencies required for
+   >
+   > If you are developing or testing, you can sync without `--no-dev` switch to install dependencies required for
        developing, testing and linting.
 
 3. Modify the project configuration file inside `config/`, you can edit `default.env` directly, but it's recommended to
