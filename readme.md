@@ -37,7 +37,7 @@ image search.
 
 #### Hardware requirements
 
-| HardWare | Minimum                                       | Recommended                                              |
+| Hardware | Minimum                                       | Recommended                                              |
 |----------|-----------------------------------------------|----------------------------------------------------------|
 | CPU      | X86_64 or ARM64 CPU, 2 cores or more          | 4 cores or more                                          |
 | RAM      | 4GB or more                                   | 8GB or more                                              |
@@ -81,31 +81,38 @@ Local file storage does not require an additional database deployment process, b
 
 #### Deploy NekoImageGallery
 
-1. Clone the project directory to your own PC or server, then checkout to a specific version tag (like `v1.0.0`).
-2. It is highly recommended to install the dependencies required for this project in a Python venv virtual environment.
-   Run the following command:
+> [!NOTE]
+> This tutorial is for NekoImageGallery v1.4.0 and later, in which we switch to `uv` as package manager. If you are
+> using an earlier version, please refer to the README file in the corresponding version tag.
+
+1. Clone the project directory to your own PC or server, then checkout to a specific version tag (like `v1.4.0`).
+2. Install the required dependencies:
     ```shell
-    python -m venv .venv
-    . .venv/bin/activate
+    uv sync --no-dev --extra cpu # For CPU-only deployment
+   
+    uv sync --no-dev --extra cu124 # For CUDA v12.4 deployment
+   
+    uv sync --no-dev --extra cu118 # For CUDA v11.8 deployment
     ```
-3. Install PyTorch. Follow the [PyTorch documentation](https://pytorch.org/get-started/locally/) to install the torch
-   version suitable for your system using pip.
-   > If you want to use CUDA acceleration for inference, be sure to install a CUDA-supported PyTorch version in this
-   step. After installation, you can use `torch.cuda.is_available()` to confirm whether CUDA is available.
-4. Install other dependencies required for this project:
-    ```shell
-    pip install -r requirements.txt
-    ```
-5. Modify the project configuration file inside `config/`, you can edit `default.env` directly, but it's recommended to
+   > [!NOTE]
+   > - It's required to specify the `--extra` option to install the correct dependencies. If you don't specify the
+       `--extra` option, PyTorch and its related dependencies will not be installed.
+   > - If you want to use CUDA acceleration for inference, be sure to choose a CUDA-supported extra variant in this
+       step (We suggest using `cu124` unless your platform doesn't support cuda12+). After installation, you can use
+       `torch.cuda.is_available()` to confirm whether CUDA is available.
+   > - If you are developing or testing, you can sync without `--no-dev` switch to install dependencies required for
+       developing, testing and linting.
+
+3. Modify the project configuration file inside `config/`, you can edit `default.env` directly, but it's recommended to
    create a new file named `local.env` and override the configuration in `default.env`.
-6. Run this application:
+4. Run this application:
     ```shell
-    python main.py
+    uv run main.py
     ```
    You can use `--host` to specify the IP address you want to bind to (default is 0.0.0.0) and `--port` to specify the
    port you want to bind to (default is 8000).  
-   You can see all available commands and options by running `python main.py --help`.
-7. (Optional) Deploy the front-end application: [NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)
+   You can see all available commands and options by running `uv run main.py --help`.
+5. (Optional) Deploy the front-end application: [NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)
    is a simple web front-end application for this project. If you want to deploy it, please refer to
    its [deployment documentation](https://github.com/hv0905/NekoImageGallery.App).
 
