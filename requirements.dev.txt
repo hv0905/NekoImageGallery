@@ -1,6 +1,0 @@
-# Requirements for development and testing
-
-pytest
-pytest-asyncio
-pytest-cov
-pylint

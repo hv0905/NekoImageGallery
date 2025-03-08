@@ -1,12 +1,16 @@
-ARG TORCH_VERSION=2.3.0
-ARG CUDA_VERSION=12.1
-FROM pytorch/pytorch:${TORCH_VERSION}-cuda${CUDA_VERSION}-cudnn8-runtime
+ARG TORCH_VERSION=2.6.0
+ARG CUDA_VERSION=12.4
+FROM pytorch/pytorch:${TORCH_VERSION}-cuda${CUDA_VERSION}-cudnn9-runtime
 
 WORKDIR /opt/NekoImageGallery
 
-COPY requirements.txt .
-
-RUN PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir -r requirements.txt
+RUN --mount=from=ghcr.io/astral-sh/uv,source=/uv,target=/bin/uv \
+    --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    export PYTHONDONTWRITEBYTECODE=1 && \
+    export UV_PROJECT_ENVIRONMENT=$(python -c "import sysconfig; print(sysconfig.get_config_var('prefix'))") && \
+    uv sync --frozen --extra cu$(python -c "import torch; print(torch.version.cuda.replace('.', '').strip())") --no-dev --inexact --link-mode=copy
 
 RUN mkdir -p /opt/models && \
     export PYTHONDONTWRITEBYTECODE=1 && \

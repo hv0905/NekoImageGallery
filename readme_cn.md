@@ -71,28 +71,34 @@ NekoImageGallery支持两种元数据存储方式：Qdrant数据库存储与本�
 
 #### 部署NekoImageGallery
 
-1. 将项目目录clone到你自己的PC或服务器中，然后按需checkout到特定版本tag（如`v1.0.0`）。
-2. 强烈建议在python venv虚拟环境中安装本项目所需依赖， 运行下面命令：
+> [!NOTE]
+> 本教程适用于NekoImageGallery v1.4.0及之后的版本，我们在该版本切换到了`uv`作为包管理器。如果您使用的是早期版本，请参考对应版本标签中的README文件。
+
+1. 将项目目录clone到你自己的PC或服务器中，然后按需checkout到特定版本tag（如`v1.4.0`）。
+2. 安装所需依赖：
     ```shell
-    python -m venv .venv
-    . .venv/bin/activate
+    uv sync --no-dev --extra cpu # 仅CPU部署
+
+    uv sync --no-dev --extra cu124 # CUDA v12.4 部署
+
+    uv sync --no-dev --extra cu118 # CUDA v11.8 部署
     ```
-3. 安装PyTorch. 按照[PyTorch文档](https://pytorch.org/get-started/locally/)使用pip安装适合你的系统的torch版本
-   > 如果您希望使用CUDA加速推理，务必在本步中安装支持Cuda的pytorch版本，安装完成后可以使用`torch.cuda.is_available()`
-   确认CUDA是否可用。
-4. 安装其它本项目所需依赖：
+
+> [!NOTE]
+> - 需要指定`--extra`选项来安装正确的依赖项。如果不指定`--extra`选项，PyTorch及其相关依赖项将不会被安装。
+> - 如果您希望使用CUDA加速推理，请务必在此步骤中选择支持CUDA的额外变体（我们建议使用`cu124`，除非您的平台不支持cuda12+）。安装完成后可以使用
+    `torch.cuda.is_available()`确认CUDA是否可用。
+> - 如果您正在开发或测试，可以在同步时不使用`--no-dev`开关，以安装开发、测试和代码检查所需的依赖项。
+
+3. 按需修改位于`config`目录下的配置文件，您可以直接修改`default.env`，但是建议创建一个名为`local.env`的文件，覆盖
+   `default.env`中的配置。
+4. 运行本应用：
     ```shell
-    pip install -r requirements.txt
-    ```
-5. 按需修改位于`config`目录下的配置文件，您可以直接修改`default.env`，但是建议创建一个名为`local.env`
-   的文件，覆盖`default.env`中的配置。
-6. 运行本应用：
-    ```shell
-    python main.py
+    uv run main.py
     ```
    你可以通过`--host`指定希望绑定到的ip地址(默认为0.0.0.0)，通过`--port`指定希望绑定到的端口(默认为8000)。  
-   通过`python main.py --help`可以查看所有可用命令和选项。
-7. (可选)部署前端应用：[NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)
+   通过`uv run main.py --help`可以查看所有可用命令和选项。
+5. (可选)部署前端应用：[NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)
    是本项目的一个简易web前端应用，如需部署请参照它的[部署文档](https://github.com/hv0905/NekoImageGallery.App)。
 
 ### 🐋 Docker 部署
@@ -156,8 +162,10 @@ NekoImageGallery镜像发布在DockerHub上，并包含多个变种，设计于�
 
 有几种方法可以将图片上传至NekoImageGallery：
 
-- 通过网页界面：您可以使用网页界面将图片上传到服务器。网页界面由 [NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)
-  提供。请确保您已启用 **Admin API** 并在配置文件中设置了您的 **Admin Token**。
+-
+
+通过网页界面：您可以使用网页界面将图片上传到服务器。网页界面由 [NekoImageGallery.App](https://github.com/hv0905/NekoImageGallery.App)
+提供。请确保您已启用 **Admin API** 并在配置文件中设置了您的 **Admin Token**。
 - 通过本地索引：这适用于本地部署或当您想上传的图片已经在服务器上时。
   使用以下命令来索引您的本地图片目录：
   ```shell
@@ -165,9 +173,11 @@ NekoImageGallery镜像发布在DockerHub上，并包含多个变种，设计于�
   ```
   上述命令将递归地将指定目录及其子目录中的所有图片上传到服务器。
   你可以通过附加选项指定上传的图片的类别和星标状态，具体参考`python main.py local-index --help`。
-- 通过API：您可以使用NekoImageGallery提供的上传API来上传图片。通过此方法，可允许服务器本地不保存图片文件而仅仅存储其URL以及元数据。  
-  请确保您已启用 **Admin API** 并在配置文件中设置了您的 **Admin Token**。  
-  此方法适用于自动化图片上传或将NekoImageGallery与外部系统进行同步。更多信息请查看 [API文档](#-api文档)。
+-
+
+通过API：您可以使用NekoImageGallery提供的上传API来上传图片。通过此方法，可允许服务器本地不保存图片文件而仅仅存储其URL以及元数据。  
+请确保您已启用 **Admin API** 并在配置文件中设置了您的 **Admin Token**。  
+此方法适用于自动化图片上传或将NekoImageGallery与外部系统进行同步。更多信息请查看 [API文档](#-api文档)。
 
 ## 📚 API文档
 

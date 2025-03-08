@@ -26,9 +26,9 @@ jobs:
             suffixes: |
               ""
               "-cuda"
-              "-cuda12.1"
+              "-cuda12.4"
             args: |
-              CUDA_VERSION=12.1
+              CUDA_VERSION=12.4
           - dockerfile: "Dockerfile"
             platforms: "linux/amd64"
             host: "ubuntu-latest"
