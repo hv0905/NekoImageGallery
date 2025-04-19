@@ -48,6 +48,7 @@ class S3StorageSettings(BaseModel):
     access_key_id: str | None = None
     secret_access_key: str | None = None
     session_token: str | None = None
+    user_endpoint_url: str | None = None
 
 
 class LocalStorageSettings(BaseModel):

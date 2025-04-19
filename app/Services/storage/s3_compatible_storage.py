@@ -50,6 +50,7 @@ class S3Storage(BaseStorage[FileMetaDataT: None]):
         self.bucket = config.storage.s3.bucket
         self.region = config.storage.s3.region
         self.endpoint = config.storage.s3.endpoint_url
+        self.user_endpoint = config.storage.s3.user_endpoint_url
 
         self.op = AsyncOperator("s3",
                                 root=str(self.static_dir),
@@ -90,7 +91,7 @@ class S3Storage(BaseStorage[FileMetaDataT: None]):
                           remote_file: "RemoteFilePathType",
                           expire_second: int = 3600) -> str:
         _presign = await self.op.presign_read(self._file_path_str_warp(remote_file), expire_second)
-        return _presign.url
+        return self.rewrite_s3_presign_url(_presign.url)
 
     @transform_exception
     async def fetch(self,
@@ -171,3 +172,8 @@ class S3Storage(BaseStorage[FileMetaDataT: None]):
         if self.bucket in parsed_url.netloc.split('.'):
             return self.endpoint
         return f"{self.endpoint}/{self.bucket}"
+
+    def rewrite_s3_presign_url(self, url: str) -> str:
+        if self.user_endpoint:
+            url = url.replace(self.endpoint, self.user_endpoint[:-1] if self.user_endpoint[-1] == '/' else self.user_endpoint)
+        return url
