@@ -183,6 +183,13 @@ NekoImageGallery镜像发布在DockerHub上，并包含多个变种，设计于�
 
 API文档由FastAPI内置的Swagger UI提供。您可以通过访问服务器的`/docs`或`/redoc`路径来查看API文档。
 
+## 🐸 其他信息
+
+有关项目的更详细的 Wiki，包括项目的工作原理，您可以访问由 DeepWiki 生成的
+Wiki：[https://deepwiki.com/hv0905/NekoImageGallery](NekoImageGallery DeepWiki)。
+
+（该 Wiki 由AI自动生成且未经过项目团队的全面审核，仅供参考。）
+
 ## ⚡ 相关项目
 
 以下项目基于NekoImageGallery工作！
