@@ -186,7 +186,7 @@ API文档由FastAPI内置的Swagger UI提供。您可以通过访问服务器的
 ## 🐸 其他信息
 
 有关项目的更详细的 Wiki，包括项目的工作原理，您可以访问由 DeepWiki 生成的
-Wiki：[https://deepwiki.com/hv0905/NekoImageGallery](NekoImageGallery DeepWiki)。
+Wiki：[NekoImageGallery DeepWiki](https://deepwiki.com/hv0905/NekoImageGallery)。
 
 （该 Wiki 由AI自动生成且未经过项目团队的全面审核，仅供参考。）
 
