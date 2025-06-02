@@ -10,6 +10,7 @@ from typing import Optional, AsyncGenerator
 import aiofiles
 from loguru import logger
 from opendal import AsyncOperator
+from opendal.layers import MimeGuessLayer, RetryLayer
 from opendal.exceptions import NotFound, PermissionDenied, AlreadyExists
 from wcmatch import glob
 
@@ -52,13 +53,15 @@ class S3Storage(BaseStorage[FileMetaDataT: None]):
         self.endpoint = config.storage.s3.endpoint_url
         self.user_endpoint = config.storage.s3.user_endpoint_url
 
-        self.op = AsyncOperator("s3",
-                                root=str(self.static_dir),
-                                bucket=self.bucket,
-                                region=self.region,
-                                endpoint=self.endpoint,
-                                access_key_id=config.storage.s3.access_key_id,
-                                secret_access_key=config.storage.s3.secret_access_key)
+        self.op = (AsyncOperator("s3",
+                                 root=str(self.static_dir),
+                                 bucket=self.bucket,
+                                 region=self.region,
+                                 endpoint=self.endpoint,
+                                 access_key_id=config.storage.s3.access_key_id,
+                                 secret_access_key=config.storage.s3.secret_access_key)
+                   .layer(RetryLayer(max_times=3, factor=1.5, jitter=False, min_delay=0.05, max_delay=0.2))
+                   .layer(MimeGuessLayer()))
 
         self._file_path_str_warp = lambda x: str(PurePosixPath(x))
 
@@ -175,5 +178,6 @@ class S3Storage(BaseStorage[FileMetaDataT: None]):
 
     def rewrite_s3_presign_url(self, url: str) -> str:
         if self.user_endpoint:
-            url = url.replace(self.endpoint, self.user_endpoint[:-1] if self.user_endpoint[-1] == '/' else self.user_endpoint)
+            url = url.replace(self.endpoint,
+                              self.user_endpoint[:-1] if self.user_endpoint[-1] == '/' else self.user_endpoint)
         return url
