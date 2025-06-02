@@ -31,6 +31,17 @@ class SearchBasisParams:
         self.basis = basis
 
 
+async def query_and_postprocess(query: DbQuery, paging: SearchPagingParams,
+                                filter_param: FilterParams) -> SearchApiResponse:
+    results = await services.db_context.query_search(
+        query=query,
+        top_k=paging.count,
+        skip=paging.skip,
+        filter_param=filter_param,
+    )
+    return await result_postprocessing(
+        SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4()))
+
 async def result_postprocessing(resp: SearchApiResponse) -> SearchApiResponse:
     if not config.storage.method.enabled:
         return resp
@@ -62,17 +73,13 @@ async def textSearch(
         else services.transformers_service.get_bert_vector(prompt)
     if basis.basis == SearchBasisEnum.ocr and exact:
         filter_param.ocr_text = prompt
-    results = await services.db_context.query_search(
+    return await query_and_postprocess(
         query=DbQuery(criteria={
             basis.basis: DbQueryBasis(positive=[DbQueryCriteriaVector(vector=text_vector)])
         }),
-        top_k=paging.count,
-        skip=paging.skip,
+        paging=paging,
         filter_param=filter_param,
     )
-
-    return await result_postprocessing(
-        SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4()))
 
 
 @search_router.post("/image", description="Search images by image")
@@ -86,16 +93,13 @@ async def imageSearch(
     img = Image.open(fakefile)
     logger.info("Image search request received")
     image_vector = services.transformers_service.get_image_vector(img)
-    results = await services.db_context.query_search(
+    return await query_and_postprocess(
         query=DbQuery(criteria={
             SearchBasisEnum.vision: DbQueryBasis(positive=[DbQueryCriteriaVector(vector=image_vector)])
         }),
-        top_k=paging.count,
-        skip=paging.skip,
+        paging=paging,
         filter_param=filter_param,
     )
-    return await result_postprocessing(
-        SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4()))
 
 
 @search_router.get("/similar/{image_id}",
@@ -108,16 +112,13 @@ async def similarWith(
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]
 ) -> SearchApiResponse:
     logger.info("Similar search request received, id: {}", image_id)
-    results = await services.db_context.query_search(
+    return await query_and_postprocess(
         query=DbQuery(criteria={
             basis.basis: DbQueryBasis(positive=[DbQueryCriteriaId(id=str(image_id))]),
         }),
-        top_k=paging.count,
-        skip=paging.skip,
+        paging=paging,
         filter_param=filter_param,
     )
-    return await result_postprocessing(
-        SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4()))
 
 
 @search_router.post("/advanced", description="Search with multiple criteria")
@@ -128,16 +129,13 @@ async def advancedSearch(
         paging: Annotated[SearchPagingParams, Depends(SearchPagingParams)]) -> SearchApiResponse:
     logger.info("Advanced search request received: {}", model)
     criteria = process_advanced_search_vectors(model, basis)
-    result = await services.db_context.query_search(
+    return await query_and_postprocess(
         query=DbQuery(criteria={
             basis.basis: criteria
         }),
-        top_k=paging.count,
-        skip=paging.skip,
+        paging=paging,
         filter_param=filter_param,
     )
-    return await result_postprocessing(
-        SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4()))
 
 
 @search_router.post("/combined", description="Search with combined criteria. Deprecated, please use /hybrid instead.",
@@ -162,18 +160,14 @@ async def combinedSearch(
         case _:
             raise HTTPException(400, "Combined search only supports OCR and Vision basis.")
 
-    result = await services.db_context.query_search(
+    return await query_and_postprocess(
         query=DbQuery(criteria={
             basis.basis: criteria,
             second_basis: DbQueryBasis(positive=[DbQueryCriteriaVector(vector=second_vector)])
         }),
-        top_k=paging.count,
-        skip=paging.skip,
+        paging=paging,
         filter_param=filter_param,
     )
-
-    return await result_postprocessing(
-        SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4()))
 
 
 @search_router.post("/hybrid",
@@ -189,19 +183,15 @@ async def hybrid_search(
         raise HTTPException(400, "You used hybrid search, but it needs OCR search which is not "
                                  "enabled.")
 
-    results = await services.db_context.query_search(
+    return await query_and_postprocess(
         query=DbQuery(criteria={
             SearchBasisEnum.vision: process_advanced_search_vectors(model.vision,
                                                                     SearchBasisParams(SearchBasisEnum.vision)),
             SearchBasisEnum.ocr: process_advanced_search_vectors(model.ocr, SearchBasisParams(SearchBasisEnum.ocr))
         }),
-        top_k=paging.count,
-        skip=paging.skip,
+        paging=paging,
         filter_param=filter_param,
     )
-
-    return await result_postprocessing(
-        SearchApiResponse(result=results, message=f"Successfully get {len(results)} results.", query_id=uuid4()))
 
 @search_router.get("/random", description="Get random images")
 async def randomPick(
@@ -212,16 +202,13 @@ async def randomPick(
 ) -> SearchApiResponse:
     logger.info("Random pick request received")
     random_vector = services.transformers_service.get_random_vector(seed)
-    result = await services.db_context.query_search(
+    return await query_and_postprocess(
         query=DbQuery(criteria={
             SearchBasisEnum.vision: DbQueryBasis(positive=[DbQueryCriteriaVector(vector=random_vector)])
         }),
-        top_k=paging.count,
-        skip=paging.skip,
+        paging=paging,
         filter_param=filter_param,
     )
-    return await result_postprocessing(
-        SearchApiResponse(result=result, message=f"Successfully get {len(result)} results.", query_id=uuid4()))
 
 
 # @search_router.get("/recall/{query_id}", description="Recall the query with given queryId")
