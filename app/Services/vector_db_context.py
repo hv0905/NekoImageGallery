@@ -1,14 +1,14 @@
-from typing import Optional
-
 import numpy
 from grpc.aio import AioRpcError
 from httpx import HTTPError
 from loguru import logger
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
-from qdrant_client.models import RecommendStrategy, RecommendInput, RecommendQuery
+from qdrant_client.http.models import FusionQuery, NearestQuery
+from qdrant_client.models import RecommendStrategy, RecommendInput, RecommendQuery, Prefetch
 
 from app.Models.api_models.search_api_model import SearchModelEnum, SearchBasisEnum
+from app.Models.db_queries import DbQuery, DbQueryBasis, DbQueryCriteria, DbQueryCriteriaId, DbQueryCriteriaVector
 from app.Models.mapped_image import MappedImage
 from app.Models.query_params import FilterParams
 from app.Models.search_result import SearchResult
@@ -100,53 +100,76 @@ class VectorDbContext(LifespanService):
                                              with_vectors=False)
         return [t.id for t in result]
 
-    async def query_search(self, query_vector, query_vector_name: str = IMG_VECTOR,
-                           top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[SearchResult]:
-        logger.info("Querying Qdrant... top_k = {}", top_k)
-        result = await self._client.query_points(collection_name=self.collection_name,
-                                                 query=query_vector,
-                                                 using=query_vector_name,
-                                                 query_filter=self._get_filters_by_filter_param(filter_param),
-                                                 limit=top_k,
-                                                 offset=skip,
-                                                 with_payload=True)
-        logger.success("Query completed!")
-        return [self._get_search_result_from_scored_point(t) for t in result.points]
+    @staticmethod
+    def _convert_basis_to_qdrant_query(basis: DbQueryBasis):
+        def map_criteria(criteria: DbQueryCriteria) -> str | list[float]:
+            if isinstance(criteria, DbQueryCriteriaId):
+                return criteria.id
+            elif isinstance(criteria, DbQueryCriteriaVector):
+                return criteria.vector
+            else:
+                raise ValueError(f"Invalid criteria type: {criteria.type}")
 
-    async def query_similar(self,
-                            query_vector_name: str = IMG_VECTOR,
-                            search_id: Optional[str] = None,
-                            positive_vectors: Optional[list[numpy.ndarray]] = None,
-                            negative_vectors: Optional[list[numpy.ndarray]] = None,
-                            mode: Optional[SearchModelEnum] = None,
-                            with_vectors: bool = False,
-                            filter_param: FilterParams | None = None,
-                            top_k: int = 10,
-                            skip: int = 0) -> list[SearchResult]:
-        _positive_vectors = [t.tolist() for t in positive_vectors] if positive_vectors is not None else [search_id]
-        _negative_vectors = [t.tolist() for t in negative_vectors] if negative_vectors is not None else None
-        _strategy = None if mode is None else (RecommendStrategy.AVERAGE_VECTOR if
-                                               mode == SearchModelEnum.average else RecommendStrategy.BEST_SCORE)
-        # since only combined_search need return vectors, We can define _combined_search_need_vectors like below
-        _combined_search_need_vectors = [
-            self.IMG_VECTOR if query_vector_name == self.TEXT_VECTOR else self.TEXT_VECTOR] if with_vectors else None
-        logger.info("Querying Qdrant... top_k = {}", top_k)
-        result = await self._client.query_points(collection_name=self.collection_name,
-                                                 using=query_vector_name,
-                                                 query=RecommendQuery(
-                                                     recommend=RecommendInput(
-                                                         positive=_positive_vectors,
-                                                         negative=_negative_vectors,
-                                                         strategy=_strategy,
-                                                     ),
-                                                 ),
-                                                 with_vectors=_combined_search_need_vectors,
-                                                 query_filter=self._get_filters_by_filter_param(filter_param),
-                                                 limit=top_k,
-                                                 offset=skip,
-                                                 with_payload=True)
-        logger.success("Query completed!")
+        if basis.negative or len(basis.positive) > 1:
+            # RecommendQuery is required
+            return RecommendQuery(
+                recommend=RecommendInput(
+                    positive=[map_criteria(t) for t in basis.positive],
+                    negative=[map_criteria(t) for t in basis.negative],
+                    strategy=RecommendStrategy.AVERAGE_VECTOR if basis.mix_strategy == SearchModelEnum.average
+                    else RecommendStrategy.BEST_SCORE
+                )
+            )
+        else:
+            return NearestQuery(
+                nearest=map_criteria(basis.positive[0]),
+            )
 
+    async def query_search(self, query: DbQuery, top_k=10, skip=0, filter_param: FilterParams | None = None) -> list[
+        SearchResult]:
+        """
+        Query the database with a unified query object.
+        :param query: The query object containing the query vector and basis.
+        :param top_k: The number of results to return.
+        :param skip: The number of results to skip.
+        :param filter_param: Optional filter parameters to apply to the query.
+        :return: A list of SearchResult objects.
+        """
+        logger.info("Starting unified search with {} criteria basis, top_k={}, skip={}",
+                    len(query.criteria), top_k, skip)
+        filters = self._get_filters_by_filter_param(filter_param)
+        if len(query.criteria) > 1:
+            # Hybrid search with RRF
+            logger.info("Performing hybrid search with RRF fusion across {} criteria", len(query.criteria))
+            prefetches = [Prefetch(
+                query=self._convert_basis_to_qdrant_query(v),
+                using=self.vector_name_for_basis(k),
+                filter=filters,
+                limit=(top_k + skip) * 2  # Increase limit to improve RRF fusion results
+            ) for (k, v) in query.criteria.items()]
+
+            result = await self._client.query_points(
+                collection_name=self.collection_name,
+                prefetch=prefetches,
+                query=FusionQuery(fusion=models.Fusion.RRF),
+                limit=top_k,
+                offset=skip,
+                with_payload=True
+            )
+        else:
+            # Normal search
+            basis, criteria = next(iter(query.criteria.items()))
+            logger.info("Performing normal search with basis {}", basis)
+            result = await self._client.query_points(
+                collection_name=self.collection_name,
+                query=self._convert_basis_to_qdrant_query(criteria),
+                using=self.vector_name_for_basis(basis),
+                query_filter=filters,
+                limit=top_k,
+                offset=skip,
+                with_payload=True
+            )
+        logger.success("Search completed! Found {} points.", len(result.points))
         return [self._get_search_result_from_scored_point(t) for t in result.points]
 
     async def insert_items(self, items: list[MappedImage]):

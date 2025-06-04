@@ -70,6 +70,22 @@ def test_search_advanced(test_client, img_ids):
     assert resp.json()['result'][0]['img']['id'] in img_ids['bsn']
 
 
+def test_search_hybrid(test_client, img_ids):
+    resp = test_client.post('/search/hybrid',
+                            json={
+                                'vision': {
+                                    'criteria': ['hatsune miku'],
+                                    'negative_criteria': ['grayscale image', 'cat'],
+                                },
+                                'ocr': {
+                                    'criteria': ['hatsune miku'],
+                                }
+                            })
+
+    assert resp.status_code == 200
+    assert resp.json()['result'][0]['img']['id'] == img_ids['cg'][1]
+
+
 def test_search_combined(test_client, img_ids):
     resp = test_client.post('/search/combined', json={'criteria': ['hatsune miku'],
                                                       'negative_criteria': ['grayscale image', 'cat'],

@@ -28,3 +28,8 @@ class AdvancedSearchModel(BaseModel):
 class CombinedSearchModel(AdvancedSearchModel):
     extra_prompt: str = Field(max_length=100,
                               description="The secondary prompt used for filtering the image.")
+
+
+class HybridSearchModel(BaseModel):
+    vision: AdvancedSearchModel = Field(description="The vision search criteria.")
+    ocr: AdvancedSearchModel = Field(description="The OCR search criteria.")
