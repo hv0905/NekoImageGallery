@@ -74,7 +74,7 @@ jobs:
           
           printf 'cache_tag=%s' "$(echo '${{ steps.docker-meta.outputs.tags }}' | tail -1 | sed 's/$/'"${SUFFIXES[0]}"'/')" >> $GITHUB_OUTPUT
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           file: ${{ matrix.configurations.dockerfile }}
           platforms: ${{matrix.configurations.platforms}}
