@@ -804,6 +804,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "loguru" },
+    { name = "neko-image-gallery-app" },
     { name = "numpy" },
     { name = "opendal" },
     { name = "pillow" },
@@ -839,9 +840,6 @@ cu124 = [
     { name = "torchvision", version = "0.21.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" } },
     { name = "transformers" },
 ]
-frontend = [
-    { name = "neko-image-gallery-app" },
-]
 
 [package.dev-dependencies]
 dev = [
@@ -861,7 +859,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.110.2" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "loguru", specifier = ">=0.7.3" },
-    { name = "neko-image-gallery-app", marker = "extra == 'frontend'", specifier = ">=0.0.0" },
+    { name = "neko-image-gallery-app", specifier = ">=0.0.0" },
     { name = "numpy", specifier = ">=2.2.3" },
     { name = "opendal", specifier = ">=0.45.19" },
     { name = "pillow", specifier = ">=11.1.0" },
@@ -884,7 +882,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34.0" },
     { name = "wcmatch", specifier = ">=10.0" },
 ]
-provides-extras = ["frontend", "cpu", "cu124", "cu118"]
+provides-extras = ["cpu", "cu124", "cu118"]
 
 [package.metadata.requires-dev]
 dev = [

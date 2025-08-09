@@ -21,6 +21,7 @@ dependencies = [
     "typer>=0.15.2",
     "uvicorn[standard]>=0.34.0",
     "wcmatch>=10.0",
+    "neko-image-gallery-app>=0.0.0",
 ]
 
 [dependency-groups]
@@ -33,9 +34,6 @@ dev = [
 
 # All the dependencies that related to PyTorch goes here
 [project.optional-dependencies]
-frontend = [
-    "neko-image-gallery-app>=0.0.0",
-]
 cpu = [
     "torch>=2.6.0",
     "torchvision",

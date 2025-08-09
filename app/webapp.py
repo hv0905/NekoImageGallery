@@ -33,7 +33,16 @@ async def lifespan(_: FastAPI):
     await provider.onexit()
 
 
-app = FastAPI(lifespan=lifespan, title=app.__title__, description=app.__description__, version=app.__version__)
+api_prefix = '/api' if config.with_frontend else ''
+app = FastAPI(
+    lifespan=lifespan,
+    title=app.__title__,
+    description=app.__description__,
+    version=app.__version__,
+    openapi_url=f"{api_prefix}/openapi.json",
+    docs_url=f"{api_prefix}/docs",
+    redoc_url=f"{api_prefix}/redoc",
+)
 init_logging()
 
 # noinspection PyTypeChecker
@@ -64,7 +73,7 @@ def welcome(request: Request,
             token_passed: Annotated[bool, Depends(permissive_access_token_verify)],
             admin_token_passed: Annotated[bool, Depends(permissive_admin_token_verify)],
             ) -> WelcomeApiResponse:
-    root_path: str = request.scope.get('root_path').rstrip('/')
+    root_path: str = request.scope.get('root_path').rstrip('/') + api_prefix
     return WelcomeApiResponse(
         message="Ciallo~ Welcome to NekoImageGallery API!",
         server_time=datetime.now(),
@@ -80,7 +89,7 @@ def welcome(request: Request,
     )
 
 
-app.include_router(root_router, prefix='/api' if config.with_frontend else '')
+app.include_router(root_router, prefix=api_prefix)
 if config.with_frontend:
     from neko_image_gallery_app import asgi_app as frontend_app
 
