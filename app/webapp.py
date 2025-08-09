@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.params import Depends
 from fastapi.staticfiles import StaticFiles
@@ -45,18 +45,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(search_controller.search_router, prefix="/search")
-app.include_router(images_controller.images_router, prefix="/images")
+root_router = APIRouter()
+
+root_router.include_router(search_controller.search_router, prefix="/search")
+root_router.include_router(images_controller.images_router, prefix="/images")
 if config.admin_api_enable:
-    app.include_router(admin_controller.admin_router, prefix="/admin")
+    root_router.include_router(admin_controller.admin_router, prefix="/admin")
 
 if config.storage.method == "local":
     # Since we will check & create the static directory soon later when the StorageService initialized, we don't need to
     # check it here.
-    app.mount("/static", StaticFiles(directory=pathlib.Path(config.storage.local.path), check_dir=False), name="static")
+    root_router.mount("/static", StaticFiles(directory=pathlib.Path(config.storage.local.path), check_dir=False),
+                      name="static")
 
 
-@app.get("/", description="Default portal. Test for server availability.")
+@root_router.get("/", description="Default portal. Test for server availability.")
 def welcome(request: Request,
             token_passed: Annotated[bool, Depends(permissive_access_token_verify)],
             admin_token_passed: Annotated[bool, Depends(permissive_admin_token_verify)],
@@ -75,3 +78,10 @@ def welcome(request: Request,
         authorization=WelcomeApiAuthenticationResponse(required=config.access_protected, passed=token_passed),
         available_basis=["vision", "ocr"] if config.ocr_search.enable else ["vision"]
     )
+
+
+app.include_router(root_router, prefix='/api' if config.with_frontend else '')
+if config.with_frontend:
+    from neko_image_gallery_app import asgi_app as frontend_app
+
+    app.mount("/", frontend_app, name="frontend")

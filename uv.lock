@@ -401,16 +401,16 @@ wheels = [
 
 [[package]]
 name = "fastapi"
-version = "0.115.11"
+version = "0.116.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "starlette" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b5/28/c5d26e5860df807241909a961a37d45e10533acef95fc368066c7dd186cd/fastapi-0.115.11.tar.gz", hash = "sha256:cc81f03f688678b92600a65a5e618b93592c65005db37157147204d8924bf94f", size = 294441 }
+sdist = { url = "https://files.pythonhosted.org/packages/78/d7/6c8b3bfe33eeffa208183ec037fee0cce9f7f024089ab1c5d12ef04bd27c/fastapi-0.116.1.tar.gz", hash = "sha256:ed52cbf946abfd70c5a0dccb24673f0670deeb517a88b3544d03c2a6bf283143", size = 296485 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b3/5d/4d8bbb94f0dbc22732350c06965e40740f4a92ca560e90bb566f4f73af41/fastapi-0.115.11-py3-none-any.whl", hash = "sha256:32e1541b7b74602e4ef4a0260ecaf3aadf9d4f19590bba3e1bf2ac4666aa2c64", size = 94926 },
+    { url = "https://files.pythonhosted.org/packages/e5/47/d63c60f59a59467fda0f93f46335c9d18526d7071f025cb5b89d5353ea42/fastapi-0.116.1-py3-none-any.whl", hash = "sha256:c46ac7c312df840f0c9e220f7964bada936781bc4e2e6eb71f1c4d7553786565", size = 95631 },
 ]
 
 [[package]]
@@ -782,6 +782,18 @@ wheels = [
 ]
 
 [[package]]
+name = "neko-image-gallery-app"
+version = "0.1.0.dev20250809135801"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "starlette" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8b/3a/3e056538be7b8f985ac82ed20142d310dc30a237242296c138f2fdb00838/neko_image_gallery_app-0.1.0.dev20250809135801.tar.gz", hash = "sha256:5168657f925955224007e972368f4716a15782fd50ba1ca68a07ca0866851233", size = 368405 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7d/5d/a93f1ad60f66230b2acf797137d666de46d12ac5e56c61347f4f94ab212e/neko_image_gallery_app-0.1.0.dev20250809135801-py3-none-any.whl", hash = "sha256:741c02c5b912bc67d0bc1dc1f1e04ad32b374d4dea8219d6bb3844428961f97f", size = 375150 },
+]
+
+[[package]]
 name = "nekoimagegallery"
 version = "1.4.0"
 source = { virtual = "." }
@@ -827,6 +839,9 @@ cu124 = [
     { name = "torchvision", version = "0.21.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" } },
     { name = "transformers" },
 ]
+frontend = [
+    { name = "neko-image-gallery-app" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -846,6 +861,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.110.2" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "loguru", specifier = ">=0.7.3" },
+    { name = "neko-image-gallery-app", marker = "extra == 'frontend'", specifier = ">=0.0.0" },
     { name = "numpy", specifier = ">=2.2.3" },
     { name = "opendal", specifier = ">=0.45.19" },
     { name = "pillow", specifier = ">=11.1.0" },
@@ -868,7 +884,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34.0" },
     { name = "wcmatch", specifier = ">=10.0" },
 ]
-provides-extras = ["cpu", "cu124", "cu118"]
+provides-extras = ["frontend", "cpu", "cu124", "cu118"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1018,7 +1034,7 @@ name = "nvidia-cudnn-cu11"
 version = "9.1.0.70"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu11", marker = "extra == 'extra-16-nekoimagegallery-cu118' or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
+    { name = "nvidia-cublas-cu11", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu118') or (sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-16-nekoimagegallery-cu118') or (sys_platform == 'darwin' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/00/3b/0b776f04e364cd99e4cf152c2a9eadb5934c67c9a91429da55169a9447fd/nvidia_cudnn_cu11-9.1.0.70-py3-none-manylinux2014_x86_64.whl", hash = "sha256:e6135ac63fe9d5b0b89cfb35c3fc1c1349f2b995becadf2e9dc21bca89d9633d", size = 663919573 },
@@ -1030,7 +1046,7 @@ name = "nvidia-cudnn-cu12"
 version = "9.1.0.70"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "(extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra != 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra != 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
+    { name = "nvidia-cublas-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'darwin' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9f/fd/713452cd72343f682b1c7b9321e23829f00b842ceaedcda96e742ea0b0b3/nvidia_cudnn_cu12-9.1.0.70-py3-none-manylinux2014_x86_64.whl", hash = "sha256:165764f44ef8c61fcdfdfdbe769d687e06374059fbb388b6c89ecb0e28793a6f", size = 664752741 },
@@ -1053,7 +1069,7 @@ name = "nvidia-cufft-cu12"
 version = "11.2.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra != 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra != 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'darwin' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7a/8a/0e728f749baca3fbeffad762738276e5df60851958be7783af121a7221e7/nvidia_cufft_cu12-11.2.1.3-py3-none-manylinux2014_aarch64.whl", hash = "sha256:5dad8008fc7f92f5ddfa2101430917ce2ffacd86824914c82e28990ad7f00399", size = 211422548 },
@@ -1087,7 +1103,7 @@ name = "nvidia-cusolver-cu11"
 version = "11.4.1.48"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu11", marker = "extra == 'extra-16-nekoimagegallery-cu118' or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
+    { name = "nvidia-cublas-cu11", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu118') or (sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-16-nekoimagegallery-cu118') or (sys_platform == 'darwin' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/55/ee/939ff0104991dd7bdabb4c9767994c612ba0e1c9a55672a1ddd42f5e5b16/nvidia_cusolver_cu11-11.4.1.48-py3-none-manylinux1_x86_64.whl", hash = "sha256:ca538f545645b7e6629140786d3127fe067b3d5a085bd794cde5bfe877c8926f", size = 128240842 },
@@ -1101,9 +1117,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.6.1.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "(extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra != 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra != 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
-    { name = "nvidia-cusparse-cu12", marker = "(extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra != 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra != 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "(extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra != 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra != 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
+    { name = "nvidia-cublas-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'darwin' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
+    { name = "nvidia-cusparse-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'darwin' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'darwin' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/46/6b/a5c33cf16af09166845345275c34ad2190944bcc6026797a39f8e0a282e0/nvidia_cusolver_cu12-11.6.1.9-py3-none-manylinux2014_aarch64.whl", hash = "sha256:d338f155f174f90724bbde3758b7ac375a70ce8e706d70b018dd3375545fc84e", size = 127634111 },
@@ -1127,7 +1143,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.3.1.170"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra != 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra != 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform != 'darwin' and sys_platform != 'linux' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'darwin' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (sys_platform == 'linux' and extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/96/a9/c0d2f83a53d40a4a41be14cea6a0bf9e668ffcf8b004bd65633f433050c0/nvidia_cusparse_cu12-12.3.1.170-py3-none-manylinux2014_aarch64.whl", hash = "sha256:9d32f62896231ebe0480efd8a7f702e143c98cfaa0e8a76df3386c1ba2b54df3", size = 207381987 },
@@ -1848,15 +1864,16 @@ wheels = [
 
 [[package]]
 name = "starlette"
-version = "0.46.0"
+version = "0.47.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio", version = "3.7.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124') or (extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124')" },
     { name = "anyio", version = "4.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu118') or (extra == 'extra-16-nekoimagegallery-cpu' and extra == 'extra-16-nekoimagegallery-cu124') or (extra == 'extra-16-nekoimagegallery-cu118' and extra == 'extra-16-nekoimagegallery-cu124')" },
+    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/44/b6/fb9a32e3c5d59b1e383c357534c63c2d3caa6f25bf3c59dd89d296ecbaec/starlette-0.46.0.tar.gz", hash = "sha256:b359e4567456b28d473d0193f34c0de0ed49710d75ef183a74a5ce0499324f50", size = 2575568 }
+sdist = { url = "https://files.pythonhosted.org/packages/04/57/d062573f391d062710d4088fa1369428c38d51460ab6fedff920efef932e/starlette-0.47.2.tar.gz", hash = "sha256:6ae9aa5db235e4846decc1e7b79c4f346adf41e9777aebeb49dfd09bbd7023d8", size = 2583948 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/41/94/8af675a62e3c91c2dee47cf92e602cfac86e8767b1a1ac3caf1b327c2ab0/starlette-0.46.0-py3-none-any.whl", hash = "sha256:913f0798bd90ba90a9156383bcf1350a17d6259451d0d8ee27fc0cf2db609038", size = 71991 },
+    { url = "https://files.pythonhosted.org/packages/f7/1f/b876b1f83aef204198a42dc101613fefccb32258e5428b5f9259677864b4/starlette-0.47.2-py3-none-any.whl", hash = "sha256:c5847e96134e5c5371ee9fac6fdf1a67336d5815e09eb2a01fdb57a351ef915b", size = 72984 },
 ]
 
 [[package]]

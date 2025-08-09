@@ -33,6 +33,9 @@ dev = [
 
 # All the dependencies that related to PyTorch goes here
 [project.optional-dependencies]
+frontend = [
+    "neko-image-gallery-app>=0.0.0",
+]
 cpu = [
     "torch>=2.6.0",
     "torchvision",

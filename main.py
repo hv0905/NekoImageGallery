@@ -57,6 +57,17 @@ def server(ctx: typer.Context,
         raise typer.Abort()
     if ctx.invoked_subcommand is not None:
         return
+    from app.config import config
+    if config.with_frontend:
+        try:
+            import neko_image_gallery_app
+        except ImportError:
+            rich.get_console().print(
+                "You enabled with_frontend option, but the frontend files didn't install correctly, please try: \n\n"
+                "uv sync --extra cuda124|cuda118|cpu --extra frontend\n\nFor more information, checkout the get "
+                "started guide.",
+                style="red")
+            raise typer.Abort()
     uvicorn.run("app.webapp:app", host=host, port=port, root_path=root_path)
 
 

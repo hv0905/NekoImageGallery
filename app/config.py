@@ -90,6 +90,9 @@ class Config(BaseSettings):
     admin_token: str = ''
     admin_index_queue_max_length: int = 200
 
+    with_frontend: bool = False  # Whether to run the frontend app with the backend, default to False for backward
+    # compatibility
+
     access_protected: bool = False
     access_token: str = ''
 
