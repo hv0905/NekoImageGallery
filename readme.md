@@ -21,12 +21,12 @@ image search.
 
 ## 📷Screenshots
 
-![Screenshot1](web/screenshots/1.png)
-![Screenshot2](web/screenshots/2.png)
-![Screenshot3](web/screenshots/3.png)
-![Screenshot4](web/screenshots/4.png)
-![Screenshot5](web/screenshots/5.png)
-![Screenshot6](web/screenshots/6.png)
+![Screenshot1](docs/public/screenshots/1.png)
+![Screenshot2](docs/public/screenshots/2.png)
+![Screenshot3](docs/public/screenshots/3.png)
+![Screenshot4](docs/public/screenshots/4.png)
+![Screenshot5](docs/public/screenshots/5.png)
+![Screenshot6](docs/public/screenshots/6.png)
 
 > The above screenshots may contain copyrighted images from different artists, please do not use them for other
 > purposes.

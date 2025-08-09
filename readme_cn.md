@@ -18,12 +18,12 @@
 
 ## 📷截图
 
-![Screenshot1](web/screenshots/1.png)
-![Screenshot2](web/screenshots/2.png)
-![Screenshot3](web/screenshots/3.png)
-![Screenshot4](web/screenshots/4.png)
-![Screenshot5](web/screenshots/5.png)
-![Screenshot6](web/screenshots/6.png)
+![Screenshot1](docs/public/screenshots/1.png)
+![Screenshot2](docs/public/screenshots/2.png)
+![Screenshot3](docs/public/screenshots/3.png)
+![Screenshot4](docs/public/screenshots/4.png)
+![Screenshot5](docs/public/screenshots/5.png)
+![Screenshot6](docs/public/screenshots/6.png)
 
 > 以上截图可能包含来自不同画师的版权图片，请不要将其用作其它用途。
 

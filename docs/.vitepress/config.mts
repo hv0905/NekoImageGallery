@@ -20,6 +20,7 @@ export default defineConfig({
         nav: [
           { text: '首页', link: '/zh/' },
           { text: '项目介绍', link: '/zh/introduction' },
+          { text: '截图', link: '/zh/screenshots' },
           { text: '部署', link: '/zh/deployment' },
           { text: '配置', link: '/zh/configurations' },
           { text: 'API', link: '/zh/api' },
@@ -34,6 +35,7 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Introduction', link: '/introduction' },
+      { text: 'Screenshots', link: '/screenshots' },
       { text: 'Deployment', link: '/deployment' },
       { text: 'Configurations', link: '/configurations' },
       { text: 'API', link: '/api' },
@@ -50,6 +52,7 @@ export default defineConfig({
           text: 'Guide',
           items: [
             { text: 'Introduction', link: '/introduction' },
+            { text: 'Screenshots', link: '/screenshots' },
             { text: 'Deployment', link: '/deployment' },
             { text: 'Configurations', link: '/configurations' },
             { text: 'API', link: '/api' },
@@ -62,6 +65,7 @@ export default defineConfig({
           text: '指南',
           items: [
             { text: '项目介绍', link: '/zh/introduction' },
+            { text: '截图', link: '/zh/screenshots' },
             { text: '部署', link: '/zh/deployment' },
             { text: '配置', link: '/zh/configurations' },
             { text: 'API', link: '/zh/api' },
