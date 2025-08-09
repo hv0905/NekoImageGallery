@@ -1,14 +1,12 @@
-name: Deploy project pages
+name: Deploy Docs to GitHub Pages
 
 on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["master"]
     paths: 
-      - '**/*.md'
-      - '**/*.png' # for screenshots
-      - 'page_build/**'
-      - '.github/workflows/**'
+      - 'docs/**'
+      - '.github/workflows/jekyll-gh-pages.yml'
       
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -32,21 +30,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'docs/package-lock.json'
+      - name: Install dependencies
+        run: npm --prefix docs install
+      - name: Build with VitePress
+        run: npm --prefix docs run docs:build
       - name: Setup Pages
         uses: actions/configure-pages@v4
-      - name: prepare site src
-        run: |
-          mkdir -p .github/page_build
-          cp *.md .github/page_build/
-          cp web/ .github/page_build/ -r
-          ls -lR .github/page_build/
-      - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./.github/page_build/
-          destination: ./_site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/.vitepress/dist
 
   # Deployment job
   deploy:
