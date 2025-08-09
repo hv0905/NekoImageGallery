@@ -8,7 +8,7 @@ RUN --mount=from=ghcr.io/astral-sh/uv,source=/uv,target=/bin/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     export PYTHONDONTWRITEBYTECODE=1 && \
     export UV_PROJECT_ENVIRONMENT=$(python -c "import sysconfig; print(sysconfig.get_config_var('prefix'))") && \
-    uv sync --frozen --extra cpu --extra frontend --no-dev --link-mode=copy
+    uv sync --frozen --extra cpu --no-dev --link-mode=copy
 
 RUN mkdir -p /opt/models && \
     export PYTHONDONTWRITEBYTECODE=1 && \
