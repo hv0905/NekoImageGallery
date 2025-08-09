@@ -64,7 +64,7 @@ if config.admin_api_enable:
 if config.storage.method == "local":
     # Since we will check & create the static directory soon later when the StorageService initialized, we don't need to
     # check it here.
-    root_router.mount("/static", StaticFiles(directory=pathlib.Path(config.storage.local.path), check_dir=False),
+    app.mount(api_prefix + "/static", StaticFiles(directory=pathlib.Path(config.storage.local.path), check_dir=False),
                       name="static")
 
 

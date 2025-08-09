@@ -21,6 +21,7 @@ def unauthorized_test_client(tmp_path_factory) -> TestClient:
     config.config.admin_token = TEST_ADMIN_TOKEN
     config.config.storage.method = config.StorageMode.LOCAL
     config.config.storage.local.path = tmp_path_factory.mktemp("static_files")
+    config.config.with_frontend = False
     # Start the application
 
     with TestClient(importlib.import_module('app.webapp').app) as client:
